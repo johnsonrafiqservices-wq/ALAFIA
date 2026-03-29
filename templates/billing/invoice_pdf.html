@@ -1,0 +1,537 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }} - {{ clinic_settings.clinic_name }}</title>
+    <style>
+        :root {
+            --alafia-primary: #1B5E96;
+            --alafia-primary-light: #e6f1fa;
+            --alafia-success: #2E8B57;
+            --alafia-success-light: #e8f5f0;
+            --alafia-accent: #00A86B;
+            --alafia-dark: #1e293b;
+            --alafia-light: #f8fafc;
+            --alafia-border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--alafia-dark);
+            background: white;
+        }
+
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+
+        /* Header Section */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--alafia-primary);
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+        }
+
+        .clinic-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--alafia-primary);
+            margin-bottom: 5px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .invoice-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .invoice-title h1 {
+            font-size: 32px;
+            color: var(--alafia-primary);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .invoice-number {
+            background: var(--alafia-primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .invoice-dates {
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* Patient and Invoice Info */
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .patient-info, .invoice-info {
+            flex: 1;
+            padding: 20px;
+            background: var(--alafia-light);
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+
+        .patient-info {
+            margin-left: 0;
+        }
+
+        .invoice-info {
+            margin-right: 0;
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--alafia-primary);
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--alafia-border);
+            padding-bottom: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .info-value {
+            color: var(--alafia-dark);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-paid { background: var(--alafia-success-light); color: var(--alafia-success); }
+        .status-sent { background: var(--alafia-primary-light); color: var(--alafia-primary); }
+        .status-draft { background: #f3f4f6; color: #6b7280; }
+        .status-overdue { background: #fecaca; color: #dc2626; }
+
+        /* Items Table */
+        .items-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--alafia-primary);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--alafia-primary);
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th {
+            background: var(--alafia-primary);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .items-table th:last-child,
+        .items-table td:last-child {
+            text-align: right;
+        }
+
+        .items-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--alafia-border);
+        }
+
+        .items-table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .item-description {
+            font-weight: bold;
+            color: var(--alafia-dark);
+        }
+
+        .item-service {
+            font-size: 10px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Totals Section */
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 30px;
+        }
+
+        .totals-table {
+            width: 300px;
+            border-collapse: collapse;
+        }
+
+        .totals-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--alafia-border);
+        }
+
+        .totals-table .total-label {
+            text-align: right;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .totals-table .total-amount {
+            text-align: right;
+            font-weight: bold;
+            color: var(--alafia-dark);
+        }
+
+        .totals-table .grand-total {
+            background: var(--alafia-primary);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .discount-row {
+            color: var(--alafia-success);
+        }
+
+        /* Payment History */
+        .payments-section {
+            margin-bottom: 30px;
+        }
+
+        .payments-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .payments-table th {
+            background: var(--alafia-success);
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .payments-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--alafia-border);
+        }
+
+        .payment-status {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+
+        .payment-completed { background: var(--alafia-success-light); color: var(--alafia-success); }
+        .payment-pending { background: #fef3c7; color: #d97706; }
+
+        /* Footer */
+        .invoice-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid var(--alafia-border);
+            text-align: center;
+            color: #666;
+            font-size: 10px;
+        }
+
+        .footer-note {
+            background: var(--alafia-light);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                font-size: 11px;
+            }
+            
+            .invoice-container {
+                padding: 0;
+                margin: 0;
+                max-width: none;
+            }
+            
+            .invoice-header {
+                margin-bottom: 20px;
+            }
+            
+            .info-section {
+                margin-bottom: 20px;
+            }
+            
+            .items-section,
+            .payments-section {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="clinic-info">
+                {% if clinic_settings.logo %}
+                    <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo">
+                {% endif %}
+                <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                <div class="clinic-details">
+                    {% if clinic_settings.address %}{{ clinic_settings.address }}<br>{% endif %}
+                    {% if clinic_settings.phone %}Phone: {{ clinic_settings.phone }}<br>{% endif %}
+                    {% if clinic_settings.email %}Email: {{ clinic_settings.email }}<br>{% endif %}
+                    {% if clinic_settings.website %}Website: {{ clinic_settings.website }}{% endif %}
+                </div>
+            </div>
+            <div class="invoice-title">
+                <h1>INVOICE</h1>
+                <div class="invoice-number">{{ invoice.invoice_number }}</div>
+                <div class="invoice-dates">
+                    <strong>Issue Date:</strong> {{ invoice.issue_date|date:"F d, Y" }}<br>
+                    <strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient and Invoice Information -->
+        <div class="info-section">
+            <div class="patient-info">
+                <div class="info-title">BILL TO</div>
+                <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">
+                    {{ invoice.patient.get_full_name }}
+                </div>
+                <div style="color: #666; margin-bottom: 5px;">
+                    Patient ID: {{ invoice.patient.patient_id }}
+                </div>
+                {% if invoice.patient.phone %}
+                <div style="margin-bottom: 3px;">Phone: {{ invoice.patient.phone }}</div>
+                {% endif %}
+                {% if invoice.patient.email %}
+                <div style="margin-bottom: 8px;">Email: {{ invoice.patient.email }}</div>
+                {% endif %}
+                <div style="color: #666;">
+                    {{ invoice.patient.address_line1 }}<br>
+                    {% if invoice.patient.address_line2 %}{{ invoice.patient.address_line2 }}<br>{% endif %}
+                    {{ invoice.patient.city }}, {{ invoice.patient.state }} {{ invoice.patient.postal_code }}
+                </div>
+            </div>
+            
+            <div class="invoice-info">
+                <div class="info-title">INVOICE DETAILS</div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="status-badge status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Created By:</span>
+                    <span class="info-value">{{ invoice.created_by.get_full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Created Date:</span>
+                    <span class="info-value">{{ invoice.created_at|date:"F d, Y" }}</span>
+                </div>
+                {% if invoice.appointment %}
+                <div class="info-row">
+                    <span class="info-label">Appointment:</span>
+                    <span class="info-value">{{ invoice.appointment.appointment_date|date:"M d, Y" }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Invoice Items -->
+        <div class="items-section">
+            <div class="section-title">SERVICES & ITEMS</div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Description</th>
+                        <th style="width: 15%; text-align: center;">Qty</th>
+                        <th style="width: 17.5%;">Unit Price</th>
+                        <th style="width: 17.5%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in line_items %}
+                    <tr>
+                        <td>
+                            <div class="item-description">Service: {{ item.service.name }}</div>
+                            {% if item.service %}
+                                <!-- <div class="item-service">Service: {{ item.service.name }}</div> -->
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td>UGX {{ item.unit_price|floatformat:2|intcomma }}</td>
+                        <td>UGX {{ item.total_amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #666; font-style: italic;">
+                            No items found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-section">
+            <table class="totals-table">
+                <tr>
+                    <td class="total-label">Subtotal:</td>
+                    <td class="total-amount">UGX {{ invoice.subtotal|floatformat:2|intcomma }}</td>
+                </tr>
+                {% if invoice.discount_amount > 0 %}
+                <tr class="discount-row">
+                    <td class="total-label">Discount:</td>
+                    <td class="total-amount">-UGX {{ invoice.discount_amount|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endif %}
+                {% if invoice.tax_rate > 0 %}
+                <tr>
+                    <td class="total-label">Tax ({{ invoice.tax_rate }}%):</td>
+                    <td class="total-amount">UGX {{ invoice.tax_amount|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endif %}
+                <tr class="grand-total" style="color:#e2e8f0 !important;">
+                    <td class="total-label" style="color:#e2e8f0 !important;">TOTAL AMOUNT:</td>
+                    <td class="total-amount" style="color:#e2e8f0 !important;">UGX {{ invoice.total_amount|floatformat:2|intcomma }}</td>
+                </tr>
+                {% if invoice.get_balance_due > 0 %}
+                <tr style="background: #fecaca; color: #dc2626;">
+                    <td class="total-label">BALANCE DUE:</td>
+                    <td class="total-amount">UGX {{ invoice.get_balance_due|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- Payment History -->
+        {% if payments %}
+        <div class="payments-section">
+            <div class="section-title">PAYMENT HISTORY</div>
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>Date</th>
+                        <th>Method</th>
+                        <th style="text-align: right;">Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.payment_id }}</td>
+                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                        <td>{{ payment.get_payment_method_display }}</td>
+                        <td style="text-align: right;">UGX {{ payment.amount|floatformat:2|intcomma }}</td>
+                        <td>
+                            <span class="payment-status payment-{{ payment.status }}">
+                                {{ payment.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        {% if invoice.notes %}
+        <div class="payments-section">
+            <!-- <div class="section-title">NOTES</div> -->
+            <!-- <div class="footer-note">
+                {{ invoice.notes|linebreaks }}
+            </div> -->
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            <!-- <div class="footer-note">
+                <strong>Payment Terms:</strong> Payment is due within 30 days of invoice date. 
+                Late payments may be subject to additional charges.
+            </div> -->
+            <div>
+                Thank you for choosing {{ clinic_settings.clinic_name }}!<br>
+                For questions about this invoice, please contact us at 
+                {% if clinic_settings.phone %}{{ clinic_settings.phone }}{% endif %}
+                {% if clinic_settings.email %} or {{ clinic_settings.email }}{% endif %}
+            </div>
+            <div style="margin-top: 10px; font-size: 9px; color: #999;">
+                Invoice generated on {{ "now"|date:"F d, Y \a\\t H:i" }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

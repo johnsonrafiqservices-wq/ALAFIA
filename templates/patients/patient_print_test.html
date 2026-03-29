@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ patient.get_full_name }} - Print</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1B5E96;
+            padding-bottom: 10px;
+        }
+        .patient-info {
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-header">
+        <h1>Patient Information</h1>
+        <p>Printed on {% now "F j, Y" %}</p>
+    </div>
+
+    <div class="patient-info">
+        <h2>{{ patient.get_full_name }}</h2>
+        <p><strong>Patient ID:</strong> {{ patient.patient_id }}</p>
+        <p><strong>Date of Birth:</strong> {{ patient.date_of_birth|date:"F j, Y" }} ({{ patient.age }} years)</p>
+        <p><strong>Gender:</strong> {{ patient.get_gender_display }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Contact Information</h3>
+        <p><strong>Phone:</strong> {{ patient.phone_number|default:"Not provided" }}</p>
+        <p><strong>Email:</strong> {{ patient.email|default:"Not provided" }}</p>
+        <p><strong>Address:</strong> {{ patient.address|default:"Not provided" }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Medical Information</h3>
+        <p><strong>Blood Type:</strong> {% if patient.blood_type %}{{ patient.get_blood_type_display }}{% else %}Not specified{% endif %}</p>
+        <p><strong>Allergies:</strong> {{ patient.allergies|default:"No known allergies" }}</p>
+    </div>
+
+    <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #1B5E96; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Print this page
+        </button>
+        <button onclick="window.close()" style="padding: 10px 20px; margin-left: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Close window
+        </button>
+    </div>
+
+    <script>
+        // Auto-print when the page loads
+        window.onload = function() {
+            if (window.location.search.includes('autoprint=1')) {
+                window.print();
+            }
+        };
+    </script>
+</body>
+</html>

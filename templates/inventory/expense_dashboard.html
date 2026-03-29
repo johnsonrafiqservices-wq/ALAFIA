@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="fas fa-receipt me-2"></i>Expense Dashboard</h2>
+            <p class="text-muted">Track and monitor clinic expenses</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:cashflow_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>All Cash Flow
+            </a>
+            <a href="{% url 'inventory:drug_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-pills me-2"></i>Back to Inventory
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Total Expenses</p>
+                            <h3 class="mb-0">UGX {{ total_expenses|floatformat:0 }}</h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded p-3">
+                            <i class="fas fa-money-bill-wave text-danger fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">This Month</p>
+                            <h3 class="mb-0">UGX {{ current_month_expenses|floatformat:0 }}</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded p-3">
+                            <i class="fas fa-calendar-month text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Last 7 Days</p>
+                            <h3 class="mb-0">UGX {{ week_expenses|floatformat:0 }}</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded p-3">
+                            <i class="fas fa-calendar-week text-info fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Total Transactions</p>
+                            <h3 class="mb-0">{{ expense_count }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded p-3">
+                            <i class="fas fa-file-invoice text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Expense Categories -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Top Expense Categories</h5>
+                </div>
+                <div class="card-body">
+                    {% if expense_categories %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th class="text-end">Count</th>
+                                        <th class="text-end">Total (UGX)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for category in expense_categories %}
+                                    <tr>
+                                        <td>{{ category.description }}</td>
+                                        <td class="text-end">{{ category.count }}</td>
+                                        <td class="text-end">{{ category.total|floatformat:0 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No expense categories found</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Expenses</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_expenses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Date</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for expense in recent_expenses %}
+                                    <tr>
+                                        <td>
+                                            {{ expense.description }}
+                                            {% if expense.drug %}
+                                                <br><small class="text-muted">Drug: {{ expense.drug.name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ expense.date|date:"M d, Y" }}<br><small class="text-muted">{{ expense.date|time:"g:i A" }}</small></td>
+                                        <td class="text-end text-danger fw-bold">{{ expense.currency }} {{ expense.amount|floatformat:0 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No recent expenses found</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Expenses Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>All Expenses</h5>
+                <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()">
+                    <i class="fas fa-file-excel me-1"></i>Export to CSV
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="expensesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Drug</th>
+                            <th>Country</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date|date:"M d, Y g:i A" }}</td>
+                            <td>{{ expense.description }}</td>
+                            <td>{{ expense.drug|default:"N/A" }}</td>
+                            <td>{{ expense.country|default:"N/A" }}</td>
+                            <td class="text-end text-danger fw-bold">{{ expense.currency }} {{ expense.amount|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No expenses recorded yet</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Export to CSV function
+function exportToCSV() {
+    const table = document.getElementById('expensesTable');
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = [];
+        const cols = rows[i].querySelectorAll('td, th');
+        
+        for (let j = 0; j < cols.length; j++) {
+            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
+            data = data.replace(/"/g, '""');
+            row.push('"' + data + '"');
+        }
+        
+        csv.push(row.join(','));
+    }
+    
+    const csvString = csv.join('\n');
+    const downloadLink = document.createElement('a');
+    downloadLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvString);
+    downloadLink.download = 'expenses_' + new Date().toISOString().split('T')[0] + '.csv';
+    downloadLink.click();
+}
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+{% endblock %}

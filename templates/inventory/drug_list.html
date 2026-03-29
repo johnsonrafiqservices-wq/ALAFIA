@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Drugs Inventory</h2>
+<a href="{% url 'inventory:drug_add' %}" class="btn btn-primary">Add Drug</a>
+<a href="{% url 'inventory:supplier_add' %}" class="btn btn-info">Add Supplier</a>
+<a href="{% url 'inventory:record_usage' %}" class="btn btn-success">Record Usage/Sale</a>
+<a href="{% url 'inventory:cashflow_list' %}" class="btn btn-info">View Cash Flow</a>
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>ATC Code</th>
+            <th>Barcode</th>
+            <th>Manufacturer</th>
+            <th>Batch</th>
+            <th>Expiry</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Currency</th>
+            <th>Country</th>
+            <th>Supplier</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for drug in drugs %}
+        <tr>
+            <td>{{ drug.name }}</td>
+            <td>{{ drug.atc_code }}</td>
+            <td>{{ drug.barcode }}</td>
+            <td>{{ drug.manufacturer }}</td>
+            <td>{{ drug.batch_number }}</td>
+            <td>{{ drug.expiry_date }}</td>
+            <td>{{ drug.quantity }}</td>
+            <td>{{ drug.unit_price }}</td>
+            <td>{{ drug.currency }}</td>
+            <td>{{ drug.country }}</td>
+            <td>{{ drug.supplier }}</td>
+            <td>
+                <a href="{% url 'inventory:drug_edit' drug.pk %}" class="btn btn-sm btn-warning">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="12">No drugs found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Pharmacy Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">Pharmacy Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'patients:dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item active">Pharmacy</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Total Medications</h6>
+                            <h2 class="mb-0">{{ total_medications|intcomma }}</h2>
+                            <small class="text-muted">Active Items</small>
+                        </div>
+                        <div class="avatar bg-primary-light rounded-circle p-3">
+                            <i class="fas fa-pills text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Prescriptions</h6>
+                            <h2 class="mb-0">{{ total_prescriptions|intcomma }}</h2>
+                            <small class="text-warning">{{ pending_prescriptions }} Pending</small>
+                        </div>
+                        <div class="avatar bg-info-light rounded-circle p-3">
+                            <i class="fas fa-prescription text-info fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Low Stock Alert</h6>
+                            <h2 class="mb-0">{{ low_stock_count|intcomma }}</h2>
+                            <small class="text-danger">Need Reorder</small>
+                        </div>
+                        <div class="avatar bg-warning-light rounded-circle p-3">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="text-muted mb-2">Suppliers</h6>
+                            <h2 class="mb-0">{{ total_suppliers|intcomma }}</h2>
+                            <small class="text-muted">Active Suppliers</small>
+                        </div>
+                        <div class="avatar bg-success-light rounded-circle p-3">
+                            <i class="fas fa-truck text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'pharmacy:medication_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 hover-lift">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-pills fa-3x text-primary mb-3"></i>
+                                    <h6 class="mb-1">Medications</h6>
+                                    <p class="text-muted small mb-0">Manage inventory</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'pharmacy:prescription_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 hover-lift">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-prescription fa-3x text-info mb-3"></i>
+                                    <h6 class="mb-1">Prescriptions</h6>
+                                    <p class="text-muted small mb-0">Process orders</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'pharmacy:batch_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 hover-lift">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-boxes fa-3x text-success mb-3"></i>
+                                    <h6 class="mb-1">Batches</h6>
+                                    <p class="text-muted small mb-0">Track stock</p>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'pharmacy:supplier_list' %}" class="card text-decoration-none border-0 shadow-sm h-100 hover-lift">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-truck fa-3x text-warning mb-3"></i>
+                                    <h6 class="mb-1">Suppliers</h6>
+                                    <p class="text-muted small mb-0">Manage vendors</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Low Stock Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Low Stock Items</h5>
+                    <span class="badge bg-danger">{{ low_stock_medications|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if low_stock_medications %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Medication</th>
+                                    <th>Current Stock</th>
+                                    <th>Reorder Level</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for med in low_stock_medications|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ med.name }}</strong>
+                                        <br><small class="text-muted">{{ med.generic_name }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">{{ med.total_stock|default:0 }}</span>
+                                    </td>
+                                    <td>{{ med.reorder_level }}</td>
+                                    <td>
+                                        <a href="{% url 'pharmacy:medication_detail' med.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <p class="text-muted">All medications are adequately stocked</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Prescriptions -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Prescriptions</h5>
+                    <a href="{% url 'pharmacy:prescription_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_prescriptions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Prescribed By</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prescription in recent_prescriptions|slice:":10" %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ prescription.patient.get_full_name }}</strong>
+                                        <br><small class="text-muted">{{ prescription.patient.patient_id }}</small>
+                                    </td>
+                                    <td>{{ prescription.prescribed_by.get_full_name }}</td>
+                                    <td>{{ prescription.prescribed_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if prescription.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif prescription.status == 'dispensed' %}
+                                            <span class="badge bg-success">Dispensed</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ prescription.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-prescription fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No recent prescriptions</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .hover-lift {
+        transition: transform 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+    }
+    .bg-primary-light {
+        background-color: rgba(27, 94, 150, 0.1);
+    }
+    .bg-success-light {
+        background-color: rgba(46, 139, 87, 0.1);
+    }
+    .bg-warning-light {
+        background-color: rgba(255, 140, 0, 0.1);
+    }
+    .bg-info-light {
+        background-color: rgba(8, 145, 178, 0.1);
+    }
+</style>
+{% endblock %}

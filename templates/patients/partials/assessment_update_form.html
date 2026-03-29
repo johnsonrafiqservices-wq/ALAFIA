@@ -1,0 +1,74 @@
+<form id="assessmentUpdateForm" method="post" action="{% url 'patients:assessment_update' patient.patient_id assessment.id %}" x-data>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">History of Present Illness</label>
+        {{ form.history_of_present_illness }}
+        {% for error in form.history_of_present_illness.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">Physical Examination</label>
+        {{ form.physical_examination }}
+        {% for error in form.physical_examination.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">Diagnosis / Impression</label>
+        {{ form.diagnosis }}
+        {% for error in form.diagnosis.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">Treatment Plan</label>
+        {{ form.treatment_plan }}
+        {% for error in form.treatment_plan.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="row g-3 mb-3 align-items-center">
+        <div class="col-md-auto">
+            <div class="form-check">
+                {{ form.follow_up_required }}
+                <label class="form-check-label ms-2" for="{{ form.follow_up_required.id_for_label }}">Follow-up Required</label>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold">Follow-up Date</label>
+            {{ form.follow_up_date }}
+            {% for error in form.follow_up_date.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-semibold">Follow-up Instructions</label>
+            {{ form.follow_up_instructions }}
+            {% for error in form.follow_up_instructions.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">Notes</label>
+        {{ form.notes }}
+        {% for error in form.notes.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="text-end">
+        <button type="button" class="btn btn-sm btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-sm btn-primary" id="assessmentUpdateSaveBtn">
+            <i class="bi bi-check-circle me-1"></i>Save Changes
+        </button>
+    </div>
+</form>

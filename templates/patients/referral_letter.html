@@ -1,0 +1,412 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Letter - {{ patient.get_full_name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #333;
+            background: white;
+            padding: 4mm;
+        }
+
+        .letter-wrapper {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 12px 16px;
+        }
+
+        /* ── Action buttons (no-print) ── */
+        .action-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .action-buttons a, .action-buttons button {
+            display: inline-block;
+            padding: 9px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 10pt;
+            font-weight: bold;
+            text-decoration: none;
+            margin-right: 6px;
+        }
+        .btn-print    { background: #1B5E96; color: white; }
+        .btn-download { background: #2E8B57; color: white; }
+        .btn-email    { background: #0ea5e9; color: white; }
+        .btn-close    { background: #6b7280; color: white; }
+        .no-print     { display: block; }
+
+        /* ── Header ── */
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 2px solid #1B5E96; }
+        .header-table td { vertical-align: top; padding: 0; }
+        .header-left  { width: 50%; }
+        .header-right { width: 50%; text-align: right; }
+
+        .clinic-logo  { display: block; width: 70px; height: 70px; object-fit: contain; margin-bottom: 4px; }
+        .clinic-name  { font-size: 12pt; font-weight: bold; color: #1B5E96; margin-bottom: 2px; }
+        .clinic-sub { font-size: 7.5pt; color: #555; line-height: 1.5; }
+
+        .doc-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 6px;
+        }
+        .rx-symbol {
+            font-size: 18pt;
+            color: #2E8B57;
+            font-family: Georgia, serif;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+        .ref-badge {
+            background: #1B5E96;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 8pt;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .doc-dates {
+            font-size: 8pt;
+            color: #555;
+            line-height: 1.6;
+        }
+        .doc-dates strong { color: #1B5E96; }
+
+        /* ── Urgency banner ── */
+        .urgency-banner {
+            text-align: center;
+            font-size: 9pt;
+            font-weight: bold;
+            letter-spacing: 0.4px;
+            padding: 4px 8px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        .urgency-routine   { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .urgency-urgent    { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .urgency-emergency { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* ── Section Headers ── */
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            letter-spacing: 0.4px;
+            margin-top: 10px;
+            margin-bottom: 0;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-bottom: 10px;
+        }
+        .info-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #e7edf4;
+            vertical-align: top;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .info-table td.lbl {
+            font-weight: bold;
+            color: #1B5E96;
+            width: 28%;
+            background: #f8fbff;
+        }
+        .section-block {
+            margin-bottom: 10px;
+            border: 1px solid #dbe7f3;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            overflow: hidden;
+        }
+        .compact-table {
+            margin-bottom: 0;
+        }
+        .compact-table tr:last-child td {
+            border-bottom: none;
+        }
+        .compact-table td.compact-value {
+            white-space: pre-wrap;
+        }
+
+        .patient-info-box {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .patient-info-grid {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 10px;
+        }
+        .patient-info-grid td {
+            width: 33.33%;
+            vertical-align: top;
+            padding: 2px 16px 2px 0;
+            font-size: 9pt;
+            line-height: 1.7;
+        }
+        .patient-info-item {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
+        .patient-info-label {
+            color: #1B5E96;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+
+        .letter-body {
+            font-size: 9pt;
+            line-height: 1.55;
+        }
+        .letter-body p {
+            margin-bottom: 8px;
+        }
+
+        .instructions {
+            font-size: 8.5pt;
+            margin: 10px 0;
+            padding: 8px 10px;
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.5;
+        }
+
+        /* ── Signature ── */
+        .signature-block {
+            margin-top: 16px;
+            text-align: right;
+            font-size: 8.5pt;
+            color: #555;
+            padding-right: 8px;
+        }
+        .signature-line  { border-top: 1px solid #333; width: 180px; display: inline-block; margin-top: 20px; }
+        .signature-name  { font-weight: bold; }
+        .signature-label {
+            font-size: 8pt;
+            color: #1B5E96;
+            text-decoration: underline;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .terms {
+            font-size: 7.8pt;
+            line-height: 1.45;
+            color: #555;
+            padding: 8px 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            margin-top: 12px;
+        }
+        .terms strong { color: #1B5E96; }
+
+        .letter-footer {
+            margin-top: 14px;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 7pt;
+            color: #888;
+        }
+
+        @media print {
+            body { padding: 0; background: white; }
+            .no-print { display: none !important; }
+            .action-buttons { display: none !important; }
+            @page { margin: 12mm; size: A4; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Action Buttons (screen only) -->
+    <div class="action-buttons no-print">
+        <button onclick="window.print()" class="btn-print">🖨️ Print</button>
+        <a href="{% url 'patients:referral_letter_pdf' patient.patient_id assessment.id %}?{{ query_string }}"
+           target="_blank" class="btn-download">📥 Download PDF</a>
+        {% if patient.email %}
+        <a href="#" onclick="document.getElementById('emailModal').style.display='flex';" class="btn-email">📧 Email</a>
+        {% endif %}
+        <button onclick="window.close()" class="btn-close">✖️ Close</button>
+    </div>
+
+    <!-- Email modal (screen only) -->
+    <div id="emailModal" class="no-print" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:8px; padding:28px; width:380px; box-shadow:0 4px 24px rgba(0,0,0,.2);">
+            <h3 style="margin-bottom:16px; color:#1B5E96;">Send Referral Letter</h3>
+            <form method="post" action="{% url 'patients:referral_letter_email' patient.patient_id assessment.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="referred_to"      value="{{ referred_to }}">
+                <input type="hidden" name="referred_to_dept" value="{{ referred_to_dept }}">
+                <input type="hidden" name="urgency"          value="{{ urgency }}">
+                <input type="hidden" name="notes"            value="{{ notes }}">
+                <label style="display:block; font-size:9pt; font-weight:bold; margin-bottom:4px;">Recipient Email</label>
+                <input type="email" name="recipient_email" value="{{ patient.email }}"
+                       style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-bottom:14px; font-size:10pt;" required>
+                <div style="text-align:right;">
+                    <button type="button" onclick="document.getElementById('emailModal').style.display='none';"
+                            style="padding:8px 16px; background:#6b7280; color:white; border:none; border-radius:4px; cursor:pointer; margin-right:8px;">Cancel</button>
+                    <button type="submit"
+                            style="padding:8px 16px; background:#0ea5e9; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="letter-wrapper">
+
+        <!-- ═══ HEADER ═══ -->
+        <table class="header-table">
+            <tr>
+                <td class="header-left">
+                    {% if logo_path and for_pdf %}
+                        <img src="{{ logo_path }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo" width="70" height="70">
+                    {% elif clinic_settings and clinic_settings.logo %}
+                        <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo" width="70" height="70">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }}</div>
+                    <div class="clinic-sub">
+                        {{ clinic_settings.address|default:"Makindye, Lukuli road" }}<br>
+                        Phone: {{ clinic_settings.phone|default:"+256792327738" }}<br>
+                        Email: {{ clinic_settings.email|default:"Alafiapoint@gmail.com" }}
+                    </div>
+                </td>
+                <td class="header-right">
+                    <div class="doc-title"><span class="rx-symbol">&#x211E;</span> REFERRAL LETTER</div>
+                    <div class="ref-badge">REF-{{ assessment.id|stringformat:"05d" }}</div>
+                    <div class="doc-dates">
+                        <strong>Letter Date:</strong> {{ today|date:"F d, Y" }}<br>
+                        <strong>Assessment Date:</strong> {{ assessment.assessment_date|date:"F d, Y" }}<br>
+                        <strong>Department:</strong> {{ assessment.get_department_display }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- ═══ URGENCY ═══ -->
+        {% if urgency == 'urgent' %}
+        <div class="urgency-banner urgency-urgent">⚠ URGENT REFERRAL</div>
+        {% elif urgency == 'emergency' %}
+        <div class="urgency-banner urgency-emergency">🚨 EMERGENCY REFERRAL</div>
+        {% else %}
+        <div class="urgency-banner urgency-routine">ROUTINE REFERRAL</div>
+        {% endif %}
+
+        <div class="section-header">Patient Information</div>
+        <div class="patient-info-box">
+            <table class="patient-info-grid">
+                <tr>
+                    <td>
+                        <div class="patient-info-item"><span class="patient-info-label">Patient Name:</span> {{ patient.get_full_name|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Gender:</span> {{ patient.get_gender_display|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Email:</span> {{ patient.email|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Referred To:</span> {% if referred_to %}{{ referred_to }}{% else %}Not specified{% endif %}</div>
+                    </td>
+                    <td>
+                        <div class="patient-info-item"><span class="patient-info-label">Patient ID:</span> {{ patient.patient_id }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Phone:</span> {{ patient.phone|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Type:</span> {{ assessment.get_assessment_type_display }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Specialty:</span> {% if referred_to_dept %}{{ referred_to_dept }}{% else %}Not specified{% endif %}</div>
+                    </td>
+                    <td>
+                        <div class="patient-info-item"><span class="patient-info-label">Age:</span> {{ patient.get_age }} years</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Nationality:</span> {{ patient.country|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Ref. Doctor:</span> {{ assessment.assessed_by.get_full_name|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Urgency:</span> {{ urgency|title }}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="letter-body">
+            <p>Dear {% if referred_to %}{{ referred_to }}{% else %}Colleague{% endif %},</p>
+
+            <p>I am writing to refer the following patient for your assessment and further management. Please find below the relevant clinical details.</p>
+
+            <!-- <div class="section-header">Clinical Summary</div> -->
+            <!-- <div class="section-block">
+                <table class="info-table compact-table">
+                    <tr><td class="lbl">Chief Complaint</td><td class="compact-value">{{ assessment.chief_complaint|default:"Not recorded" }}</td></tr>
+                    <tr><td class="lbl">History of Present Illness</td><td class="compact-value">{{ assessment.history_of_present_illness|default:"Not recorded" }}</td></tr>
+                    <tr><td class="lbl">Physical Examination</td><td class="compact-value">{{ assessment.physical_examination|default:"Not recorded" }}</td></tr>
+                    {% if assessment.diagnosis %}<tr><td class="lbl">Diagnosis</td><td class="compact-value">{{ assessment.diagnosis }}</td></tr>{% endif %}
+                    {% if assessment.treatment_plan %}<tr><td class="lbl">Treatment to Date</td><td class="compact-value">{{ assessment.treatment_plan }}</td></tr>{% endif %}
+                    {% if assessment.department == 'physiotherapy' and assessment.functional_assessment %}<tr><td class="lbl">Functional Assessment</td><td class="compact-value">{{ assessment.functional_assessment }}</td></tr>{% endif %}
+                    {% if assessment.department == 'physiotherapy' and assessment.range_of_motion %}<tr><td class="lbl">Range of Motion</td><td class="compact-value">{{ assessment.range_of_motion }}</td></tr>{% endif %}
+                    {% if assessment.department == 'physiotherapy' and assessment.muscle_strength %}<tr><td class="lbl">Muscle Strength</td><td class="compact-value">{{ assessment.muscle_strength }}</td></tr>{% endif %}
+                </table>
+            </div>
+
+            <div class="section-header">Medical Information</div>
+            <div class="section-block">
+                <table class="info-table compact-table">
+                    <tr><td class="lbl">Date of Birth</td><td class="compact-value">{{ patient.date_of_birth|date:"d F Y"|default:"Not recorded" }}</td></tr>
+                    {% if patient.current_medications %}<tr><td class="lbl">Current Medications</td><td class="compact-value">{{ patient.current_medications }}</td></tr>{% endif %}
+                    {% if patient.allergies %}<tr><td class="lbl">Known Allergies</td><td class="compact-value">{{ patient.allergies }}</td></tr>{% endif %}
+                </table>
+            </div> -->
+
+            {% if notes %}
+            <div class="instructions"><strong>Additional Notes:</strong> {{ notes }}</div>
+            {% endif %}
+
+            <p>I would be grateful for your expert opinion and ongoing management of this patient. Please do not hesitate to contact our clinic should you require any further clinical information.</p>
+
+            <p>Thank you for your kind assistance.</p>
+
+        </div>
+
+        <!-- ═══ SIGNATURE ═══ -->
+        <div class="signature-block">
+            <p>Yours sincerely,</p>
+            <div class="signature-line"></div>
+            <div class="signature-name">{{ assessment.assessed_by.get_full_name }}</div>
+            <div>{{ assessment.get_department_display }}, {{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }}</div>
+            {% if clinic_settings.phone %}<div>Tel: {{ clinic_settings.phone }}</div>{% endif %}
+            {% if clinic_settings.email %}<div>Email: {{ clinic_settings.email }}</div>{% endif %}
+            <div class="signature-label">Healthcare Provider Signature</div>
+        </div>
+
+        <div class="section-header" style="margin-top: 18px;">Important Information</div>
+        <div class="terms">
+            <strong>Confidentiality:</strong> This referral letter contains confidential medical information intended only for the named recipient.&nbsp;
+            <strong>Continuity of Care:</strong> Please use this information to support further assessment and management.&nbsp;
+            <strong>Retention:</strong> This is a formal clinical communication and should be retained in the patient record.
+        </div>
+
+        <!-- ═══ FOOTER ═══ -->
+        <div class="letter-footer">
+            <p>{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }} | REF-{{ assessment.id|stringformat:"05d" }} | Generated: {% now "M d, Y h:i A" %}</p>
+            <p>This is a computer-generated referral document.</p>
+        </div>
+
+    </div>
+
+</body>
+</html>

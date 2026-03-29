@@ -1,0 +1,469 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Segoe UI', sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 5mm;
+        }
+
+        .document-wrapper {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .document {
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(297mm - 40px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1B5E96;
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .clinic-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        .document-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .document-title h1 {
+            font-size: 26px;
+            color: #1B5E96;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .invoice-number {
+            background: #1B5E96;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .invoice-dates {
+            font-size: 9pt;
+            color: #666;
+            text-align: right;
+        }
+
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            margin: 10px 0 5px 0;
+            padding: 4px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 8pt;
+        }
+
+        .info-table td {
+            padding: 3px 6px;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            background: transparent;
+            width: 35%;
+            color: #1B5E96;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 9pt;
+        }
+
+        .items-table th {
+            background: #1B5E96;
+            color: white;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+        }
+
+        .items-table td {
+            padding: 8px;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .items-table .text-right {
+            text-align: right;
+        }
+
+        .totals-section {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 3px solid #1B5E96;
+        }
+
+        .totals-table {
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            font-size: 9pt;
+        }
+
+        .totals-table td {
+            padding: 5px 10px;
+        }
+
+        .totals-table td:first-child {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .totals-table td:last-child {
+            text-align: right;
+        }
+
+        .totals-table .total-row {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1B5E96;
+            border-top: 2px solid #1B5E96;
+            padding-top: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #2E8B57;
+            color: white;
+            padding: 6px 15px;
+            border-radius: 3px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge.paid {
+            background: #2E8B57;
+        }
+
+        .status-badge.draft {
+            background: #fbbf24;
+        }
+
+        .status-badge.sent {
+            background: #0dcaf0;
+        }
+
+        .status-badge.overdue {
+            background: #dc3545;
+        }
+
+        .payment-info {
+            background: #e7f3ff;
+            border: 2px solid #1B5E96;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-size: 8pt;
+        }
+
+        .content-wrapper {
+            flex: 1;
+        }
+
+        .bottom-section {
+            margin-top: auto;
+            padding-top: 15px;
+        }
+
+        .terms {
+            font-size: 7pt;
+            line-height: 1.4;
+            color: #555;
+            margin: 6px 0;
+            text-align: justify;
+        }
+
+        .signature {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 180px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .signature-label {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .document-wrapper {
+                padding: 15px;
+                min-height: 277mm;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            @page {
+                margin: 10mm;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="document-wrapper">
+        <div class="document">
+            <div class="header">
+                <div class="clinic-info">
+                    {% if clinic_settings.logo %}
+                    <img src="{{ clinic_settings.logo.url }}" alt="Logo" class="clinic-logo">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                    <div class="clinic-details">
+                        {{ clinic_settings.address }}<br>
+                        Tel: {{ clinic_settings.phone_number }} | Email: {{ clinic_settings.email }}
+                    </div>
+                </div>
+                <div class="document-title">
+                    <h1>INVOICE</h1>
+                    <div class="invoice-number">{{ invoice.invoice_number }}</div>
+                    <div class="invoice-dates">
+                        <strong>Issue Date:</strong> {{ invoice.issue_date|date:"M d, Y" }}<br>
+                        {% if invoice.due_date %}
+                        <strong>Due Date:</strong> {{ invoice.due_date|date:"M d, Y" }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="section-header">Bill To</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Patient Name:</td>
+                        <td>{{ invoice.patient.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Patient ID:</td>
+                        <td>{{ invoice.patient.patient_id }}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone:</td>
+                        <td>{{ invoice.patient.phone_number }}</td>
+                    </tr>
+                    <tr>
+                        <td>Email:</td>
+                        <td>{{ invoice.patient.email|default:"-" }}</td>
+                    </tr>
+                </table>
+
+                <div class="section-header">Invoice Details</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Invoice Number:</td>
+                        <td>{{ invoice.invoice_number }}</td>
+                    </tr>
+                    <tr>
+                        <td>Issue Date:</td>
+                        <td>{{ invoice.issue_date|date:"M d, Y" }}</td>
+                    </tr>
+                    {% if invoice.due_date %}
+                    <tr>
+                        <td>Due Date:</td>
+                        <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>Status:</td>
+                        <td>
+                            <span class="status-badge {{ invoice.status }}">
+                                {{ invoice.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="section-header">Invoice Items</div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Description</th>
+                            <th style="width: 15%;" class="text-right">Qty</th>
+                            <th style="width: 17%;" class="text-right">Unit Price</th>
+                            <th style="width: 18%;" class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items.all %}
+                        <tr>
+                            <td>{{ item.description }}</td>
+                            <td class="text-right">{{ item.quantity }}</td>
+                            <td class="text-right">UGX {{ item.unit_price|intcomma }}</td>
+                            <td class="text-right">UGX {{ item.total_price|intcomma }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="totals-section">
+                    <table class="totals-table">
+                        <tr>
+                            <td>Subtotal:</td>
+                            <td>UGX {{ invoice.subtotal|intcomma }}</td>
+                        </tr>
+                        {% if invoice.discount_amount > 0 %}
+                        <tr>
+                            <td>Discount:</td>
+                            <td>- UGX {{ invoice.discount_amount|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.tax_amount > 0 %}
+                        <tr>
+                            <td>Tax:</td>
+                            <td>UGX {{ invoice.tax_amount|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="total-row">
+                            <td>Total Amount:</td>
+                            <td>UGX {{ invoice.total_amount|intcomma }}</td>
+                        </tr>
+                        {% if invoice.amount_paid > 0 %}
+                        <tr>
+                            <td>Amount Paid:</td>
+                            <td>UGX {{ invoice.amount_paid|intcomma }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Balance Due:</td>
+                            <td>UGX {{ invoice.balance_due|intcomma }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+
+                {% if invoice.notes %}
+                <div class="section-header">Notes</div>
+                <div style="font-size: 9pt; padding: 8px; background: #f8f9fa;">
+                    {{ invoice.notes|linebreaks }}
+                </div>
+                {% endif %}
+
+                {% if invoice.status != 'paid' %}
+                <div class="payment-info">
+                    <strong>Payment Information:</strong><br>
+                    Please make payment to: {{ clinic_settings.clinic_name }}<br>
+                    Payment methods: Cash, Mobile Money, Bank Transfer<br>
+                    For inquiries, contact: {{ clinic_settings.phone_number }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bottom-section">
+                <div class="terms">
+                    <strong>Terms & Conditions:</strong> Payment is due upon receipt unless otherwise specified. Late payments may be subject to additional charges. 
+                    Please retain this invoice for your records. For any questions regarding this invoice, please contact our billing department.
+                </div>
+
+                <div class="signature">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Authorized Signature</div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for choosing {{ clinic_settings.clinic_name }}</p>
+                    <p>Printed on: {{ now|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,454 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment - {{ appointment.patient.get_full_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Arial', 'Segoe UI', sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 2mm;
+            min-height: 100%;
+        }
+
+        .document-wrapper {
+            max-width: 100%;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: white;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .document {
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            flex: 1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #1B5E96;
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .clinic-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 3px;
+            margin-top: 3px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 8pt;
+            line-height: 1.4;
+        }
+
+        .document-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .document-title h1 {
+            font-size: 22px;
+            color: #1B5E96;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .appointment-number {
+            background: #1B5E96;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 9pt;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .appointment-datetime {
+            font-size: 12pt;
+            color: #2E8B57;
+            font-weight: bold;
+            text-align: right;
+            margin: 3px 0;
+        }
+
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            margin: 8px 0 4px 0;
+            padding: 4px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+            font-size: 8pt;
+        }
+
+        .info-table td {
+            padding: 2px 5px;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            background: transparent;
+            width: 35%;
+            color: #1B5E96;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #2E8B57;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge.scheduled {
+            background: #0dcaf0;
+        }
+
+        .status-badge.confirmed {
+            background: #2E8B57;
+        }
+
+        .status-badge.completed {
+            background: #6c757d;
+        }
+
+        .status-badge.cancelled {
+            background: #dc3545;
+        }
+
+        .notes-section {
+            background: #fffbeb;
+            padding: 8px;
+            margin: 6px 0;
+            border-left: 3px solid #f59e0b;
+            font-size: 8pt;
+            line-height: 1.5;
+        }
+
+        .reminder-list {
+            margin: 5px 0 5px 20px;
+            font-size: 8pt;
+            line-height: 1.5;
+        }
+
+        .reminder-list li {
+            margin-bottom: 3px;
+        }
+
+        .content-wrapper {
+            flex: 1;
+        }
+
+        .bottom-section {
+            margin-top: auto;
+            padding-top: 0;
+            page-break-inside: avoid;
+        }
+
+        .footer {
+            margin-top: 0;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+                height: 100%;
+            }
+
+            html {
+                height: 100%;
+            }
+
+            .document-wrapper {
+                padding: 5px;
+                min-height: 100%;
+                width: 100%;
+            }
+
+            .document {
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .content-wrapper {
+                flex: 1;
+            }
+
+            .bottom-section {
+                page-break-inside: avoid !important;
+            }
+
+            .footer {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+            }
+
+            .reminder-list {
+                page-break-after: avoid;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            .header {
+                font-size: 95%;
+            }
+
+            @page {
+                margin: 8mm;
+            }
+        }
+
+        /* A5 specific adjustments */
+        @media print and (max-width: 148mm) {
+            html, body {
+                height: 100%;
+            }
+
+            body {
+                font-size: 8pt;
+            }
+
+            .document-wrapper {
+                min-height: 100%;
+            }
+
+            .document {
+                min-height: 100%;
+            }
+
+            .document-title h1 {
+                font-size: 18px;
+            }
+
+            .clinic-name {
+                font-size: 11px;
+            }
+
+            .clinic-details {
+                font-size: 7pt;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            .section-header {
+                font-size: 7pt;
+                padding: 3px 6px;
+                margin: 6px 0 3px 0;
+            }
+
+            .appointment-datetime {
+                font-size: 10pt;
+            }
+
+            .appointment-number {
+                font-size: 8pt;
+                padding: 4px 10px;
+            }
+
+            .info-table {
+                font-size: 7pt;
+            }
+
+            .info-table td {
+                padding: 1px 4px;
+            }
+
+            .reminder-list {
+                font-size: 7pt;
+                line-height: 1.4;
+            }
+
+            .notes-section {
+                font-size: 7pt;
+                padding: 6px;
+            }
+
+            .footer {
+                font-size: 7pt;
+            }
+
+            @page {
+                margin: 6mm;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="document-wrapper">
+        <div class="document">
+            <div class="header">
+                <div class="clinic-info">
+                    {% if clinic_settings.logo %}
+                    <img src="{{ clinic_settings.logo.url }}" alt="Logo" class="clinic-logo">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                    <div class="clinic-details">
+                        {{ clinic_settings.address }}<br>
+                        Tel: {{ clinic_settings.phone_number }} | Email: {{ clinic_settings.email }}
+                    </div>
+                </div>
+                <div class="document-title">
+                    <h1>Appointment Card</h1>
+                    <div class="appointment-number">APT-{{ appointment.pk }}</div>
+                    <div class="appointment-datetime">
+                        {{ appointment.appointment_date|date:"l, M d, Y" }}<br>
+                        {{ appointment.appointment_time|time:"g:i A" }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="section-header">Patient Information</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Patient Name:</td>
+                        <td>{{ appointment.patient.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Patient ID:</td>
+                        <td>{{ appointment.patient.patient_id }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date of Birth:</td>
+                        <td>{{ appointment.patient.date_of_birth|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone:</td>
+                        <td>{{ appointment.patient.phone_number }}</td>
+                    </tr>
+                </table>
+
+                <div class="section-header">Appointment Details</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Provider:</td>
+                        <td>{{ appointment.provider.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Service:</td>
+                        <td>{{ appointment.service.name|default:"General Consultation" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Duration:</td>
+                        <td>{{ appointment.service.duration|default:"30" }} minutes</td>
+                    </tr>
+                    <tr>
+                        <td>Appointment Date:</td>
+                        <td>{{ appointment.appointment_date|date:"l, M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Appointment Time:</td>
+                        <td>{{ appointment.appointment_time|time:"g:i A" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Status:</td>
+                        <td>
+                            <span class="status-badge {{ appointment.status }}">
+                                {{ appointment.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                {% if appointment.notes %}
+                <div class="section-header">Appointment Notes</div>
+                <div class="notes-section">
+                    {{ appointment.notes|linebreaks }}
+                </div>
+                {% endif %}
+
+                <div class="section-header">Appointment Reminders</div>
+                <ul class="reminder-list">
+                    <li>Please arrive <strong>15 minutes early</strong> for registration and paperwork</li>
+                    <li>Bring your <strong>ID card</strong> and any relevant <strong>medical documents</strong></li>
+                    <li>If you need to cancel or reschedule, please call us at least <strong>24 hours in advance</strong></li>
+                    <li>Bring a list of your <strong>current medications</strong> and any <strong>allergy information</strong></li>
+                    <li>Wear comfortable clothing appropriate for your consultation</li>
+                </ul>
+
+                {% if appointment.patient.medical_history %}
+                <div class="section-header">Medical History Summary</div>
+                <div class="notes-section">
+                    {{ appointment.patient.medical_history|truncatewords:50 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bottom-section">
+                <div class="footer">
+                    <p><strong>For any questions or to reschedule, please contact us:</strong></p>
+                    <p>Phone: {{ clinic_settings.phone_number }} | Email: {{ clinic_settings.email }}</p>
+                    <p style="margin-top: 10px;">Printed on: {{ now|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

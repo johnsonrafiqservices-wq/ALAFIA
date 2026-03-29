@@ -1,0 +1,705 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Records - {{ patient.get_full_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, 'Segoe UI', sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 5mm;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin: 0;
+            font-family: "Times New Roman", serif;
+        }
+
+        .prescription-wrapper {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prescription-document {
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(297mm - 40px);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11pt;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-print {
+            background: #1B5E96;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: #154a7a;
+        }
+
+        .btn-download {
+            background: #2E8B57;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #26734a;
+        }
+
+        .btn-close {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background: #4b5563;
+        }
+
+        .no-print {
+            display: block;
+        }
+
+        /* Header Section - Invoice Style */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1B5E96;
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+            margin-right: 0;
+            display: block;
+            object-fit: contain;
+        }
+
+        .clinic-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        .prescription-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .prescription-title h1 {
+            font-size: 26px;
+            color: #1B5E96;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .rx-symbol {
+            font-size: 24px;
+            color: #2E8B57;
+            font-family: Georgia, serif;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .prescription-number {
+            background: #1B5E96;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .prescription-dates {
+            font-size: 9pt;
+            color: #666;
+            text-align: right;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--alafia-primary);
+            color: #fff;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 10pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            margin: 10px 0 6px 0;
+            padding: 5px 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .content-wrapper {
+            flex: 1;
+        }
+
+        .bottom-section {
+            margin-top: auto;
+            padding-top: 15px;
+            page-break-inside: avoid;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #0f172a;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .pill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pill {
+            background: var(--alafia-success);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .alert-warning {
+            border-left: 4px solid var(--alafia-danger);
+            background: #fee2e2;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        /* Compact Tables */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 9pt;
+        }
+
+        .info-table td {
+            padding: 3px 8px;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            background: transparent;
+            width: 40%;
+            color: #1B5E96;
+        }
+
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 9pt;
+        }
+
+        .med-table th {
+            background: #1B5E96;
+            color: white;
+            padding: 4px 8px;
+            text-align: left;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+        }
+
+        .med-table td {
+            padding: 5px 8px;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .record-card {
+            border: 1px solid var(--alafia-border);
+            border-left: 4px solid var(--alafia-primary);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .record-card.highlight {
+            border-left-color: var(--alafia-success);
+            box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+
+        .record-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--alafia-primary);
+        }
+
+        .record-meta {
+            font-size: 12px;
+            color: #475569;
+            text-align: right;
+            line-height: 1.4;
+        }
+
+        .record-body {
+            font-size: 14px;
+            color: #1f2937;
+            white-space: pre-line;
+        }
+
+        .record-appointment {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .document-card {
+            border: 1px solid var(--alafia-border);
+            border-radius: 8px;
+            padding: 12px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .document-card h4 {
+            font-size: 15px;
+            color: var(--alafia-primary);
+            margin-bottom: 4px;
+        }
+
+        .document-card span {
+            display: block;
+            color: #475569;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .document-card small {
+            color: #6b7280;
+        }
+
+        /* Terms and Signature */
+        .terms {
+            font-size: 7pt;
+            line-height: 1.4;
+            color: #555;
+            margin: 6px 0;
+            text-align: justify;
+        }
+
+        .signature {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 180px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .signature-label {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 7pt;
+            color: #666;
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .prescription-wrapper {
+                padding: 15px;
+                min-height: 277mm;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .prescription-document {
+                display: flex;
+                flex-direction: column;
+                min-height: calc(277mm - 30px);
+            }
+
+            .content-wrapper {
+                flex: 1;
+            }
+
+            .bottom-section {
+                margin-top: auto;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .action-buttons {
+                display: none !important;
+            }
+
+            @page {
+                margin: 10mm;
+                size: A4;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .document-header { flex-direction: column; align-items: flex-start; }
+            .document-title { text-align: left; }
+            .info-grid { grid-template-columns: 1fr; }
+            .documents-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Action Buttons -->
+    <div class="action-buttons no-print">
+        <button onclick="window.print()" class="btn btn-print">
+            🖨️ Print
+        </button>
+        <a href="{% url 'medical_records:record_print_pdf' patient.patient_id %}" target="_blank" class="btn btn-download">
+            📥 Download PDF
+        </a>
+        <button onclick="window.close()" class="btn btn-close">
+            ✖️ Close
+        </button>
+    </div>
+
+    <div class="prescription-wrapper">
+        <div class="prescription-document">
+            <!-- Header - Invoice Style -->
+            <div class="header">
+                <div class="clinic-info">
+                    {% if logo_path and for_pdf %}
+                        <img src="{{ logo_path }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo">
+                    {% elif clinic_settings and clinic_settings.logo %}
+                        <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }}</div>
+                    <div class="clinic-details">
+                        {{ clinic_settings.address|default:"Makindye, Lukuli road" }}<br>
+                        Phone: {{ clinic_settings.phone|default:"+256792327738" }}<br>
+                        Email: {{ clinic_settings.email|default:"Alafiapoint@gmail.com" }}<br>
+                        Website: {{ clinic_settings.website|default:"http://www.alafiapoint.com" }}
+                    </div>
+                </div>
+                <div class="prescription-title">
+                    <h1><span class="rx-symbol">℞</span> MEDICAL RECORDS</h1>
+                    <div class="prescription-number">REC-{{ patient.patient_id|slice:"3:" }}</div>
+                    <div class="prescription-dates">
+                        <strong>Patient:</strong> {{ patient.get_full_name }}<br>
+                        <strong>Patient ID:</strong> {{ patient.patient_id }}<br>
+                        <strong>DOB:</strong> {{ patient.date_of_birth|date:"F d, Y" }}<br>
+                        <strong>Generated:</strong> {{ "now"|date:"F d, Y" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Wrapper -->
+            <div class="content-wrapper">
+
+            <!-- Patient Overview -->
+            <div class="section-header">Patient Information</div>
+            <table class="info-table" style="width: 50%;">
+                <tr>
+                    <td>Patient Name</td>
+                    <td>{{ patient.get_full_name }}</td>
+                </tr>
+                <tr>
+                    <td>Age / Gender</td>
+                    <td>{{ patient.get_age }} years / {{ patient.get_gender_display }}</td>
+                </tr>
+                <tr>
+                    <td>Blood Type</td>
+                    <td>{{ patient.blood_type|default:"Not specified" }}</td>
+                </tr>
+                <tr>
+                    <td>Phone</td>
+                    <td>{{ patient.phone }}</td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td>{{ patient.email|default:"Not provided" }}</td>
+                </tr>
+                <tr>
+                    <td>Address</td>
+                    <td>
+                        {{ patient.address_line1 }}{% if patient.address_line2 %}, {{ patient.address_line2 }}{% endif %}
+                        {% if patient.city %}, {{ patient.city }}{% endif %}
+                        {% if patient.state %}, {{ patient.state }}{% endif %}
+                        {% if patient.postal_code %} {{ patient.postal_code }}{% endif %}
+                    </td>
+                </tr>
+            </table>
+
+            {% if patient.allergies %}
+            <div class="alert-warning" style="margin: 10px 0;">
+                <strong>⚠️ Allergy Alerts:</strong> {{ patient.allergies }}
+            </div>
+            {% endif %}
+
+            <!-- Medical History -->
+            <div class="section-header">Medical History</div>
+            <table class="info-table">
+                <tr>
+                    <td style="width: 30%;">Medical History</td>
+                    <td>{% if patient.medical_history %}{{ patient.medical_history }}{% else %}<span class="muted">No medical history recorded</span>{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Current Medications</td>
+                    <td>{% if patient.current_medications %}{{ patient.current_medications }}{% else %}<span class="muted">No current medications documented</span>{% endif %}</td>
+                </tr>
+            </table>
+
+            <!-- Medical Records Summary -->
+            <div class="section-header">Medical Records Summary</div>
+            {% if medical_records %}
+            <table class="info-table" style="width: 60%;">
+                <tr>
+                    <td>Total Records</td>
+                    <td>{{ medical_records|length }}</td>
+                </tr>
+                <tr>
+                    <td>First Record</td>
+                    <td>{% if earliest_record %}{{ earliest_record.created_at|date:"F d, Y" }}{% else %}<span class="muted">N/A</span>{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Most Recent Record</td>
+                    <td>{% if latest_record %}{{ latest_record.created_at|date:"F d, Y" }}{% else %}<span class="muted">N/A</span>{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Records Created By</td>
+                    <td>{% if record_creators %}{{ record_creators|join:", " }}{% else %}<span class="muted">Not available</span>{% endif %}</td>
+                </tr>
+            </table>
+            {% else %}
+            <p class="muted" style="margin: 10px 0;">No medical records available for this patient.</p>
+            {% endif %}
+
+            <!-- Medical Records Detail -->
+            <div class="section-header">Medical Records Detail</div>
+            {% if medical_records %}
+                {% for record in medical_records %}
+                        <div class="record-card{% if selected_record_id and record.id|stringformat:'s' == selected_record_id %} highlight{% endif %}">
+                            <div class="record-header">
+                                <div>
+                                    <div class="record-title">{{ record.title }}</div>
+                                    <div class="pill-list" style="margin-top: 6px;">
+                                        <span class="pill" style="background: {% if record.record_type == 'assessment' %}var(--alafia-info){% elif record.record_type == 'progress' %}var(--alafia-success){% elif record.record_type == 'discharge' %}var(--alafia-warning){% elif record.record_type == 'referral' %}var(--alafia-primary){% elif record.record_type == 'lab_result' %}var(--alafia-info){% elif record.record_type == 'imaging' %}var(--alafia-accent){% else %}var(--alafia-primary){% endif %};">
+                                            {{ record.get_record_type_display }}
+                                        </span>
+                                        {% if record.appointment %}
+                                            <span class="pill" style="background: var(--alafia-primary);">Appointment Linked</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="record-meta">
+                                    <strong>Date:</strong> {{ record.created_at|date:"F d, Y H:i" }}<br>
+                                    {% if record.created_by %}<strong>Recorded by:</strong> {{ record.created_by.get_full_name }}{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="record-body">
+                                {{ record.content|linebreaks }}
+                            </div>
+
+                            {% if record.appointment %}
+                                <div class="record-appointment">
+                                    <strong>Linked Appointment:</strong> {{ record.appointment.service.name }} on {{ record.appointment.appointment_date|date:"F d, Y" }} at {{ record.appointment.appointment_time|time:"H:i" }} with {{ record.appointment.provider.get_full_name }}
+                                </div>
+                            {% endif %}
+                        </div>
+                {% endfor %}
+            {% else %}
+                <p class="muted" style="margin: 10px 0;">No medical records available for this patient.</p>
+            {% endif %}
+
+            <!-- Supporting Documents -->
+            {% if documents %}
+            <div class="section-header">Supporting Documents</div>
+            <table class="med-table">
+                <thead>
+                    <tr>
+                        <th>Document Title</th>
+                        <th>Type</th>
+                        <th>Uploaded Date</th>
+                        <th>Uploaded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for document in documents %}
+                    <tr>
+                        <td>{{ document.title }}</td>
+                        <td>{{ document.get_document_type_display }}</td>
+                        <td>{{ document.uploaded_at|date:"F d, Y" }}</td>
+                        <td>{% if document.uploaded_by %}{{ document.uploaded_by.get_full_name }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            </div>
+            <!-- End Content Wrapper -->
+
+            <!-- Bottom Section - Terms at page bottom -->
+            <div class="bottom-section">
+                <div class="section-header">Important Information & Terms</div>
+                <div class="terms">
+                    <strong>Confidentiality:</strong> This medical record contains confidential health information protected by law.
+                    <strong>Access:</strong> Authorized medical personnel and patient only.
+                    <strong>Disclosure:</strong> Unauthorized disclosure is strictly prohibited and may be punishable by law.
+                    <strong>Validity:</strong> This is an official medical document from {{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }}.
+                    <strong>Data Protection:</strong> All information is maintained in compliance with health data protection regulations.
+                    This document is generated electronically and is valid without a signature.
+                </div>
+
+                <!-- Footer -->
+                <div class="footer">
+                    <p>{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }} | Generated: {{ "now"|date:"M d, Y h:i A" }}</p>
+                    <p>This is a computer-generated medical records document. For inquiries, contact {{ clinic_settings.phone|default:"+256 XXX XXX XXX" }}</p>
+                </div>
+            </div>
+            <!-- End Bottom Section -->
+        </div>
+        <!-- End prescription-document -->
+    </div>
+    <!-- End prescription-wrapper -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const highlighted = document.querySelector('.record-card.highlight');
+            if (highlighted) {
+                highlighted.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    </script>
+</body>
+</html>

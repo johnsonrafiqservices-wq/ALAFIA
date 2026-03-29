@@ -1,0 +1,485 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Budget & Expense Management - {{ clinic_settings.clinic_name }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-wallet2 me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
+        <span style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">
+            Budget & Expense Management
+        </span>
+    </div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+        <i class="bi bi-plus-circle"></i> Add Expense
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBudgetModal">
+        <i class="bi bi-file-earmark-plus"></i> Create Budget
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --alafia-primary: #0ea5e9;
+        --alafia-success: #10b981;
+        --alafia-warning: #f59e0b;
+        --alafia-danger: #ef4444;
+        --alafia-info: #6366f1;
+    }
+
+    .stats-card {
+        border-radius: 8px;
+        padding: 1rem;
+        background: white;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        border-left: 3px solid;
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .stats-card.primary {
+        border-left-color: var(--alafia-primary);
+    }
+
+    .stats-card.success {
+        border-left-color: var(--alafia-success);
+    }
+
+    .stats-card.warning {
+        border-left-color: var(--alafia-warning);
+    }
+
+    .stats-card.danger {
+        border-left-color: var(--alafia-danger);
+    }
+
+    .stats-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-icon.primary {
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--alafia-primary);
+    }
+
+    .stats-icon.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--alafia-success);
+    }
+
+    .stats-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--alafia-warning);
+    }
+
+    .stats-icon.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--alafia-danger);
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0.25rem 0;
+        color: #1e293b;
+    }
+
+    .stats-label {
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .card-modern {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card danger">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="stats-label">Total Expenses</div>
+                        <div class="stats-value">UGX {{ total_expenses|floatformat:0|intcomma }}</div>
+                        <small class="text-muted">All approved expenses</small>
+                    </div>
+                    <div class="stats-icon danger">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="stats-label">This Month</div>
+                        <div class="stats-value">UGX {{ month_expenses|floatformat:0|intcomma }}</div>
+                        <small class="text-muted">Current month expenses</small>
+                    </div>
+                    <div class="stats-icon warning">
+                        <i class="bi bi-calendar-month"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="stats-label">Pending Approval</div>
+                        <div class="stats-value">{{ pending_expenses }}</div>
+                        <small class="text-muted">Awaiting approval</small>
+                    </div>
+                    <div class="stats-icon primary">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="stats-label">Active Budget</div>
+                        {% if active_budget %}
+                            <div class="stats-value">UGX {{ active_budget.total_amount|floatformat:0|intcomma }}</div>
+                            <small class="text-muted">{{ active_budget.name }}</small>
+                        {% else %}
+                            <div class="stats-value text-muted">None</div>
+                            <small class="text-muted">No active budget</small>
+                        {% endif %}
+                    </div>
+                    <div class="stats-icon success">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Active Budget Details -->
+        {% if active_budget %}
+        <div class="col-md-6 mb-4">
+            <div class="card-modern">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0"><i class="bi bi-pie-chart me-2"></i>Active Budget Overview</h5>
+                    <a href="{% url 'budget:budget_detail' active_budget.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-eye"></i> View Details
+                    </a>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">{{ active_budget.name }}</h6>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-calendar3"></i> {{ active_budget.start_date|date:"M d, Y" }} - {{ active_budget.end_date|date:"M d, Y" }}
+                    </p>
+
+                    <!-- Budget Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">Budget Utilization</span>
+                            <span class="small fw-bold">{{ active_budget.get_utilization_percentage|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            {% with utilization=active_budget.get_utilization_percentage %}
+                                <div class="progress-bar {% if utilization >= 90 %}bg-danger{% elif utilization >= 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ utilization }}%"
+                                     aria-valuenow="{{ utilization }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ utilization|floatformat:1 }}%
+                                </div>
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    <!-- Budget Summary -->
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="text-center p-2 bg-light rounded">
+                                <small class="text-muted d-block">Total</small>
+                                <strong class="d-block">UGX {{ active_budget.total_amount|floatformat:0|intcomma }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center p-2 bg-light rounded">
+                                <small class="text-muted d-block">Spent</small>
+                                <strong class="d-block text-danger">UGX {{ active_budget.get_spent_amount|floatformat:0|intcomma }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center p-2 bg-light rounded">
+                                <small class="text-muted d-block">Remaining</small>
+                                <strong class="d-block text-success">UGX {{ active_budget.get_remaining_amount|floatformat:0|intcomma }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Top Expense Categories -->
+        <div class="col-md-6 mb-4">
+            <div class="card-modern">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0"><i class="bi bi-bar-chart me-2"></i>Top Expense Categories</h5>
+                        <a href="{% url 'budget:category_list' %}" class="btn btn-sm btn-outline-secondary">
+                            Manage Categories
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if category_stats %}
+                        <div class="list-group list-group-flush p-2" style="border-radius: 5px !important;">
+                            {% for category in category_stats %}
+                            <div class="list-group-item px-0 border-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2" style="padding-left: 15px !important; padding-right: 15px !important;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-{{ category.color }} bg-opacity-10 rounded p-2 me-3">
+                                            <i class="bi {{ category.icon }} text-{{ category.color }}"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ category.name }}</strong>
+                                            <br><small class="text-muted">{{ category.expense_count }} transactions</small>
+                                        </div>
+                                    </div>
+                                    <strong class="text-danger">UGX {{ category.total_spent|floatformat:0|intcomma|default:"0" }}</strong>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                            <p class="text-muted">No expense data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses -->
+        <div class="col-md-12 mb-4">
+            <div class="card-modern">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0"><i class="bi bi-list-ul me-2"></i>Recent Expenses</h5>
+                    <a href="{% url 'budget:expense_list' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-eye"></i> View All
+                    </a>
+                </div>
+                <div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Submitted By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in recent_expenses %}
+                                <tr>
+                                    <td>{{ expense.expense_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <strong>{{ expense.description }}</strong>
+                                        {% if expense.vendor_name %}
+                                            <br><small class="text-muted">{{ expense.vendor_name }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ expense.category.color }} bg-opacity-10 text-{{ expense.category.color }}">
+                                            <i class="bi {{ expense.category.icon }}"></i> {{ expense.category.name }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold text-danger">{{ expense.currency }} {{ expense.amount|floatformat:0|intcomma }}</td>
+                                    <td>
+                                        {% if expense.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif expense.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% elif expense.status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% elif expense.status == 'paid' %}
+                                            <span class="badge bg-primary">Paid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ expense.submitted_by.get_full_name }}</td>
+                                    <td>
+                                        <a href="{% url 'budget:expense_detail' expense.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                                        <p class="text-muted mb-3">No expenses recorded yet</p>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                                            <i class="bi bi-plus-circle me-1"></i> Add First Expense
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Budgets -->
+        <div class="col-md-12">
+            <div class="card-modern">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0"><i class="bi bi-folder2 me-2"></i>All Budgets</h5>
+                    <a href="{% url 'budget:budget_list' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-eye"></i> View All
+                    </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Budget Name</th>
+                                    <th>Period</th>
+                                    <th>Total Amount</th>
+                                    <th>Spent</th>
+                                    <th>Utilization</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for budget in all_budgets %}
+                                <tr>
+                                    <td><strong>{{ budget.name }}</strong></td>
+                                    <td>
+                                        <small>
+                                            {{ budget.start_date|date:"M d" }} - {{ budget.end_date|date:"M d, Y" }}
+                                            <br><span class="badge bg-secondary">{{ budget.get_period_type_display }}</span>
+                                        </small>
+                                    </td>
+                                    <td class="fw-bold">UGX {{ budget.total_amount|floatformat:0|intcomma }}</td>
+                                    <td class="text-danger">UGX {{ budget.get_spent_amount|floatformat:0|intcomma }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 8px; width: 100px;">
+                                            {% with utilization=budget.get_utilization_percentage %}
+                                                <div class="progress-bar {% if utilization >= 90 %}bg-danger{% elif utilization >= 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                     style="width: {{ utilization }}%"></div>
+                                            {% endwith %}
+                                        </div>
+                                        <small>{{ budget.get_utilization_percentage|floatformat:1 }}%</small>
+                                    </td>
+                                    <td>
+                                        {% if budget.status == 'draft' %}
+                                            <span class="badge bg-secondary">Draft</span>
+                                        {% elif budget.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif budget.status == 'closed' %}
+                                            <span class="badge bg-dark">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'budget:budget_detail' budget.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="bi bi-folder2-open fs-1 text-muted mb-3"></i>
+                                        <p class="text-muted mb-3">No budgets created yet</p>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBudgetModal">
+                                            <i class="bi bi-plus-circle me-1"></i> Create First Budget
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Budget & Expense Modals -->
+{% include 'budget/modals.html' %}
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+{% endblock %}

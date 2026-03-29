@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-box-arrow-in-down me-3" style="font-size: 1.5rem; color: var(--alafia-success);"></i>
+        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">{{ title }}</span>
+    </div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'pharmacy:stock_movement_list' %}" class="btn btn-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back to Stock Movements
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-plus-circle text-success me-2"></i>Add Stock Information
+                    </h5>
+                    <small class="text-muted">Increase stock for an existing batch</small>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="stockForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ form.non_field_errors }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Stock Movement Details -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="bi bi-info-circle me-2"></i>Stock Movement Details
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.batch.id_for_label }}" class="form-label">
+                                    <i class="bi bi-boxes me-1"></i>Select Batch <span class="text-danger">*</span>
+                                </label>
+                                {{ form.batch }}
+                                {% if form.batch.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.batch.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Choose the batch to add stock to</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    <i class="bi bi-hash me-1"></i>Quantity <span class="text-danger">*</span>
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.quantity.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Number of units to add</small>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-arrow-down-circle me-1"></i>Movement Type
+                                </label>
+                                <input type="text" class="form-control" value="Stock In" readonly>
+                                <small class="form-text text-muted">Automatically set to "Stock In"</small>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3 border-bottom pb-2">
+                                    <i class="bi bi-file-text me-2"></i>Additional Information
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="bi bi-pencil-square me-1"></i>Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Optional: Add any relevant notes about this stock addition (e.g., purchase order number, supplier reference)</small>
+                            </div>
+                        </div>
+
+                        <!-- Info Alert -->
+                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                            <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                            <div>
+                                <strong>Note:</strong> This will automatically increase the batch quantity and create a stock movement record.
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'pharmacy:stock_movement_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-2"></i>Add Stock
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-question-circle text-info me-2"></i>Need Help?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="bi bi-box-arrow-in-down me-2"></i>Adding Stock
+                            </h6>
+                            <ul class="small">
+                                <li>Select the batch you want to add stock to</li>
+                                <li>Enter the quantity of units being added</li>
+                                <li>Add notes about the source (optional)</li>
+                                <li>The batch quantity will update automatically</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="bi bi-lightbulb me-2"></i>Tips
+                            </h6>
+                            <ul class="small">
+                                <li>Always verify the batch number before adding stock</li>
+                                <li>Include purchase order or invoice numbers in notes</li>
+                                <li>Check expiry dates before accepting new stock</li>
+                                <li>Record stock additions immediately upon receipt</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #e0e0e0;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--alafia-primary);
+        box-shadow: 0 0 0 0.2rem rgba(27, 94, 150, 0.15);
+    }
+    
+    .card-header {
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label i {
+        color: var(--alafia-primary);
+    }
+    
+    .text-danger {
+        font-weight: 600;
+    }
+    
+    .border-bottom {
+        border-bottom: 2px solid #e9ecef !important;
+    }
+    
+    .btn {
+        padding: 0.625rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, var(--alafia-success) 0%, var(--alafia-success-dark) 100%);
+        border: none;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(46, 139, 87, 0.3);
+    }
+    
+    .alert {
+        border-radius: 0.5rem;
+        border: none;
+    }
+    
+    .card {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap form validation classes
+        const form = document.getElementById('stockForm');
+        const inputs = form.querySelectorAll('input, select, textarea');
+        
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-check-input')) {
+                input.classList.add('form-control');
+            }
+        });
+        
+        // Add real-time validation feedback
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+        
+        // Focus first input
+        const firstInput = form.querySelector('select, input');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    });
+</script>
+{% endblock %}

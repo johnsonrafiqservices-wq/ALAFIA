@@ -1,0 +1,518 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vital Signs - {{ patient.get_full_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Arial', 'Segoe UI', sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 2mm;
+            min-height: 100%;
+        }
+
+        .document-wrapper {
+            max-width: 100%;
+            min-height: 100vh;
+            margin: 0 auto;
+            background: white;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .document {
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            flex: 1;
+        }
+
+        /* Header Section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #1B5E96;
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+            margin-right: 0;
+            display: block;
+            object-fit: contain;
+        }
+
+        .clinic-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 3px;
+            margin-top: 3px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 8pt;
+            line-height: 1.4;
+        }
+
+        .document-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .document-title h1 {
+            font-size: 22px;
+            color: #1B5E96;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .document-number {
+            background: #1B5E96;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 9pt;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .document-dates {
+            font-size: 8pt;
+            color: #666;
+            text-align: right;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            margin: 8px 0 4px 0;
+            padding: 4px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Compact Tables */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+            font-size: 8pt;
+        }
+
+        .info-table td {
+            padding: 2px 5px;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            background: transparent;
+            width: 35%;
+            color: #1B5E96;
+        }
+
+        .vitals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 5px 0;
+        }
+
+        .vitals-table th {
+            background: #1B5E96;
+            color: white;
+            padding: 4px 6px;
+            text-align: left;
+            font-size: 7pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+        }
+
+        .vitals-table td {
+            padding: 4px 6px;
+            border: none;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 8pt;
+        }
+
+        .vital-value {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #2E8B57;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            background: #2E8B57;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .content-wrapper {
+            flex: 1;
+        }
+
+        .bottom-section {
+            margin-top: auto;
+            padding-top: 0;
+            page-break-inside: avoid;
+        }
+
+        .signature {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 180px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .signature-label {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .footer {
+            margin-top: 0;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+                height: 100%;
+            }
+
+            html {
+                height: 100%;
+            }
+
+            .document-wrapper {
+                padding: 5px;
+                min-height: 100%;
+                width: 100%;
+            }
+
+            .document {
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .content-wrapper {
+                flex: 1;
+            }
+
+            .bottom-section {
+                page-break-inside: avoid !important;
+            }
+
+            .footer {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            .header {
+                font-size: 95%;
+            }
+
+            @page {
+                margin: 8mm;
+            }
+        }
+
+        /* A5 specific adjustments */
+        @media print and (max-width: 148mm) {
+            html, body {
+                height: 100%;
+            }
+
+            body {
+                font-size: 8pt;
+            }
+
+            .document-wrapper {
+                min-height: 100%;
+            }
+
+            .document {
+                min-height: 100%;
+            }
+
+            .document-title h1 {
+                font-size: 18px;
+            }
+
+            .clinic-name {
+                font-size: 11px;
+            }
+
+            .clinic-details {
+                font-size: 7pt;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            .section-header {
+                font-size: 7pt;
+                padding: 3px 6px;
+                margin: 6px 0 3px 0;
+            }
+
+            .document-number {
+                font-size: 8pt;
+                padding: 4px 10px;
+            }
+
+            .info-table {
+                font-size: 7pt;
+            }
+
+            .info-table td {
+                padding: 1px 4px;
+            }
+
+            .vitals-table th {
+                font-size: 6pt;
+                padding: 3px 5px;
+            }
+
+            .vitals-table td {
+                font-size: 7pt;
+                padding: 3px 5px;
+            }
+
+            .vital-value {
+                font-size: 9pt;
+            }
+
+            .footer {
+                font-size: 7pt;
+            }
+
+            @page {
+                margin: 6mm;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="document-wrapper">
+        <div class="document">
+            <!-- Header -->
+            <div class="header">
+                <div class="clinic-info">
+                    {% if clinic_settings.logo %}
+                    <img src="{{ clinic_settings.logo.url }}" alt="Logo" class="clinic-logo">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                    <div class="clinic-details">
+                        {{ clinic_settings.address }}<br>
+                        Tel: {{ clinic_settings.phone_number }} | Email: {{ clinic_settings.email }}
+                    </div>
+                </div>
+                <div class="document-title">
+                    <h1>Vital Signs</h1>
+                    <div class="document-number">Record #{{ vital.id }}</div>
+                    <div class="document-dates">
+                        <strong>Date:</strong> {{ vital.recorded_date|date:"M d, Y" }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <!-- Patient Information -->
+                <div class="section-header">Patient Information</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Patient Name:</td>
+                        <td>{{ patient.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Patient ID:</td>
+                        <td>{{ patient.patient_id }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date of Birth:</td>
+                        <td>{{ patient.date_of_birth|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Gender:</td>
+                        <td>{{ patient.get_gender_display }}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone:</td>
+                        <td>{{ patient.phone_number }}</td>
+                    </tr>
+                </table>
+
+                <!-- Vital Signs Details -->
+                <div class="section-header">Vital Signs Measurements</div>
+                <table class="vitals-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                    </tr>
+                    <tr>
+                        <td>Height</td>
+                        <td class="vital-value">{{ vital.height }}</td>
+                        <td>cm</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>Weight</td>
+                        <td class="vital-value">{{ vital.weight }}</td>
+                        <td>kg</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>Body Mass Index (BMI)</td>
+                        <td class="vital-value">{{ vital.bmi|floatformat:2 }}</td>
+                        <td>kg/m²</td>
+                        <td>
+                            {% if vital.bmi < 18.5 %}
+                                Underweight
+                            {% elif vital.bmi < 25 %}
+                                Normal
+                            {% elif vital.bmi < 30 %}
+                                Overweight
+                            {% else %}
+                                Obese
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Blood Pressure</td>
+                        <td class="vital-value">{{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }}</td>
+                        <td>mmHg</td>
+                        <td>✓</td>
+                    </tr>
+                    <tr>
+                        <td>Heart Rate</td>
+                        <td class="vital-value">{{ vital.heart_rate }}</td>
+                        <td>bpm</td>
+                        <td>✓</td>
+                    </tr>
+                    {% if vital.temperature %}
+                    <tr>
+                        <td>Temperature</td>
+                        <td class="vital-value">{{ vital.temperature }}</td>
+                        <td>°C</td>
+                        <td>✓</td>
+                    </tr>
+                    {% endif %}
+                    {% if vital.respiratory_rate %}
+                    <tr>
+                        <td>Respiratory Rate</td>
+                        <td class="vital-value">{{ vital.respiratory_rate }}</td>
+                        <td>breaths/min</td>
+                        <td>✓</td>
+                    </tr>
+                    {% endif %}
+                    {% if vital.oxygen_saturation %}
+                    <tr>
+                        <td>Oxygen Saturation</td>
+                        <td class="vital-value">{{ vital.oxygen_saturation }}</td>
+                        <td>%</td>
+                        <td>✓</td>
+                    </tr>
+                    {% endif %}
+                </table>
+
+                {% if vital.notes %}
+                <div class="section-header">Additional Notes</div>
+                <table class="info-table">
+                    <tr>
+                        <td colspan="2">{{ vital.notes }}</td>
+                    </tr>
+                </table>
+                {% endif %}
+
+                <div class="section-header">Recording Information</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Recorded By:</td>
+                        <td>{{ vital.recorded_by.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date & Time:</td>
+                        <td>{{ vital.recorded_date|date:"M d, Y - g:i A" }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Bottom Section -->
+            <div class="bottom-section">
+                <div class="signature">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Authorized Signature</div>
+                </div>
+
+                <div class="footer">
+                    <p>This is a system-generated document from {{ clinic_settings.clinic_name }}</p>
+                    <p>Printed on: {{ now|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,521 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Information - {{ patient.get_full_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Segoe UI', sans-serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #333;
+            background: white;
+            padding: 5mm;
+        }
+
+        .document-wrapper {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .document {
+            background: white;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(297mm - 40px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1B5E96;
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .clinic-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        .document-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .document-title h1 {
+            font-size: 26px;
+            color: #1B5E96;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .patient-id-box {
+            background: #1B5E96;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .document-dates {
+            font-size: 9pt;
+            color: #666;
+            text-align: right;
+        }
+
+        .section-header {
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+            background: #1B5E96;
+            text-transform: uppercase;
+            margin: 10px 0 5px 0;
+            padding: 4px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 8pt;
+        }
+
+        .info-table td {
+            padding: 3px 6px;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            background: transparent;
+            width: 35%;
+            color: #1B5E96;
+        }
+
+        .alert-box {
+            background: #fee;
+            border: 2px solid #dc3545;
+            border-left: 5px solid #dc3545;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .alert-box strong {
+            color: #dc3545;
+            font-size: 10pt;
+        }
+
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 8px 0;
+        }
+
+        .vital-box {
+            background: #f8f9fa;
+            padding: 8px;
+            border-left: 3px solid #1B5E96;
+            font-size: 8pt;
+        }
+
+        .vital-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 7pt;
+            text-transform: uppercase;
+        }
+
+        .vital-value {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #1B5E96;
+            margin-top: 3px;
+        }
+
+        .notes-section {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 3px solid #1B5E96;
+            font-size: 9pt;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-info {
+            background: #0dcaf0;
+            color: white;
+        }
+
+        .badge-success {
+            background: #2E8B57;
+            color: white;
+        }
+
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            font-size: 8pt;
+        }
+
+        .data-table th {
+            background: #1B5E96;
+            color: white;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 7pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .content-wrapper {
+            flex: 1;
+        }
+
+        .bottom-section {
+            margin-top: auto;
+            padding-top: 15px;
+        }
+
+        .footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .document-wrapper {
+                padding: 15px;
+                min-height: 277mm;
+            }
+
+            .clinic-logo {
+                max-height: 75px !important;
+                max-width: 150px !important;
+            }
+
+            @page {
+                margin: 10mm;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="document-wrapper">
+        <div class="document">
+            <div class="header">
+                <div class="clinic-info">
+                    {% if clinic_settings.logo %}
+                    <img src="{{ clinic_settings.logo.url }}" alt="Logo" class="clinic-logo">
+                    {% endif %}
+                    <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                    <div class="clinic-details">
+                        {{ clinic_settings.address }}<br>
+                        Tel: {{ clinic_settings.phone_number }} | Email: {{ clinic_settings.email }}
+                    </div>
+                </div>
+                <div class="document-title">
+                    <h1>Medical Information</h1>
+                    <div class="patient-id-box">{{ patient.patient_id }}</div>
+                    <div class="document-dates">
+                        <strong>Generated:</strong> {{ now|date:"M d, Y - g:i A" }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="section-header">Patient Demographics</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Full Name:</td>
+                        <td>{{ patient.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date of Birth:</td>
+                        <td>{{ patient.date_of_birth|date:"M d, Y" }} ({{ patient.age }} years old)</td>
+                    </tr>
+                    <tr>
+                        <td>Gender:</td>
+                        <td>{{ patient.get_gender_display }}</td>
+                    </tr>
+                    <tr>
+                        <td>Phone:</td>
+                        <td>{{ patient.phone_number|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Email:</td>
+                        <td>{{ patient.email|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Address:</td>
+                        <td>{{ patient.address|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Registration Date:</td>
+                        <td>{{ patient.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                </table>
+
+                <div class="section-header">Medical History & Allergies</div>
+                {% if patient.allergies %}
+                <div class="alert-box">
+                    <strong>⚠️ ALLERGIES:</strong><br>
+                    {{ patient.allergies }}
+                </div>
+                {% endif %}
+
+                <table class="info-table">
+                    <tr>
+                        <td>Medical History:</td>
+                        <td>{{ patient.medical_history|default:"No medical history recorded." }}</td>
+                    </tr>
+                    <tr>
+                        <td>Current Medications:</td>
+                        <td>{{ patient.current_medications|default:"No current medications recorded." }}</td>
+                    </tr>
+                </table>
+
+                {% if vital_signs %}
+                {% with recent_vitals=vital_signs.0 %}
+                <div class="section-header">Latest Vital Signs</div>
+                <p style="font-size: 8pt; color: #666; margin: 5px 0;">
+                    Recorded on {{ recent_vitals.recorded_date|date:"M d, Y \a\t H:i" }} 
+                    by {{ recent_vitals.recorded_by.get_full_name|default:"System" }}
+                </p>
+
+                <table class="info-table" style="width: 100%; margin-top: 8px;">
+                    <tr>
+                        <td style="width: 25%; font-weight: 600;">Height:</td>
+                        <td style="width: 25%;">{{ recent_vitals.height }} cm</td>
+                        <td style="width: 25%; font-weight: 600;">Weight:</td>
+                        <td style="width: 25%;">{{ recent_vitals.weight }} kg</td>
+                    </tr>
+                    {% if recent_vitals.bmi %}
+                    <tr>
+                        <td style="font-weight: 600;">BMI:</td>
+                        <td>{{ recent_vitals.bmi }} <small style="font-size: 7pt; color: #666;">({% if recent_vitals.bmi < 18.5 %}Underweight{% elif recent_vitals.bmi < 25 %}Normal{% elif recent_vitals.bmi < 30 %}Overweight{% else %}Obese{% endif %})</small></td>
+                        <td style="font-weight: 600;">Blood Pressure:</td>
+                        <td>{{ recent_vitals.blood_pressure_systolic }}/{{ recent_vitals.blood_pressure_diastolic }} mmHg</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td style="font-weight: 600;">Blood Pressure:</td>
+                        <td>{{ recent_vitals.blood_pressure_systolic }}/{{ recent_vitals.blood_pressure_diastolic }} mmHg</td>
+                        <td style="font-weight: 600;">Heart Rate:</td>
+                        <td>{{ recent_vitals.heart_rate }} BPM</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        {% if recent_vitals.bmi %}
+                        <td style="font-weight: 600;">Heart Rate:</td>
+                        <td>{{ recent_vitals.heart_rate }} BPM</td>
+                        {% else %}
+                        <td style="font-weight: 600;">Temperature:</td>
+                        <td>{{ recent_vitals.temperature }}°C</td>
+                        {% endif %}
+                        <td style="font-weight: 600;">{% if recent_vitals.bmi %}Temperature{% else %}Respiratory Rate{% endif %}:</td>
+                        <td>{% if recent_vitals.bmi %}{{ recent_vitals.temperature }}°C{% else %}{{ recent_vitals.respiratory_rate }} /min{% endif %}</td>
+                    </tr>
+                    <tr>
+                        {% if recent_vitals.bmi %}
+                        <td style="font-weight: 600;">Respiratory Rate:</td>
+                        <td>{{ recent_vitals.respiratory_rate }} /min</td>
+                        {% endif %}
+                        {% if recent_vitals.oxygen_saturation %}
+                        <td style="font-weight: 600;">Oxygen Saturation:</td>
+                        <td>{{ recent_vitals.oxygen_saturation }}%</td>
+                        {% else %}
+                        <td colspan="2"></td>
+                        {% endif %}
+                        {% if not recent_vitals.bmi and not recent_vitals.oxygen_saturation %}
+                        <td colspan="2"></td>
+                        {% endif %}
+                    </tr>
+                </table>
+
+                {% if recent_vitals.notes %}
+                <div class="notes-section">
+                    <strong>Clinical Notes:</strong><br>
+                    {{ recent_vitals.notes }}
+                </div>
+                {% endif %}
+
+                <p style="font-size: 7pt; color: #666; margin-top: 8px;">
+                    <em>Total vital signs records: {{ vital_signs|length }}</em>
+                </p>
+                {% endwith %}
+                {% endif %}
+
+                {% if assessments %}
+                {% with recent_assessment=assessments.0 %}
+                <div class="section-header">Latest Clinical Assessment</div>
+                <p style="font-size: 8pt; color: #666; margin: 5px 0;">
+                    <strong>{{ recent_assessment.get_department_display }} Assessment</strong>
+                    <span class="badge badge-info">{{ recent_assessment.get_assessment_type_display }}</span><br>
+                    {{ recent_assessment.assessment_date|date:"M d, Y \a\t H:i" }}
+                </p>
+
+                <table class="info-table">
+                    <tr>
+                        <td>Assessed By:</td>
+                        <td>{{ recent_assessment.assessed_by.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Chief Complaint:</td>
+                        <td>{{ recent_assessment.chief_complaint|default:"Not specified" }}</td>
+                    </tr>
+                    {% if recent_assessment.diagnosis %}
+                    <tr>
+                        <td>Diagnosis:</td>
+                        <td>{{ recent_assessment.diagnosis }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if recent_assessment.treatment_plan %}
+                    <tr>
+                        <td>Treatment Plan:</td>
+                        <td>{{ recent_assessment.treatment_plan }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>Follow-up Required:</td>
+                        <td>
+                            {% if recent_assessment.follow_up_required %}
+                                <span class="badge badge-success">Yes</span>
+                                {% if recent_assessment.follow_up_date %}
+                                    - {{ recent_assessment.follow_up_date|date:"F d, Y" }}
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-secondary">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+
+                {% if recent_assessment.notes %}
+                <div class="notes-section">
+                    <strong>Assessment Notes:</strong><br>
+                    {{ recent_assessment.notes }}
+                </div>
+                {% endif %}
+
+                <p style="font-size: 7pt; color: #666; margin-top: 8px;">
+                    <em>Total assessments: {{ assessments|length }}</em>
+                </p>
+                {% endwith %}
+                {% endif %}
+
+                {% if lab_results %}
+                <div class="section-header">Recent Laboratory Results</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Test</th>
+                            <th>Result</th>
+                            <th>Reported By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in lab_results|slice:":5" %}
+                        <tr>
+                            <td>{{ result.date_reported|date:"M d, Y" }}</td>
+                            <td>{{ result.request.test.name }}</td>
+                            <td>{{ result.result }}</td>
+                            <td>{{ result.reported_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if lab_results|length > 5 %}
+                <p style="font-size: 7pt; color: #666;">
+                    <em>Showing 5 most recent results. Total: {{ lab_results|length }} results.</em>
+                </p>
+                {% endif %}
+                {% endif %}
+
+               
+            </div>
+
+            <div class="bottom-section">
+                <div class="footer">
+                    <p><strong>CONFIDENTIAL MEDICAL RECORD</strong></p>
+                    <p>This document contains protected health information. Unauthorized access or disclosure is prohibited.</p>
+                    <p style="margin-top: 10px;">Generated from {{ clinic_settings.clinic_name }} Electronic Medical Record System</p>
+                    <p>Printed on: {{ now|date:"M d, Y - g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

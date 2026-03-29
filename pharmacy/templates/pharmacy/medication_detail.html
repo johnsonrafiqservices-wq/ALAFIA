@@ -1,0 +1,1272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ medication.name }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-capsule-pill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
+        <div>
+            <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">{{ medication.name }}</span>
+            <div class="small text-muted mt-1">{{ medication.generic_name }}</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+</a>
+<a href="{% url 'pharmacy:medication_edit' medication.pk %}" class="btn btn-warning btn-sm">
+    <i class="bi bi-pencil-square"></i> Edit Details
+</a>
+<button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#batchCreateModal">
+    <i class="bi bi-plus-circle"></i> Receive Batch
+</button>
+<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#medicationSellModal">
+    <i class="bi bi-cart-check"></i> Sell
+</button>
+<button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#medicationDispenseModal">
+    <i class="bi bi-prescription2"></i> Dispense
+</button>
+<button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#medicationPrescribeModal">
+    <i class="bi bi-file-medical"></i> Prescribe
+</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-label">Total Stock</div>
+                        <div class="metric-value">{{ total_stock|intcomma }}</div>
+                        <small class="text-muted">Available units</small>
+                    </div>
+                    <div class="metric-icon primary">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-label">Active Batches</div>
+                        <div class="metric-value">{{ batches_count|intcomma }}</div>
+                        <small class="text-muted">In stock</small>
+                    </div>
+                    <div class="metric-icon success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-label">Unit Price</div>
+                        {% if batches %}
+                        <div class="metric-value">UGX {{ batches.first.selling_price|floatformat:0|intcomma }}</div>
+                        {% else %}
+                        <div class="metric-value">-</div>
+                        {% endif %}
+                        <small class="text-muted">Per unit</small>
+                    </div>
+                    <div class="metric-icon info">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card metric-card warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="metric-label">Reorder Level</div>
+                        <div class="metric-value">{{ medication.reorder_level|intcomma }}</div>
+                        <small class="text-muted">Minimum stock</small>
+                    </div>
+                    <div class="metric-icon warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="row">
+        <!-- Medication Details -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3" style="border-bottom: 2px solid var(--alafia-primary);">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="bi bi-info-circle text-primary me-2"></i>Medication Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-list">
+                        <div class="info-item py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small"><i class="bi bi-tag me-2"></i>Category</span>
+                                <span class="badge" style="background: var(--alafia-gradient);">{{ medication.category }}</span>
+                            </div>
+                        </div>
+                        <div class="info-item py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small"><i class="bi bi-prescription2 me-2"></i>Dosage Form</span>
+                                <span class="fw-semibold">{{ medication.dosage_form }}</span>
+                            </div>
+                        </div>
+                        {% if medication.strength %}
+                        <div class="info-item py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small"><i class="bi bi-lightning me-2"></i>Strength</span>
+                                <span class="fw-semibold">{{ medication.strength }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if medication.manufacturer %}
+                        <div class="info-item py-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small"><i class="bi bi-building me-2"></i>Manufacturer</span>
+                                <span class="fw-semibold">{{ medication.manufacturer }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="info-item py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small"><i class="bi bi-circle-fill me-2"></i>Status</span>
+                                {% if medication.is_active %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if medication.storage_conditions %}
+                    <div class="mt-4 p-3 rounded" style="background: linear-gradient(135deg, rgba(27, 94, 150, 0.05), rgba(27, 94, 150, 0.1));">
+                        <h6 class="mb-2 fw-semibold" style="color: var(--alafia-primary);"><i class="bi bi-thermometer-half me-2"></i>Storage Conditions</h6>
+                        <p class="text-muted small mb-0">{{ medication.storage_conditions }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if medication.description %}
+                    <div class="mt-3 p-3 rounded" style="background: linear-gradient(135deg, rgba(0, 168, 107, 0.05), rgba(0, 168, 107, 0.1));">
+                        <h6 class="mb-2 fw-semibold" style="color: var(--alafia-accent);"><i class="bi bi-file-text me-2"></i>Description</h6>
+                        <p class="text-muted small mb-0">{{ medication.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Batches -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-box-seam"></i> Active Batches
+                </div>
+                <div class="card-body p-0">
+                    {% if batches %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Batch Number</th>
+                                    <th>Supplier</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Left</th>
+                                    <th class="text-center" style="width: 60px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for batch in batches %}
+                                <tr style="border-left: 3px solid transparent; transition: all 0.2s;">
+                                    <td class="px-4">
+                                        <div class="fw-bold" style="color: var(--alafia-primary);">{{ batch.batch_number }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                                <i class="bi bi-building" style="color: var(--alafia-accent);"></i>
+                                            </div>
+                                            <span class="fw-semibold small">{{ batch.supplier.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            {% if batch.quantity_remaining <= 10 %}
+                                                <span class="badge bg-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">{{ batch.quantity_remaining }}</span>
+                                            {% elif batch.quantity_remaining <= 50 %}
+                                                <span class="badge bg-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">{{ batch.quantity_remaining }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">{{ batch.quantity_remaining }}</span>
+                                            {% endif %}
+                                            <span class="text-muted small">/ {{ batch.quantity_received }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-calendar3 text-muted me-2"></i>
+                                            <span class="small">{{ batch.expiry_date|date:"M d, Y" }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% with days=batch.get_remaining_shelf_life_days %}
+                                            {% if days <= 30 %}
+                                                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> {{ days }} days</span>
+                                            {% elif days <= 90 %}
+                                                <span class="badge bg-warning"><i class="bi bi-clock"></i> {{ days }} days</span>
+                                            {% else %}
+                                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> {{ days }} days</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'pharmacy:batch_edit' batch.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="bi bi-inbox" style="font-size: 4rem; color: var(--alafia-primary); opacity: 0.3;"></i>
+                        </div>
+                        <h5 class="text-muted mb-3">No Active Batches</h5>
+                        <p class="text-muted mb-4">This medication doesn't have any batches in stock.</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#batchCreateModal">
+                            <i class="bi bi-plus-circle me-2"></i>Receive First Batch
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prescriptions Section -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-file-medical"></i> Prescriptions ({{ prescriptions_count }})
+            </div>
+            <div class="card-body p-0">
+                {% if prescriptions %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Prescription ID</th>
+                                <th>Patient</th>
+                                <th>Details</th>
+                                <th>Prescribed Date</th>
+                                <th>Prescribed By</th>
+                                <th>Status</th>
+                                <th class="text-center" style="width: 60px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in prescriptions %}
+                            <tr style="border-left: 3px solid transparent; transition: all 0.2s;">
+                                <td class="px-4">
+                                    <div class="fw-bold" style="color: var(--alafia-primary);">#{{ prescription.id }}</div>
+                                </td>
+                                <td>
+                                    {% if prescription.patient %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
+                                            <i class="bi bi-person" style="color: var(--alafia-accent);"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold small">{{ prescription.patient.get_full_name }}</div>
+                                            <small class="text-muted">{{ prescription.patient.patient_id }}</small>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% with items=prescription.items.all %}
+                                    {% if items %}
+                                        <!-- Multi-medication prescription -->
+                                        <div class="small">
+                                            {% for item in items %}
+                                                {% if item.medication.id == medication.id %}
+                                                    <strong class="text-primary">{{ item.medication.name }}</strong>: {{ item.quantity }} units
+                                                    {% if item.dosage %}<br><span class="text-muted">{{ item.dosage }}, {{ item.frequency }}</span>{% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if items.count > 1 %}
+                                                <br><small class="text-muted">+ {{ items.count|add:"-1" }} more medication(s)</small>
+                                            {% endif %}
+                                        </div>
+                                    {% elif prescription.medication %}
+                                        <!-- Legacy single medication -->
+                                        <div class="small">
+                                            <strong>{{ prescription.quantity }}</strong> units
+                                            {% if prescription.dosage %}<br><span class="text-muted">{{ prescription.dosage }}</span>{% endif %}
+                                        </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-calendar3 text-muted me-2"></i>
+                                        <span class="small">{{ prescription.prescribed_date|date:"M d, Y" }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small">{{ prescription.prescribed_by.get_full_name|default:"N/A" }}</div>
+                                </td>
+                                <td>
+                                    {% if prescription.status == 'pending' %}
+                                        <span class="badge bg-warning"><i class="bi bi-clock"></i> Pending</span>
+                                    {% elif prescription.status == 'dispensed' %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Dispensed</span>
+                                    {% elif prescription.status == 'cancelled' %}
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Cancelled</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ prescription.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'pharmacy:prescription_print' prescription.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="bi bi-printer"></i> Print
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-file-medical" style="font-size: 4rem; color: var(--alafia-primary); opacity: 0.3;"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">No Prescriptions Yet</h5>
+                    <p class="text-muted mb-4">This medication hasn't been prescribed yet.</p>
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#medicationPrescribeModal">
+                        <i class="bi bi-plus-circle me-2"></i>Create First Prescription
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Medication Detail Page Styles */
+.info-item {
+    padding: 0.5rem 0;
+    transition: background-color 0.2s;
+}
+
+.info-item:hover {
+    background-color: rgba(27, 94, 150, 0.03);
+}
+
+.table tbody tr {
+    cursor: pointer;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+
+<!-- ============================================================================ -->
+<!-- MEDICATION-SPECIFIC MODALS -->
+<!-- ============================================================================ -->
+
+<!-- Sell Medication Modal - Same as Sales Dashboard -->
+<div class="modal fade" id="medicationSellModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--alafia-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="bi bi-plus-circle me-2"></i>Record Sale / Dispense - {{ medication.name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="medicationSellForm">
+                    {% csrf_token %}
+                    
+                    <!-- Sale Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-tag text-primary"></i> Sale Type <span class="text-danger">*</span>
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="sale_type" id="sellTypeWalkin" value="walkin" checked>
+                            <label class="btn btn-outline-primary" for="sellTypeWalkin">
+                                <i class="bi bi-person-walking"></i> Walk-in Customer
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="sale_type" id="sellTypePatient" value="patient">
+                            <label class="btn btn-outline-success" for="sellTypePatient">
+                                <i class="bi bi-person-badge"></i> Patient Sale
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="sale_type" id="sellTypePrescription" value="prescription">
+                            <label class="btn btn-outline-info" for="sellTypePrescription">
+                                <i class="bi bi-file-medical"></i> Prescription
+                            </label>
+                        </div>
+                        <div class="form-text">Select the type of sale or dispensing</div>
+                    </div>
+                    
+                    <!-- Walk-in Customer Section -->
+                    <div id="sellWalkinSection" class="sale-type-section">
+                        <div class="mb-3">
+                            <label for="sell_customer_name" class="form-label">
+                                <i class="bi bi-person text-info"></i> Customer Name
+                            </label>
+                            <input type="text" class="form-control" id="sell_customer_name" name="customer_info" placeholder="Walk-in Customer">
+                            <div class="form-text">Optional - defaults to "Walk-in Customer"</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Patient Selection Section -->
+                    <div id="sellPatientSection" class="sale-type-section" style="display: none;">
+                        <div class="mb-3">
+                            <label for="sell_patient_id" class="form-label">
+                                <i class="bi bi-person-badge text-success"></i> Select Patient <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="sell_patient_id" name="patient_id">
+                                <option value="">-- Search and Select Patient --</option>
+                                {% for patient in all_patients %}
+                                <option value="{{ patient.id }}">
+                                    {{ patient.patient_id }} - {{ patient.get_full_name }}
+                                    {% if patient.phone %}({{ patient.phone }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the patient purchasing medication</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prescription Selection Section -->
+                    <div id="sellPrescriptionSection" class="sale-type-section" style="display: none;">
+                        <div class="mb-3">
+                            <label for="sell_prescription_id" class="form-label">
+                                <i class="bi bi-file-medical text-info"></i> Select Prescription <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="sell_prescription_id" name="prescription_id">
+                                <option value="">-- Select Pending Prescription --</option>
+                            </select>
+                            <div class="form-text">
+                                <span id="sellPrescriptionInfo" class="text-muted"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Batch Selection for This Medication -->
+                    <div class="mb-3">
+                        <label for="sell_batch_id" class="form-label">
+                            <i class="bi bi-capsule text-primary"></i> Select Batch for {{ medication.name }} <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="sell_batch_id" name="batch" required>
+                            <option value="">-- Select Batch --</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch.id }}" 
+                                    data-stock="{{ batch.quantity_remaining }}"
+                                    data-price="{{ batch.selling_price }}"
+                                    data-expiry="{{ batch.expiry_date|date:'M d, Y' }}">
+                                Batch: {{ batch.batch_number }} | Stock: {{ batch.quantity_remaining }} | 
+                                Price: UGX {{ batch.selling_price|floatformat:0 }} | 
+                                Expires: {{ batch.expiry_date|date:"M d, Y" }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <span class="text-muted">Select batch with available stock</span>
+                            <div id="sellSelectedBatchDetails" style="display:none;" class="mt-2">
+                                <span class="badge bg-info me-2">Stock: <span id="sellBatchStock">-</span></span>
+                                <span class="badge bg-warning text-dark me-2">Expiry: <span id="sellBatchExpiry">-</span></span>
+                                <span class="badge bg-success">Unit Price: UGX <span id="sellBatchPrice">-</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity -->
+                    <div class="mb-3">
+                        <label for="sell_quantity" class="form-label">
+                            <i class="bi bi-123 text-success"></i> Quantity <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="sell_quantity" name="quantity" min="1" value="1" required>
+                        <div class="form-text">
+                            Available: <span id="sellAvailableStock">-</span> units
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label for="sell_notes" class="form-label">
+                            <i class="bi bi-sticky text-warning"></i> Notes
+                        </label>
+                        <textarea class="form-control" id="sell_notes" name="notes" rows="2" placeholder="Additional notes (optional)"></textarea>
+                    </div>
+                    
+                    <!-- Revenue Preview -->
+                    <div class="alert alert-success mb-0">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <i class="bi bi-currency-exchange"></i> <strong>Total Amount:</strong> 
+                                <span id="sellEstimatedRevenue" class="fs-5 fw-bold">UGX 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="submitSellBtn">
+                    <i class="bi bi-check-circle"></i> <span id="submitSellBtnText">Record Sale</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dispense Prescription Modal for this Medication -->
+<div class="modal fade" id="medicationDispenseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-prescription2 me-2"></i>Dispense Prescription - {{ medication.name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="medicationDispenseForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="medication_id" value="{{ medication.id }}">
+                <input type="hidden" name="sale_type" value="prescription">
+                
+                <div class="modal-body">
+                    <!-- Medication Info Display -->
+                    <div class="alert alert-info mb-3">
+                        <div class="row">
+                            <div class="col-md-12 mb-2">
+                                <strong><i class="bi bi-capsule-pill"></i> Medication:</strong> {{ medication.name }} ({{ medication.generic_name }})
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong><i class="bi bi-box"></i> Form:</strong> {{ medication.get_dosage_form_display }}
+                                {% if medication.strength %}
+                                    <span class="text-muted">| {{ medication.strength }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <strong><i class="bi bi-boxes"></i> Available Stock:</strong> 
+                                <span class="badge {% if total_stock <= medication.reorder_level %}bg-danger{% elif total_stock <= medication.reorder_level|add:20 %}bg-warning{% else %}bg-success{% endif %}" style="font-size: 1rem; padding: 0.4rem 0.8rem;">
+                                    {{ total_stock }} units
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prescription Selection -->
+                    <div class="mb-3">
+                        <label for="dispense_prescription_id" class="form-label">
+                            <i class="bi bi-file-medical"></i> Select Prescription <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="dispense_prescription_id" name="prescription_id" required>
+                            <option value="">Loading prescriptions...</option>
+                        </select>
+                        <div class="form-text">Select a pending prescription for this medication</div>
+                    </div>
+                    
+                    <!-- Batch Selection -->
+                    <div class="mb-3" id="dispense_batch_section" style="display: none;">
+                        <label for="dispense_batch_id" class="form-label">
+                            <i class="bi bi-box-seam"></i> Select Batch <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="dispense_batch_id" name="batch" required>
+                            <option value="">-- Select Batch --</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch.id }}" 
+                                    data-stock="{{ batch.quantity_remaining }}"
+                                    data-price="{{ batch.selling_price }}">
+                                Batch: {{ batch.batch_number }} | Stock: {{ batch.quantity_remaining }} | 
+                                Expires: {{ batch.expiry_date|date:"M d, Y" }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Quantity (auto-populated from prescription) -->
+                    <div class="mb-3" id="dispense_quantity_section" style="display: none;">
+                        <label for="dispense_quantity" class="form-label">
+                            <i class="bi bi-123"></i> Quantity <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="dispense_quantity" name="quantity" min="1" required>
+                        <div class="form-text">Quantity will be auto-filled from the prescription</div>
+                    </div>
+                    
+                    <!-- Prescription Details Display -->
+                    <div id="dispense_prescription_details" class="alert alert-light border" style="display: none;">
+                        <h6>Prescription Details:</h6>
+                        <div id="dispense_details_content"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-info" id="submitDispenseBtn">
+                        <i class="bi bi-check-circle"></i> Dispense Prescription
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Prescribe Medication Modal -->
+<div class="modal fade" id="medicationPrescribeModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-medical me-2"></i>Create Prescription - {{ medication.name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="medicationPrescribeForm" method="post">
+                {% csrf_token %}
+                
+                <div class="modal-body">
+                    <!-- Info Alert -->
+                    <div class="alert alert-light border mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>{{ medication.name }}</strong> is pre-selected. You can add more medications if needed.
+                        </small>
+                    </div>
+                    
+                    <!-- Patient Selection -->
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Patient</strong> <span class="text-danger">*</span></label>
+                        <select class="form-select" name="patient" id="prescribe_patient_select" required>
+                            <option value="">Select Patient</option>
+                            {% for patient in all_patients %}
+                            <option value="{{ patient.id }}">{{ patient.get_full_name }} ({{ patient.patient_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Medications Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">
+                            <i class="bi bi-capsule-pill text-secondary"></i> Medications 
+                            <span class="badge bg-secondary" id="medicationCountPrescribe">1</span>
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addMedicationRowPrescribe()">
+                            <i class="bi bi-plus-circle"></i> Add Medication
+                        </button>
+                    </div>
+                    
+                    <!-- Medications Container -->
+                    <div id="medicationsContainerPrescribe">
+                        <!-- First medication row - pre-filled with current medication -->
+                        <div class="medication-row-prescribe card mb-3 border-secondary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0"><i class="bi bi-capsule text-secondary"></i> Medication #1</h6>
+                                    <button type="button" class="btn btn-sm btn-danger remove-medication-prescribe" onclick="removeMedicationRowPrescribe(this)" style="display: none;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label"><i class="bi bi-capsule-pill text-primary"></i> Medication <span class="text-danger">*</span></label>
+                                        <select class="form-select medication-select-prescribe" required style="font-weight: 500; border: 2px solid #6c757d;">
+                                            <option value="{{ medication.id }}" selected>
+                                                {{ medication.name }} {{ medication.strength }} ({{ medication.get_dosage_form_display }})
+                                            </option>
+                                            {% for med in medications %}
+                                            {% if med.id != medication.id %}
+                                            <option value="{{ med.id }}">
+                                                {{ med.name }} {{ med.strength }} ({{ med.get_dosage_form_display }})
+                                            </option>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Dosage <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control dosage-input-prescribe" placeholder="e.g., 500mg" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Frequency <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control frequency-input-prescribe" placeholder="e.g., Twice daily" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Duration <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control duration-input-prescribe" placeholder="e.g., 7 days" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control quantity-input-prescribe" min="1" placeholder="e.g., 14" required>
+                                    </div>
+                                    <div class="col-12 mb-2">
+                                        <label class="form-label">Notes (Optional)</label>
+                                        <textarea class="form-control notes-input-prescribe" rows="2" placeholder="Specific notes for this medication"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- General Instructions -->
+                    <div class="mb-3">
+                        <label class="form-label"><strong>General Instructions</strong> (Optional)</label>
+                        <textarea class="form-control" name="instructions" rows="3" placeholder="General instructions that apply to all medications..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitMedicationPrescription()">
+                        <i class="bi bi-check-circle me-2"></i>Create Prescription
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Include Pharmacy Modals -->
+{% include 'pharmacy/modals/all_pharmacy_modals.html' %}
+
+<script>
+// ============================================================================
+// MEDICATION DETAIL PAGE - SELL, DISPENSE, PRESCRIBE FUNCTIONALITY
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ========== SELL MODAL ==========
+    const sellModal = document.getElementById('medicationSellModal');
+    const sellForm = document.getElementById('medicationSellForm');
+    const sellBatchSelect = document.getElementById('sell_batch_id');
+    const sellQuantityInput = document.getElementById('sell_quantity');
+    const submitSellBtn = document.getElementById('submitSellBtn');
+    const submitSellBtnText = document.getElementById('submitSellBtnText');
+    
+    // Display elements
+    const sellEstimatedRevenue = document.getElementById('sellEstimatedRevenue');
+    const sellAvailableStock = document.getElementById('sellAvailableStock');
+    const sellSelectedBatchDetails = document.getElementById('sellSelectedBatchDetails');
+    const sellBatchStock = document.getElementById('sellBatchStock');
+    const sellBatchExpiry = document.getElementById('sellBatchExpiry');
+    const sellBatchPrice = document.getElementById('sellBatchPrice');
+    
+    // Sale type sections
+    const sellWalkinSection = document.getElementById('sellWalkinSection');
+    const sellPatientSection = document.getElementById('sellPatientSection');
+    const sellPrescriptionSection = document.getElementById('sellPrescriptionSection');
+    const sellPrescriptionSelect = document.getElementById('sell_prescription_id');
+    const sellPrescriptionInfo = document.getElementById('sellPrescriptionInfo');
+    
+    // Handle sale type switching
+    const saleTypeRadios = document.querySelectorAll('input[name="sale_type"]');
+    saleTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Hide all sections
+            sellWalkinSection.style.display = 'none';
+            sellPatientSection.style.display = 'none';
+            sellPrescriptionSection.style.display = 'none';
+            
+            // Show relevant section and update button text
+            if (this.value === 'walkin') {
+                sellWalkinSection.style.display = 'block';
+                submitSellBtnText.textContent = 'Record Sale';
+            } else if (this.value === 'patient') {
+                sellPatientSection.style.display = 'block';
+                submitSellBtnText.textContent = 'Record Patient Sale';
+            } else if (this.value === 'prescription') {
+                sellPrescriptionSection.style.display = 'block';
+                submitSellBtnText.textContent = 'Dispense Prescription';
+                // Load prescriptions for this medication
+                loadPendingPrescriptions('sell');
+            }
+        });
+    });
+    
+    // Function to load pending prescriptions
+    function loadPendingPrescriptions(modalType) {
+        const selectElement = modalType === 'sell' ? sellPrescriptionSelect : dispensePrescriptionSelect;
+        const infoElement = modalType === 'sell' ? sellPrescriptionInfo : null;
+        
+        selectElement.innerHTML = '<option value="">Loading prescriptions...</option>';
+        
+        const medicationId = '{{ medication.id }}';
+        const url = `{% url 'pharmacy:get_pending_prescriptions_ajax' %}?medication_id=${medicationId}`;
+        
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.prescriptions.length > 0) {
+                selectElement.innerHTML = '<option value="">-- Select Pending Prescription --</option>';
+                
+                data.prescriptions.forEach(prescription => {
+                    const option = document.createElement('option');
+                    option.value = prescription.id;
+                    option.dataset.quantity = prescription.quantity;
+                    option.dataset.patientName = prescription.patient_name;
+                    option.dataset.medications = prescription.medications;
+                    option.textContent = `${prescription.patient_id} - ${prescription.patient_name} - ${prescription.medications} (Qty: ${prescription.quantity}) - ${prescription.prescribed_date}`;
+                    selectElement.appendChild(option);
+                });
+                
+                if (infoElement) {
+                    infoElement.textContent = `${data.count} pending prescription(s) found for this medication`;
+                    infoElement.classList.remove('text-muted');
+                    infoElement.classList.add('text-success');
+                }
+            } else {
+                selectElement.innerHTML = '<option value="">No pending prescriptions for this medication</option>';
+                
+                if (infoElement) {
+                    infoElement.textContent = 'No pending prescriptions available';
+                    infoElement.classList.remove('text-success');
+                    infoElement.classList.add('text-muted');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading prescriptions:', error);
+            selectElement.innerHTML = '<option value="">Error loading prescriptions</option>';
+            
+            if (infoElement) {
+                infoElement.textContent = 'Error loading prescriptions';
+                infoElement.classList.add('text-danger');
+            }
+        });
+    }
+    
+    // Handle prescription selection in sell modal
+    if (sellPrescriptionSelect) {
+        sellPrescriptionSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (this.value && selectedOption.dataset.quantity) {
+                // Auto-fill quantity from prescription
+                sellQuantityInput.value = selectedOption.dataset.quantity;
+                
+                if (sellPrescriptionInfo) {
+                    sellPrescriptionInfo.textContent = `Patient: ${selectedOption.dataset.patientName} | ${selectedOption.dataset.medications}`;
+                    sellPrescriptionInfo.classList.remove('text-muted');
+                    sellPrescriptionInfo.classList.add('text-info');
+                }
+            } else {
+                if (sellPrescriptionInfo) {
+                    sellPrescriptionInfo.textContent = '';
+                }
+            }
+        });
+    }
+    
+    // Handle batch selection
+    if (sellBatchSelect) {
+        sellBatchSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (this.value) {
+                const stock = selectedOption.dataset.stock;
+                const price = selectedOption.dataset.price;
+                const expiry = selectedOption.dataset.expiry;
+                
+                // Update display elements
+                sellBatchStock.textContent = stock;
+                sellBatchExpiry.textContent = expiry;
+                sellBatchPrice.textContent = parseFloat(price).toFixed(0);
+                sellAvailableStock.textContent = stock;
+                sellSelectedBatchDetails.style.display = 'block';
+                
+                // Set max quantity
+                sellQuantityInput.max = stock;
+                
+                // Calculate total
+                calculateSellTotal();
+            } else {
+                sellSelectedBatchDetails.style.display = 'none';
+                sellAvailableStock.textContent = '-';
+                sellEstimatedRevenue.textContent = 'UGX 0';
+            }
+        });
+        
+        sellQuantityInput.addEventListener('input', calculateSellTotal);
+    }
+    
+    function calculateSellTotal() {
+        const selectedOption = sellBatchSelect.options[sellBatchSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const quantity = parseInt(sellQuantityInput.value) || 0;
+            const total = price * quantity;
+            sellEstimatedRevenue.textContent = 'UGX ' + total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        } else {
+            sellEstimatedRevenue.textContent = 'UGX 0';
+        }
+    }
+    
+    // Handle form submission
+    if (submitSellBtn) {
+        submitSellBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!sellForm.checkValidity()) {
+                sellForm.reportValidity();
+                return;
+            }
+            
+            const originalText = submitSellBtn.innerHTML;
+            submitSellBtn.disabled = true;
+            submitSellBtn.innerHTML = '<i class="bi bi-hourglass-split spinner-border spinner-border-sm"></i> Processing...';
+            
+            const formData = new FormData(sellForm);
+            
+            fetch('{% url "pharmacy:record_sale_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ ' + data.message);
+                    const modal = bootstrap.Modal.getInstance(sellModal);
+                    modal.hide();
+                    sellForm.reset();
+                    sellSelectedBatchDetails.style.display = 'none';
+                    window.location.reload();
+                } else {
+                    alert('❌ ' + (data.message || 'Error recording sale'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            })
+            .finally(() => {
+                submitSellBtn.disabled = false;
+                submitSellBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // ========== DISPENSE MODAL ==========
+    const dispenseModal = document.getElementById('medicationDispenseModal');
+    const dispenseForm = document.getElementById('medicationDispenseForm');
+    const dispensePrescriptionSelect = document.getElementById('dispense_prescription_id');
+    const dispenseBatchSection = document.getElementById('dispense_batch_section');
+    const dispenseBatchSelect = document.getElementById('dispense_batch_id');
+    const dispenseQuantitySection = document.getElementById('dispense_quantity_section');
+    const dispenseQuantityInput = document.getElementById('dispense_quantity');
+    const dispensePrescriptionDetails = document.getElementById('dispense_prescription_details');
+    const dispenseDetailsContent = document.getElementById('dispense_details_content');
+    
+    // Load pending prescriptions for this medication when modal opens
+    if (dispenseModal) {
+        dispenseModal.addEventListener('shown.bs.modal', function() {
+            loadPendingPrescriptions('dispense');
+        });
+    }
+    
+    function loadPendingPrescriptions(modalType) {
+        const selectElement = modalType === 'sell' ? sellPrescriptionSelect : dispensePrescriptionSelect;
+        const infoElement = modalType === 'sell' ? sellPrescriptionInfo : null;
+        
+        selectElement.innerHTML = '<option value="">Loading prescriptions...</option>';
+        
+        const medicationId = '{{ medication.id }}';
+        const url = `{% url 'pharmacy:get_pending_prescriptions_ajax' %}?medication_id=${medicationId}`;
+        
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.prescriptions.length > 0) {
+                selectElement.innerHTML = '<option value="">-- Select Pending Prescription --</option>';
+                
+                data.prescriptions.forEach(prescription => {
+                    const option = document.createElement('option');
+                    option.value = prescription.id;
+                    option.dataset.quantity = prescription.quantity;
+                    option.dataset.patientName = prescription.patient_name;
+                    option.dataset.medications = prescription.medications;
+                    option.textContent = `${prescription.patient_id} - ${prescription.patient_name} - ${prescription.medications} (Qty: ${prescription.quantity}) - ${prescription.prescribed_date}`;
+                    selectElement.appendChild(option);
+                });
+                
+                if (infoElement) {
+                    infoElement.textContent = `${data.count} pending prescription(s) found for this medication`;
+                    infoElement.classList.remove('text-muted');
+                    infoElement.classList.add('text-success');
+                }
+            } else {
+                selectElement.innerHTML = '<option value="">No pending prescriptions for this medication</option>';
+                
+                if (infoElement) {
+                    infoElement.textContent = 'No pending prescriptions available';
+                    infoElement.classList.remove('text-success');
+                    infoElement.classList.add('text-muted');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading prescriptions:', error);
+            selectElement.innerHTML = '<option value="">Error loading prescriptions</option>';
+            
+            if (infoElement) {
+                infoElement.textContent = 'Error loading prescriptions';
+                infoElement.classList.add('text-danger');
+            }
+        });
+    }
+    
+    // Handle prescription selection
+    if (dispensePrescriptionSelect) {
+        dispensePrescriptionSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (this.value && selectedOption.dataset.quantity) {
+                dispenseBatchSection.style.display = 'block';
+                dispenseQuantitySection.style.display = 'block';
+                dispensePrescriptionDetails.style.display = 'block';
+                
+                // Auto-fill quantity from prescription
+                dispenseQuantityInput.value = selectedOption.dataset.quantity;
+                
+                // Display prescription details
+                dispenseDetailsContent.innerHTML = `
+                    <p><strong>Patient:</strong> ${selectedOption.dataset.patientName}</p>
+                    <p><strong>Medications:</strong> ${selectedOption.dataset.medications}</p>
+                    <p><strong>Quantity for this medication:</strong> ${selectedOption.dataset.quantity} units</p>
+                `;
+            } else {
+                dispenseBatchSection.style.display = 'none';
+                dispenseQuantitySection.style.display = 'none';
+                dispensePrescriptionDetails.style.display = 'none';
+            }
+        });
+    }
+    
+    // Handle dispense form submission
+    if (dispenseForm) {
+        dispenseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitDispenseBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split spinner-border spinner-border-sm"></i> Dispensing...';
+            
+            const formData = new FormData(this);
+            
+            fetch('{% url "pharmacy:record_sale_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ ' + data.message);
+                    const modal = bootstrap.Modal.getInstance(dispenseModal);
+                    modal.hide();
+                    dispenseForm.reset();
+                    window.location.reload();
+                } else {
+                    alert('❌ ' + (data.message || 'Error dispensing prescription'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // ========== PRESCRIBE MODAL ==========
+    const prescribeForm = document.getElementById('medicationPrescribeForm');
+    let medicationRowCountPrescribe = 1;
+    
+    // Function to add medication row
+    window.addMedicationRowPrescribe = function() {
+        medicationRowCountPrescribe++;
+        const container = document.getElementById('medicationsContainerPrescribe');
+        const firstRow = container.querySelector('.medication-row-prescribe');
+        const newRow = firstRow.cloneNode(true);
+        
+        // Update row number
+        newRow.querySelector('h6').innerHTML = `<i class="bi bi-capsule text-secondary"></i> Medication #${medicationRowCountPrescribe}`;
+        
+        // Show remove button
+        newRow.querySelector('.remove-medication-prescribe').style.display = 'inline-block';
+        
+        // Clear input values
+        newRow.querySelectorAll('input, textarea').forEach(input => input.value = '');
+        newRow.querySelector('.medication-select-prescribe').selectedIndex = 0;
+        
+        container.appendChild(newRow);
+        updateMedicationCountPrescribe();
+    };
+    
+    // Function to remove medication row
+    window.removeMedicationRowPrescribe = function(button) {
+        if (medicationRowCountPrescribe > 1) {
+            button.closest('.medication-row-prescribe').remove();
+            medicationRowCountPrescribe--;
+            updateMedicationCountPrescribe();
+        }
+    };
+    
+    function updateMedicationCountPrescribe() {
+        document.getElementById('medicationCountPrescribe').textContent = medicationRowCountPrescribe;
+        const rows = document.querySelectorAll('.medication-row-prescribe');
+        rows.forEach((row, index) => {
+            row.querySelector('h6').innerHTML = `<i class="bi bi-capsule text-secondary"></i> Medication #${index + 1}`;
+            if (rows.length === 1) {
+                row.querySelector('.remove-medication-prescribe').style.display = 'none';
+            } else {
+                row.querySelector('.remove-medication-prescribe').style.display = 'inline-block';
+            }
+        });
+    }
+    
+    // Handle prescribe form submission
+    window.submitMedicationPrescription = function() {
+        if (!prescribeForm.checkValidity()) {
+            prescribeForm.reportValidity();
+            return;
+        }
+        
+        const submitBtn = event.target;
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split spinner-border spinner-border-sm"></i> Creating...';
+        
+        // Collect medication data
+        const medications = [];
+        document.querySelectorAll('.medication-row-prescribe').forEach(row => {
+            const medId = row.querySelector('.medication-select-prescribe').value;
+            if (medId) {  // Only include if medication is selected
+                medications.push({
+                    medication: medId,  // Changed from medication_id to medication
+                    dosage: row.querySelector('.dosage-input-prescribe').value,
+                    frequency: row.querySelector('.frequency-input-prescribe').value,
+                    duration: row.querySelector('.duration-input-prescribe').value,
+                    quantity: row.querySelector('.quantity-input-prescribe').value,
+                    notes: row.querySelector('.notes-input-prescribe').value
+                });
+            }
+        });
+        
+        // Get patient and instructions
+        const patientId = document.getElementById('prescribe_patient_select').value;
+        const instructions = prescribeForm.querySelector('textarea[name="instructions"]').value;
+        
+        // Create JSON payload
+        const payload = {
+            patient: patientId,
+            instructions: instructions,
+            medications: medications
+        };
+        
+        console.log('Sending prescription data:', payload);
+        
+        // Get CSRF token
+        const csrfToken = prescribeForm.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch('{% url "pharmacy:prescription_create_ajax" %}', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ ' + (data.message || 'Prescription created successfully!'));
+                const modal = bootstrap.Modal.getInstance(document.getElementById('medicationPrescribeModal'));
+                modal.hide();
+                prescribeForm.reset();
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert('❌ ' + (data.message || 'Error creating prescription'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        });
+    };
+});
+</script>
+{% endblock %}

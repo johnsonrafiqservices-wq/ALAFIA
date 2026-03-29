@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Laboratory Tests</h2>
+<button class="btn btn-primary" onclick="openModal('{% url 'laboratory:labtest_add' %}')">Add Lab Test</button>
+<button class="btn btn-success" onclick="openModal('{% url 'laboratory:labtest_request' %}')">Request Test for Patient</button>
+<a href="{% url 'laboratory:labtest_results' %}" class="btn btn-info">View Results</a>
+<button class="btn btn-warning" onclick="openModal('{% url 'laboratory:labtest_result_add' %}')">Add Lab Test Result</button>
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Currency</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for test in tests %}
+        <tr>
+            <td>{{ test.name }}</td>
+            <td>{{ test.code }}</td>
+            <td>{{ test.description }}</td>
+            <td>{{ test.price }}</td>
+            <td>{{ test.currency }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No lab tests found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

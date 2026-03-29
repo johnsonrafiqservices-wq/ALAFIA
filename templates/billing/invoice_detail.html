@@ -1,0 +1,850 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} - {{ invoice.patient.get_full_name }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Dashboard</span>
+    </div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex align-items-center gap-2 flex-wrap">
+    <a href="{% url 'billing:invoice_pdf' invoice.pk %}" class="btn btn-sm btn-primary" target="_blank">
+        <i class="bi bi-download"></i> Download PDF
+    </a>
+    {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#quickPaymentModal">
+        <i class="bi bi-credit-card"></i> Quick Payment
+    </button>
+    {% else %}
+        {% if invoice.status == 'paid' %}
+        <span class="btn btn-sm btn-success disabled">
+            <i class="bi bi-check-circle"></i> Fully Paid
+        </span>
+        {% endif %}
+    {% endif %}
+    <!-- <button type="button" class="btn btn-sm btn-outline-success"
+            onclick="openPaymentModal({{ invoice.pk }}, '{{ invoice.invoice_number }}', {{ invoice.get_balance_due|floatformat:2|intcomma }}, {{ invoice.patient.pk }})">
+        <i class="bi bi-credit-card-2-front"></i> Record Payment
+    </button> -->
+    {% if invoice.status == 'draft' %}
+    <form method="post" action="{% url 'billing:invoice_status_update' invoice.pk %}" style="display: inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="sent">
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-send"></i> Send Invoice
+        </button>
+    </form>
+    {% endif %}
+    <a href="{% url 'billing:invoice_list' %}" class="btn btn-sm btn-light border">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+    <div class="dropdown d-none">
+        <!-- <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots"></i> More Actions
+        </button> -->
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'billing:invoice_list' %}">
+                <i class="bi bi-list"></i> Back to Invoices
+            </a></li>
+            {% if invoice.status == 'draft' %}
+            <li><a class="dropdown-item" href="{% url 'billing:invoice_edit' invoice.pk %}">
+                <i class="bi bi-pencil"></i> Edit Invoice
+            </a></li>
+            {% endif %}
+            {% if invoice.status != 'cancelled' %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form method="post" action="{% url 'billing:invoice_status_update' invoice.pk %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Are you sure you want to cancel this invoice?')">
+                        <i class="bi bi-x-circle"></i> Cancel Invoice
+                    </button>
+                </form>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.invoice-shell-card,
+.invoice-section-card,
+.invoice-stat-card,
+.payment-summary-card {
+    border-radius: 1rem;
+}
+
+.invoice-shell-card {
+    border: 1px solid #e7edf5;
+}
+
+.invoice-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #20717c, #2c4fa3);
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.invoice-number-display {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #13263b;
+}
+
+.invoice-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: #64748b;
+    font-size: 0.92rem;
+}
+
+.invoice-meta-row i {
+    margin-right: 0.35rem;
+}
+
+.invoice-link {
+    color: #2b6ea5;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.invoice-link:hover {
+    color: #1e5684;
+}
+
+.status-pill,
+.payment-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.status-draft {
+    background: #fff3cd;
+    color: #8a6d1d;
+}
+
+.status-paid,
+.payment-completed {
+    background: #d1f4de;
+    color: #13653a;
+}
+
+.status-sent {
+    background: #dbeafe;
+    color: #1d4f91;
+}
+
+.status-overdue,
+.payment-failed {
+    background: #fee2e2;
+    color: #b42318;
+}
+
+.status-cancelled {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.payment-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.invoice-barcode {
+    width: 120px;
+    height: 26px;
+    border-radius: 0.3rem;
+    background: repeating-linear-gradient(
+        90deg,
+        #0f172a 0px,
+        #0f172a 2px,
+        transparent 2px,
+        transparent 4px,
+        #0f172a 4px,
+        #0f172a 5px,
+        transparent 5px,
+        transparent 7px,
+        #0f172a 7px,
+        #0f172a 10px,
+        transparent 10px,
+        transparent 12px
+    );
+}
+
+.invoice-detail-tabs {
+    gap: 0.5rem;
+    border-bottom: 1px solid #e7edf5;
+}
+
+.invoice-detail-tabs .nav-link {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #6b7a8c;
+    font-weight: 600;
+    padding: 0.9rem 1rem;
+}
+
+.invoice-detail-tabs .nav-link.active {
+    color: #185487;
+    border-bottom-color: #185487;
+}
+
+.invoice-detail-tabs .nav-link i {
+    margin-right: 0.4rem;
+}
+
+.invoice-stat-card {
+    border: 1px solid #e7edf5;
+    background: #fff;
+    padding: 1.15rem 1.25rem;
+    height: 100%;
+    text-align: center;
+}
+
+.invoice-stat-label,
+.info-label {
+    color: #718096;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.45rem;
+}
+
+.invoice-stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #10263c;
+}
+
+.invoice-section-card,
+.payment-summary-card {
+    border: 1px solid #e7edf5;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    padding: 1.4rem;
+}
+
+.invoice-section-title {
+    color: #185487;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 1rem;
+}
+
+.info-value {
+    color: #13263b;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.invoice-table thead th {
+    background: #f8fbff;
+    color: #607086;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid #e6eef7;
+}
+
+.invoice-table tbody td,
+.invoice-table tfoot td {
+    border-color: #eef2f7;
+}
+
+.invoice-total-row td {
+    background: #f8fbff;
+}
+
+@media (max-width: 991.98px) {
+    .invoice-meta-row {
+        gap: 0.6rem;
+    }
+
+    .invoice-number-display {
+        font-size: 1.35rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 invoice-detail-shell">
+    <div class="card border-0 shadow-sm invoice-shell-card">
+        <div class="card-body p-4 p-lg-5">
+            <!-- Invoice Information -->
+            <!-- Invoice Header -->
+            <div class="d-flex justify-content-between align-items-start gap-4 flex-wrap invoice-hero-section">
+                <div class="d-flex align-items-start gap-3 flex-grow-1">
+                    <div class="invoice-avatar">IN</div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold invoice-number-display">{{ invoice.invoice_number }}</div>
+                        <div class="invoice-meta-row mt-1">
+                            <span><i class="bi bi-calendar-event"></i> DOB: {% if invoice.patient.date_of_birth %}{{ invoice.patient.date_of_birth|date:'M d, Y' }}{% else %}-{% endif %}</span>
+                            <span><i class="bi bi-calendar2-check"></i> Due: {{ invoice.due_date|date:'M d, Y' }}</span>
+                            <span><i class="bi bi-person"></i> Patient: <a href="{% url 'patients:patient_detail' invoice.patient.patient_id %}" class="invoice-link">{{ invoice.patient.get_full_name }}</a></span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="status-pill {% if invoice.status == 'paid' %}status-paid{% elif invoice.status == 'sent' %}status-sent{% elif invoice.status == 'overdue' or invoice.status != 'paid' and invoice.due_date < today %}status-overdue{% elif invoice.status == 'cancelled' %}status-cancelled{% else %}status-draft{% endif %}">{{ invoice.get_status_display }}</span>
+                        </div>
+                        <div class="invoice-barcode mt-4"></div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav invoice-detail-tabs mt-4" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overviewTab" type="button">
+                        <i class="bi bi-grid"></i> Overview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#itemsTab" type="button">
+                        <i class="bi bi-list-ul"></i> Invoice Items
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#paymentsTab" type="button">
+                        <i class="bi bi-credit-card-2-front"></i> Payment History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsTab" type="button">
+                        <i class="bi bi-info-circle"></i> Details
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content pt-4">
+                <div class="tab-pane fade show active" id="overviewTab">
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="invoice-stat-card">
+                                <div class="invoice-stat-label">Total Amount</div>
+                                <div class="invoice-stat-value text-primary">UGX {{ invoice.total_amount|floatformat:0|intcomma }}</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="invoice-stat-card">
+                                <div class="invoice-stat-label">Total Paid</div>
+                                <div class="invoice-stat-value text-success">UGX {{ invoice.get_total_paid|floatformat:0|intcomma }}</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="invoice-stat-card">
+                                <div class="invoice-stat-label">Balance Due</div>
+                                <div class="invoice-stat-value {% if invoice.get_balance_due > 0 %}text-danger{% else %}text-success{% endif %}">UGX {{ invoice.get_balance_due|floatformat:0|intcomma }}</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="invoice-stat-card">
+                                <div class="invoice-stat-label">Line Items</div>
+                                <div class="invoice-stat-value text-dark">{{ line_items|length }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="invoice-section-card">
+                        <div class="invoice-section-title">Invoice Information</div>
+                        <div class="row g-4 invoice-info-grid">
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Invoice Number</div>
+                                <div class="info-value">{{ invoice.invoice_number }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Issue Date</div>
+                                <div class="info-value">{{ invoice.issue_date|date:'F d, Y' }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Due Date</div>
+                                <div class="info-value">{{ invoice.due_date|date:'F d, Y' }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Status</div>
+                                <div class="info-value">{{ invoice.get_status_display }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Created By</div>
+                                <div class="info-value">{{ invoice.created_by.get_full_name|default:'-' }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Created At</div>
+                                <div class="info-value">{{ invoice.created_at|date:'M d, Y H:i' }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Patient Name</div>
+                                <div class="info-value">{{ invoice.patient.get_full_name }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Patient ID</div>
+                                <div class="info-value">{{ invoice.patient.patient_id }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Phone</div>
+                                <div class="info-value">{{ invoice.patient.phone|default:'-' }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Payments</div>
+                                <div class="info-value">{{ payments|length }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Discount</div>
+                                <div class="info-value">UGX {{ invoice.discount_amount|floatformat:0|intcomma }}</div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6">
+                                <div class="info-label">Tax</div>
+                                <div class="info-value">{{ invoice.tax_rate|floatformat:0 }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Items -->
+                <div class="tab-pane fade" id="itemsTab">
+                    <div class="invoice-section-card">
+                        <div class="invoice-section-title">Invoice Items</div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0 invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">Unit Price</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in line_items %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ item.description }}</div>
+                                            {% if item.service %}
+                                            <div class="small text-muted">Service: {{ item.service.name }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">UGX {{ item.unit_price|floatformat:2|intcomma }}</td>
+                                        <td class="text-end fw-semibold">UGX {{ item.total_amount|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">No items found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end">Subtotal</td>
+                                        <td class="text-end fw-semibold">UGX {{ invoice.subtotal|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                    {% if invoice.discount_amount > 0 %}
+                                    <tr>
+                                        <td colspan="3" class="text-end">Discount</td>
+                                        <td class="text-end text-success fw-semibold">-UGX {{ invoice.discount_amount|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if invoice.tax_rate > 0 %}
+                                    <tr>
+                                        <td colspan="3" class="text-end">Tax ({{ invoice.tax_rate|floatformat:0 }}%)</td>
+                                        <td class="text-end fw-semibold">UGX {{ invoice.tax_amount|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="invoice-total-row">
+                                        <td colspan="3" class="text-end">Total Amount</td>
+                                        <td class="text-end fw-bold">UGX {{ invoice.total_amount|floatformat:2|intcomma }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment History -->
+                <div class="tab-pane fade" id="paymentsTab">
+                    <div class="invoice-section-card">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <div class="invoice-section-title mb-0">Payment History</div>
+                            {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#quickPaymentModal">
+                                <i class="bi bi-plus-circle"></i> Record Payment
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% if payments %}
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0 invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payment ID</th>
+                                        <th>Date</th>
+                                        <th>Method</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Status</th>
+                                        <th>Processed By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'billing:payment_detail' payment.pk %}" class="invoice-link fw-semibold">
+                                                {{ payment.payment_id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ payment.payment_date|date:'M d, Y' }}</td>
+                                        <td>{{ payment.get_payment_method_display }}</td>
+                                        <td class="text-end">UGX {{ payment.amount|floatformat:2|intcomma }}</td>
+                                        <td>
+                                            <span class="payment-status {% if payment.status == 'completed' %}payment-completed{% elif payment.status == 'pending' %}payment-pending{% else %}payment-failed{% endif %}">{{ payment.get_status_display }}</span>
+                                        </td>
+                                        <td>{{ payment.processed_by.get_full_name|default:'-' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <div class="payment-summary-card">
+                                    <div class="info-label">Total Paid</div>
+                                    <div class="fw-bold text-success">UGX {{ invoice.get_total_paid|floatformat:2|intcomma }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="payment-summary-card">
+                                    <div class="info-label">Balance Due</div>
+                                    <div class="fw-bold {% if invoice.get_balance_due > 0 %}text-danger{% else %}text-success{% endif %}">UGX {{ invoice.get_balance_due|floatformat:2|intcomma }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5 text-muted">No payments recorded yet.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="tab-pane fade" id="detailsTab">
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <!-- Quick Actions -->
+                            <div class="invoice-section-card h-100">
+                                <div class="invoice-section-title">Quick Actions</div>
+                                <div class="d-grid gap-2">
+                                    {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#quickPaymentModal">
+                                        <i class="bi bi-credit-card"></i> Quick Payment
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'billing:invoice_pdf' invoice.pk %}" class="btn btn-outline-primary" target="_blank">
+                                        <i class="bi bi-file-pdf"></i> View PDF
+                                    </a>
+                                    {% if invoice.status == 'draft' %}
+                                    <a href="{% url 'billing:invoice_edit' invoice.pk %}" class="btn btn-outline-warning">
+                                        <i class="bi bi-pencil-square"></i> Edit Invoice
+                                    </a>
+                                    <form method="post" action="{% url 'billing:invoice_status_update' invoice.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="sent">
+                                        <button type="submit" class="btn btn-outline-success w-100">
+                                            <i class="bi bi-send"></i> Send Invoice
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <a href="{% url 'patients:patient_detail' invoice.patient.patient_id %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-person"></i> View Patient
+                                    </a>
+                                    <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-list-ul"></i> All Invoices
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <!-- Patient Summary -->
+                                    <div class="invoice-section-card h-100">
+                                        <div class="invoice-section-title">Patient Information</div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="info-label">Patient Name</div>
+                                                <div class="info-value">{{ invoice.patient.get_full_name }}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-label">Patient ID</div>
+                                                <div class="info-value">{{ invoice.patient.patient_id }}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-label">Phone</div>
+                                                <div class="info-value">{{ invoice.patient.phone|default:'-' }}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="info-label">Email</div>
+                                                <div class="info-value">{{ invoice.patient.email|default:'-' }}</div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-label">Address</div>
+                                                <div class="info-value text-muted">
+                                                    {% if invoice.patient.address_line1 or invoice.patient.city or invoice.patient.state or invoice.patient.postal_code %}
+                                                        {{ invoice.patient.address_line1 }}{% if invoice.patient.address_line2 %}, {{ invoice.patient.address_line2 }}{% endif %}{% if invoice.patient.city %}, {{ invoice.patient.city }}{% endif %}{% if invoice.patient.state %}, {{ invoice.patient.state }}{% endif %}{% if invoice.patient.postal_code %} {{ invoice.patient.postal_code }}{% endif %}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <!-- Invoice Statistics -->
+                                    <div class="invoice-section-card h-100">
+                                        <div class="invoice-section-title">Billing Details</div>
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <div class="info-label">Subtotal</div>
+                                                <div class="info-value">UGX {{ invoice.subtotal|floatformat:2|intcomma }}</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-label">Discount</div>
+                                                <div class="info-value">UGX {{ invoice.discount_amount|floatformat:2|intcomma }}</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-label">Tax Amount</div>
+                                                <div class="info-value">UGX {{ invoice.tax_amount|floatformat:2|intcomma }}</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-label">Last Updated</div>
+                                                <div class="info-value">{{ invoice.updated_at|date:'M d, Y H:i' }}</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-label">Invoice Age</div>
+                                                <div class="info-value">{{ invoice.issue_date|timesince }}</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="info-label">Payment Count</div>
+                                                <div class="info-value">{{ payments|length }}</div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="info-label">Notes</div>
+                                                <div class="info-value text-muted">{{ invoice.notes|default:'No invoice notes recorded.'|linebreaksbr }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Payment Modal -->
+{% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+<div class="modal fade" id="quickPaymentModal" tabindex="-1" aria-labelledby="quickPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickPaymentModalLabel">
+                    <i class="bi bi-credit-card me-2"></i>Quick Payment - {{ invoice.invoice_number }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="quickPaymentForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <strong>Invoice Total:</strong> UGX {{ invoice.total_amount|floatformat:2|intcomma }}<br>
+                        <strong>Balance Due:</strong> UGX {{ invoice.get_balance_due|floatformat:2|intcomma }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentAmount" class="form-label">Payment Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">UGX</span>
+                            <input type="number" class="form-control" id="paymentAmount" name="amount" 
+                                   value="{{ invoice.get_balance_due|floatformat:2 }}" step="1" min="1" required>
+                        </div>
+                        <div class="form-text">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setFullAmount()">Full Amount</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setPartialAmount()">Partial Payment</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentMethod" class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentMethod" name="payment_method" required>
+                            <option value="">Select payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="cash">Momo</option>
+                            <option value="cash">Airtel Marchant</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="debit_card">Debit Card</option>
+                            <option value="check">Check</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="insurance">Insurance</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="referenceNumber" class="form-label">Transaction Number (Optional)</label>
+                        <input type="text" class="form-control" id="referenceNumber" name="reference_number" 
+                               placeholder="Check number, transaction ID, etc.">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paymentNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="paymentNotes" name="notes" rows="2" 
+                                  placeholder="Additional payment notes"></textarea>
+                    </div>
+                    
+                    <input type="hidden" name="patient" value="{{ invoice.patient.pk }}">
+                    <input type="hidden" name="invoice" value="{{ invoice.pk }}">
+                    <input type="hidden" name="status" value="completed">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-credit-card me-1"></i>Record Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quickPaymentForm = document.getElementById('quickPaymentForm');
+    const paymentAmountInput = document.getElementById('paymentAmount');
+    const balanceDue = parseFloat('{{ invoice.get_balance_due|floatformat:2 }}');
+    const totalAmount = parseFloat('{{ invoice.total_amount|floatformat:2 }}');
+    
+    // Set full amount function
+    window.setFullAmount = function() {
+        paymentAmountInput.value = balanceDue.toFixed(2);
+    };
+    
+    // Set partial amount function (half of balance due)
+    window.setPartialAmount = function() {
+        paymentAmountInput.value = (balanceDue / 2).toFixed(2);
+    };
+    
+    // Handle quick payment form submission
+    if (quickPaymentForm) {
+        quickPaymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+            
+            // Submit payment via AJAX
+            fetch('{% url "billing:payment_create" %}?invoice={{ invoice.pk }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-check-circle me-2"></i>${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const shell = document.querySelector('.invoice-detail-shell');
+                    if (shell) {
+                        shell.prepend(alertDiv);
+                    }
+                    
+                    // Close modal and reload page to show updated payment info
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('quickPaymentModal'));
+                    modal.hide();
+                    
+                    // Reload page after a short delay to show the new payment
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    // Check if invoice is already fully paid
+                    if (data.already_paid) {
+                        // Show already paid popup
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-warning alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Invoice Already Paid!</strong><br>
+                            ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        const shell = document.querySelector('.invoice-detail-shell');
+                        if (shell) {
+                            shell.prepend(alertDiv);
+                        }
+                        
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('quickPaymentModal'));
+                        modal.hide();
+                        
+                        // Optionally reload page to show current status
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        // Show error messages
+                        let errorMessage = 'Please correct the following errors:\n';
+                        for (const field in data.errors) {
+                            errorMessage += `${field}: ${data.errors[field].join(', ')}\n`;
+                        }
+                        alert(errorMessage);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing the payment. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

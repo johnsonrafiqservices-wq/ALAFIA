@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center gap-3">
+    <div class="rounded-circle d-flex align-items-center justify-content-center item-form-icon">
+        <i class="bi bi-box-seam"></i>
+    </div>
+    <div>
+        <div class="fw-bold page-title-gradient">{{ title }}</div>
+        <div class="small text-muted">Create and manage sellable pharmacy items from one place.</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'pharmacy:medication_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back to Items
+</a>
+{% if medication %}
+<a href="{% url 'pharmacy:medication_detail' medication.pk %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-eye"></i> View Item
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm form-shell-card">
+                <div class="card-body p-4 p-lg-5">
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="itemForm">
+                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="section-title">Item identity</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.item_type.id_for_label }}" class="form-label">Item type</label>
+                                {{ form.item_type }}
+                                {% if form.item_type.errors %}<div class="invalid-feedback d-block">{{ form.item_type.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Item name</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.generic_name.id_for_label }}" class="form-label">Generic / alternate name</label>
+                                {{ form.generic_name }}
+                                {% if form.generic_name.errors %}<div class="invalid-feedback d-block">{{ form.generic_name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}<div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <div class="section-title">Product details</div>
+                            </div>
+                            <div class="col-md-4" id="formFieldWrap">
+                                <label for="{{ form.form.id_for_label }}" class="form-label">Form</label>
+                                {{ form.form }}
+                                {% if form.form.errors %}<div class="invalid-feedback d-block">{{ form.form.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4" id="strengthFieldWrap">
+                                <label for="{{ form.strength.id_for_label }}" class="form-label">Strength</label>
+                                {{ form.strength }}
+                                {% if form.strength.errors %}<div class="invalid-feedback d-block">{{ form.strength.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.manufacturer.id_for_label }}" class="form-label">Manufacturer</label>
+                                {{ form.manufacturer }}
+                                {% if form.manufacturer.errors %}<div class="invalid-feedback d-block">{{ form.manufacturer.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">Unit price</label>
+                                {{ form.unit_price }}
+                                {% if form.unit_price.errors %}<div class="invalid-feedback d-block">{{ form.unit_price.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">Unit of measure</label>
+                                {{ form.unit_of_measure }}
+                                {% if form.unit_of_measure.errors %}<div class="invalid-feedback d-block">{{ form.unit_of_measure.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.reorder_level.id_for_label }}" class="form-label">Reorder level</label>
+                                {{ form.reorder_level }}
+                                {% if form.reorder_level.errors %}<div class="invalid-feedback d-block">{{ form.reorder_level.errors.0 }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <div class="section-title">Operational notes</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="{{ form.storage_instructions.id_for_label }}" class="form-label">Storage instructions</label>
+                                {{ form.storage_instructions }}
+                                {% if form.storage_instructions.errors %}<div class="invalid-feedback d-block">{{ form.storage_instructions.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}<div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch item-switch" id="prescriptionSwitchWrap">
+                                    {{ form.requires_prescription }}
+                                    <label class="form-check-label" for="{{ form.requires_prescription.id_for_label }}">Requires prescription</label>
+                                </div>
+                                {% if form.requires_prescription.errors %}<div class="invalid-feedback d-block">{{ form.requires_prescription.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch item-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Item is active</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-5 flex-wrap gap-3">
+                            <a href="{% url 'pharmacy:medication_list' %}" class="btn btn-light border px-4">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-circle me-2"></i>Save Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm h-100 helper-card">
+                <div class="card-body p-4">
+                    <div class="helper-badge mb-3">Item management flow</div>
+                    <h5 class="fw-bold mb-3">Designed for medications and other sellable items</h5>
+                    <div class="helper-list d-grid gap-3">
+                        <div class="helper-row">
+                            <span class="helper-step">1</span>
+                            <div>
+                                <div class="fw-semibold">Create the item</div>
+                                <div class="text-muted small">Set the type, pricing, and handling details first.</div>
+                            </div>
+                        </div>
+                        <div class="helper-row">
+                            <span class="helper-step">2</span>
+                            <div>
+                                <div class="fw-semibold">Receive stock</div>
+                                <div class="text-muted small">Add one or more batches after the item has been saved.</div>
+                            </div>
+                        </div>
+                        <div class="helper-row">
+                            <span class="helper-step">3</span>
+                            <div>
+                                <div class="fw-semibold">Sell or dispense</div>
+                                <div class="text-muted small">Medications can be prescribed; all active items can be sold.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="helper-panel mt-4">
+                        <div class="small text-uppercase text-muted mb-2">Quick rules</div>
+                        <ul class="mb-0 small text-muted ps-3">
+                            <li>Only items with type <strong>Medication</strong> should require prescriptions.</li>
+                            <li>Generic name, strength, and form can stay blank for non-medication items.</li>
+                            <li>Use clear units like <strong>box</strong>, <strong>bottle</strong>, or <strong>piece</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.item-form-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #185487, #2b6ea5);
+    color: #fff;
+    font-size: 1.2rem;
+}
+.page-title-gradient {
+    background: linear-gradient(135deg, #185487, #2b6ea5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.15rem;
+}
+.form-shell-card,
+.helper-card {
+    border-radius: 1rem;
+}
+.section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #185487;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e8eef5;
+}
+.helper-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(24, 84, 135, 0.08);
+    color: #185487;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.helper-row {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+}
+.helper-step {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #185487, #2b6ea5);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.helper-panel {
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #f8fbff;
+    border: 1px solid #e2edf8;
+}
+.item-switch {
+    padding: 0.85rem 1rem;
+    border-radius: 0.9rem;
+    border: 1px solid #e8eef5;
+    background: #fbfdff;
+}
+#itemForm .form-control,
+#itemForm .form-select {
+    border-radius: 0.85rem;
+    min-height: 48px;
+    border-color: #d8e2ed;
+}
+#itemForm textarea.form-control {
+    min-height: 110px;
+}
+#itemForm .form-control:focus,
+#itemForm .form-select:focus {
+    border-color: #185487;
+    box-shadow: 0 0 0 0.2rem rgba(24, 84, 135, 0.12);
+}
+@media (max-width: 991.98px) {
+    .helper-card {
+        margin-top: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemTypeField = document.getElementById('{{ form.item_type.id_for_label }}');
+    const prescriptionWrap = document.getElementById('prescriptionSwitchWrap');
+    const prescriptionInput = document.getElementById('{{ form.requires_prescription.id_for_label }}');
+    const formWrap = document.getElementById('formFieldWrap');
+    const strengthWrap = document.getElementById('strengthFieldWrap');
+
+    function updateItemFormState() {
+        const isMedication = itemTypeField && itemTypeField.value === 'medication';
+        if (prescriptionWrap) {
+            prescriptionWrap.style.display = isMedication ? '' : 'none';
+        }
+        if (!isMedication && prescriptionInput) {
+            prescriptionInput.checked = false;
+        }
+        if (formWrap) {
+            formWrap.style.opacity = isMedication ? '1' : '0.75';
+        }
+        if (strengthWrap) {
+            strengthWrap.style.opacity = isMedication ? '1' : '0.75';
+        }
+    }
+
+    if (itemTypeField) {
+        itemTypeField.addEventListener('change', updateItemFormState);
+        updateItemFormState();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,611 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Pharmacy Inventory Dashboard{% endblock %}
+
+{% block content %}
+<!-- Modern Header with Gradient -->
+<div class="pharmacy-header-gradient py-5 mb-4">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="text-white mb-2">
+                    <i class="fas fa-prescription-bottle-alt me-3"></i>
+                    Pharmacy Inventory Dashboard
+                </h1>
+                <p class="text-white-50 mb-0">Real-time inventory management and monitoring</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
+                    <i class="fas fa-plus me-2"></i>Add Medication
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Statistics Cards with Gradients -->
+    <div class="row mb-4">
+        <!-- Total Medications -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-card-primary">
+                <div class="metric-icon">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <div class="metric-content">
+                    <h6 class="metric-label">Total Medications</h6>
+                    <h2 class="metric-value">{{ total_medications|intcomma }}</h2>
+                    <p class="metric-subtitle">Active Products</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-primary" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Batches -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-card-success">
+                <div class="metric-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="metric-content">
+                    <h6 class="metric-label">Total Batches</h6>
+                    <h2 class="metric-value">{{ total_batches|intcomma }}</h2>
+                    <p class="metric-subtitle">Active Batches</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Items -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-card-warning">
+                <div class="metric-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="metric-content">
+                    <h6 class="metric-label">Low Stock Items</h6>
+                    <h2 class="metric-value">{{ low_stock_count|intcomma }}</h2>
+                    <p class="metric-subtitle text-warning">Need Attention</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-warning" style="width: {{ low_stock_count|default:0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Value -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="metric-card metric-card-info">
+                <div class="metric-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="metric-content">
+                    <h6 class="metric-label">Inventory Value</h6>
+                    <h2 class="metric-value">{{ total_value|intcomma }}</h2>
+                    <p class="metric-subtitle">UGX</p>
+                </div>
+                <div class="metric-progress">
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-info" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions with Modal Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm modern-card">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="quick-action-card" onclick="window.location.href='{% url 'pharmacy:medication_list' %}'">
+                                <div class="quick-action-icon bg-primary-gradient">
+                                    <i class="fas fa-pills"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Medications</h6>
+                                <p class="text-muted small mb-0">Manage all medications</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="quick-action-card" onclick="window.location.href='{% url 'pharmacy:batch_list' %}'">
+                                <div class="quick-action-icon bg-success-gradient">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Batches</h6>
+                                <p class="text-muted small mb-0">Track batch inventory</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="quick-action-card" onclick="window.location.href='{% url 'pharmacy:prescription_list' %}'">
+                                <div class="quick-action-icon bg-warning-gradient">
+                                    <i class="fas fa-prescription"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Prescriptions</h6>
+                                <p class="text-muted small mb-0">Manage prescriptions</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="quick-action-card" onclick="window.location.href='{% url 'pharmacy:supplier_list' %}'">
+                                <div class="quick-action-icon bg-info-gradient">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h6 class="mt-3 mb-2">Suppliers</h6>
+                                <p class="text-muted small mb-0">Manage suppliers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock & Expiring Items -->
+    <div class="row">
+        <!-- Low Stock Items -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm modern-card h-100">
+                <div class="card-header bg-danger-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>Low Stock Alert
+                    </h5>
+                    <span class="badge bg-danger rounded-pill">{{ low_stock_items|length }}</span>
+                </div>
+                <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                    {% if low_stock_items %}
+                    <div class="list-group list-group-flush">
+                        {% for item in low_stock_items %}
+                        <div class="list-group-item alert-item py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="alert-icon bg-danger-light text-danger me-3">
+                                    <i class="fas fa-pills"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ item.name }}</h6>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-danger me-2">{{ item.total_stock|default:0 }} units</span>
+                                        <small class="text-muted">Reorder at: {{ item.reorder_level }}</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'pharmacy:medication_detail' item.pk %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state-icon bg-success-light text-success mb-3">
+                            <i class="fas fa-check-circle fa-3x"></i>
+                        </div>
+                        <h6 class="text-muted">All stocks are healthy!</h6>
+                        <p class="text-muted small">No medications below reorder level</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiring Soon -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm modern-card h-100">
+                <div class="card-header bg-warning-light d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-warning">
+                        <i class="fas fa-clock me-2"></i>Expiring Soon
+                    </h5>
+                    <span class="badge bg-warning rounded-pill">{{ expiring_soon|length }}</span>
+                </div>
+                <div class="card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                    {% if expiring_soon %}
+                    <div class="list-group list-group-flush">
+                        {% for batch in expiring_soon %}
+                        <div class="list-group-item alert-item py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="alert-icon bg-warning-light text-warning me-3">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ batch.medication.name }}</h6>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-secondary me-2">{{ batch.batch_number }}</span>
+                                        <small class="text-muted">Expires: {{ batch.expiry_date|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-calendar-alt me-1"></i>{{ batch.get_remaining_shelf_life_days }} days
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="empty-state-icon bg-success-light text-success mb-3">
+                            <i class="fas fa-check-circle fa-3x"></i>
+                        </div>
+                        <h6 class="text-muted">No items expiring soon!</h6>
+                        <p class="text-muted small">All batches have healthy expiry dates</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm modern-card">
+                <div class="card-header bg-gradient-info text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Inventory Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <div class="insight-item">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <h4 class="mb-1">{{ total_medications|intcomma }}</h4>
+                                <p class="text-muted small mb-0">Active Products</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="insight-item">
+                                <i class="fas fa-box-open text-primary fa-2x mb-2"></i>
+                                <h4 class="mb-1">{{ total_batches|intcomma }}</h4>
+                                <p class="text-muted small mb-0">Stock Batches</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="insight-item">
+                                <i class="fas fa-dollar-sign text-info fa-2x mb-2"></i>
+                                <h4 class="mb-1">UGX {{ total_value|intcomma }}</h4>
+                                <p class="text-muted small mb-0">Total Worth</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="insight-item">
+                                <i class="fas fa-shipping-fast text-warning fa-2x mb-2"></i>
+                                <h4 class="mb-1">{{ low_stock_count|intcomma }}</h4>
+                                <p class="text-muted small mb-0">Need Reorder</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Pharmacy Modals -->
+{% include 'pharmacy/modals/all_pharmacy_modals.html' %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Pharmacy Header Gradient */
+    .pharmacy-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Modern Metric Cards */
+    .metric-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        opacity: 0.1;
+    }
+
+    .metric-card-primary::before { background: #0d6efd; }
+    .metric-card-success::before { background: #198754; }
+    .metric-card-warning::before { background: #ffc107; }
+    .metric-card-info::before { background: #0dcaf0; }
+
+    .metric-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 1rem;
+    }
+
+    .metric-card-primary .metric-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .metric-card-success .metric-icon {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+    }
+
+    .metric-card-warning .metric-icon {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+    }
+
+    .metric-card-info .metric-icon {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+    }
+
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+
+    .metric-subtitle {
+        font-size: 0.75rem;
+        color: #95a5a6;
+        margin-bottom: 1rem;
+    }
+
+    .metric-progress {
+        margin-top: 1rem;
+    }
+
+    /* Quick Action Cards */
+    .quick-action-card {
+        text-align: center;
+        padding: 2rem 1rem;
+        border-radius: 12px;
+        background: white;
+        border: 2px solid #f0f0f0;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+    }
+
+    .quick-action-card:hover {
+        border-color: #667eea;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.1);
+    }
+
+    .quick-action-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        margin: 0 auto;
+    }
+
+    .bg-primary-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .bg-success-gradient {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    }
+
+    .bg-warning-gradient {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    }
+
+    .bg-info-gradient {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    /* Modern Card */
+    .modern-card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    }
+
+    /* Alert Items */
+    .alert-item {
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+    }
+
+    .alert-item:hover {
+        background-color: #f8f9fa;
+        border-left-color: #667eea;
+    }
+
+    .alert-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .bg-warning-light {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    /* Empty State */
+    .empty-state-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Insight Items */
+    .insight-item {
+        padding: 1rem;
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .insight-item:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.05);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .metric-value {
+            font-size: 1.5rem;
+        }
+        
+        .quick-action-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('🔧 Loading batch form handler for inventory dashboard...');
+
+// BATCH FORM SUBMISSION - Global Function
+window.submitBatchForm = function(formId, url) {
+    console.log('🚀 submitBatchForm called!', formId, url);
+    
+    const form = document.getElementById(formId);
+    if (!form) {
+        alert('❌ Form not found: ' + formId);
+        console.error('Form not found:', formId);
+        return;
+    }
+    
+    console.log('📝 Form found, preparing submission...');
+    const formData = new FormData(form);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Log form data
+    console.log('Form data:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+    
+    // Clear previous errors
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+    
+    console.log('📡 Sending AJAX request to:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('📥 Response received:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Response data:', data);
+        
+        if (data.success) {
+            alert('✅ SUCCESS: ' + data.message);
+            const modalEl = document.getElementById('batchCreateModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            
+            setTimeout(() => {
+                window.location.href = data.redirect_url || window.location.href;
+            }, 500);
+        } else {
+            console.error('❌ Validation errors:', data.errors);
+            
+            if (data.errors) {
+                for (const [field, errors] of Object.entries(data.errors)) {
+                    const input = form.querySelector(`[name="${field}"]`);
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback d-block';
+                        errorDiv.textContent = Array.isArray(errors) ? errors.join(', ') : errors;
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                }
+            }
+            alert('❌ ERROR: ' + (data.message || 'Please correct the errors and try again.'));
+        }
+    })
+    .catch(error => {
+        console.error('💥 AJAX Error:', error);
+        alert('❌ NETWORK ERROR: ' + error.message + '\n\nCheck console for details.');
+    });
+};
+
+// Medication form handler
+window.submitMedicationForm = function(formId, url) {
+    window.submitBatchForm(formId, url); // Use same handler
+};
+
+console.log('✅ submitBatchForm loaded:', typeof window.submitBatchForm);
+</script>
+{% endblock %}

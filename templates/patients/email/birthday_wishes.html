@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday!</title>
+<style>
+  body { margin: 0; padding: 0; background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; }
+  .wrapper { max-width: 580px; margin: 32px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
+  .header { background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%); padding: 36px 32px 28px; text-align: center; }
+  .header .emoji { font-size: 52px; line-height: 1; margin-bottom: 12px; }
+  .header h1 { color: #ffffff; font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: 0.5px; }
+  .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin: 0; }
+  .body { padding: 36px 32px; }
+  .greeting { font-size: 16px; color: #1a2b4a; margin-bottom: 20px; line-height: 1.6; }
+  .greeting strong { color: #1B5E96; }
+  .age-badge { display: inline-block; background: linear-gradient(135deg, #1B5E96, #2E8B57); color: #fff; font-size: 18px; font-weight: 700; border-radius: 50px; padding: 10px 28px; margin: 8px 0 24px; letter-spacing: 0.5px; }
+  .message { font-size: 15px; color: #4a5568; line-height: 1.7; margin-bottom: 24px; }
+  .divider { border: none; border-top: 1px solid #e8ecf0; margin: 24px 0; }
+  .health-tip { background: #f0fdf4; border-left: 4px solid #2E8B57; border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 24px; }
+  .health-tip p { margin: 0; font-size: 13.5px; color: #2d5a3d; line-height: 1.6; }
+  .health-tip strong { color: #1B5E96; }
+  .cta { text-align: center; margin: 28px 0; }
+  .cta a { display: inline-block; background: linear-gradient(135deg, #1B5E96, #2E8B57); color: #ffffff !important; text-decoration: none; font-weight: 600; font-size: 14px; padding: 12px 32px; border-radius: 50px; letter-spacing: 0.4px; }
+  .footer { background: #f8fafc; padding: 20px 32px; text-align: center; border-top: 1px solid #e8ecf0; }
+  .footer p { margin: 4px 0; font-size: 12px; color: #94a3b8; }
+  .footer .clinic-name { font-weight: 700; color: #1B5E96; font-size: 13px; }
+  .balloons { font-size: 22px; letter-spacing: 6px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="emoji">🎂</div>
+    <h1>Happy Birthday, {{ patient.first_name }}!</h1>
+    <p>A special day deserves a special greeting</p>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <div class="balloons">🎈 🎉 🎁 🎊 🎈</div>
+
+    <p class="greeting">
+      Dear <strong>{{ patient.get_full_name }}</strong>,
+    </p>
+
+    <p class="message">
+      All of us at <strong>{{ clinic_name }}</strong> want to wish you a very
+      <strong>Happy Birthday</strong>!
+      {% if age %}
+      Today you celebrate <strong>{{ age }} wonderful year{{ age|pluralize }}</strong> of life,
+      and we feel privileged to be part of your health journey.
+      {% endif %}
+    </p>
+
+    <div style="text-align:center;">
+      <span class="age-badge">
+        {% if age %}🎂 Celebrating {{ age }} Year{{ age|pluralize }}!{% else %}🎂 Happy Birthday!{% endif %}
+      </span>
+    </div>
+
+    <p class="message">
+      May this new year of your life bring you excellent health, happiness,
+      and everything you wish for. You deserve nothing but the best!
+    </p>
+
+    <hr class="divider">
+
+    <div class="health-tip">
+      <p>
+        <strong>🌿 A Birthday Health Tip:</strong> Birthdays are a great time to schedule your
+        annual health check-up. Prevention is the best medicine &mdash; stay proactive about your wellness!
+      </p>
+    </div>
+
+    <div class="cta">
+      <a href="mailto:{{ clinic_settings.email|default:'alafiapoint@gmail.com' }}">
+        📅 Schedule a Check-up
+      </a>
+    </div>
+
+    <p class="message" style="text-align:center; color:#64748b; font-size:14px;">
+      With warm wishes,<br>
+      <strong style="color:#1B5E96;">The {{ clinic_name }} Team</strong>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p class="clinic-name">{{ clinic_name }}</p>
+    {% if clinic_settings %}
+    <p>{{ clinic_settings.address }}</p>
+    <p>Phone: {{ clinic_settings.phone }} &nbsp;|&nbsp; Email: {{ clinic_settings.email }}</p>
+    {% endif %}
+    <p style="margin-top:10px; color:#cbd5e1;">This email was sent because you are a registered patient. Patient ID: {{ patient.patient_id }}</p>
+  </div>
+
+</div>
+</body>
+</html>

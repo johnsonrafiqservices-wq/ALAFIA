@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Details - {{ patient.get_full_name }}</title>
+    <style>
+        /* Print-optimized styles */
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+            .page-break { page-break-before: always; }
+        }
+        
+        :root {
+            --alafia-primary: #1B5E96;
+            --alafia-primary-light: #e6f1fa;
+            --alafia-success: #2E8B57;
+            --alafia-success-light: #e8f5f0;
+            --alafia-accent: #00A86B;
+            --alafia-dark: #1e293b;
+            --alafia-light: #f8fafc;
+            --alafia-border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.4;
+            color: var(--alafia-dark);
+            margin: 20px;
+            background: white;
+        }
+        
+        /* Header Section */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--alafia-primary);
+        }
+
+        .clinic-info {
+            flex: 1;
+        }
+
+        .clinic-logo {
+            max-height: 75px;
+            max-width: 150px;
+            margin-bottom: 5px;
+        }
+
+        .clinic-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--alafia-primary);
+            margin-bottom: 5px;
+        }
+
+        .clinic-details {
+            color: #666;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .invoice-title {
+            text-align: right;
+            flex: 1;
+        }
+
+        .invoice-title h1 {
+            font-size: 32px;
+            color: var(--alafia-primary);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .invoice-number {
+            background: var(--alafia-primary);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .invoice-dates {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            border: 1px solid var(--alafia-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: var(--alafia-light);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--alafia-border);
+            font-weight: bold;
+            color: var(--alafia-primary);
+            font-size: 16px;
+        }
+        
+        .section-content {
+            padding: 20px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            margin-bottom: 12px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .info-value {
+            color: #333;
+            padding-left: 10px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .vital-signs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .vital-signs-table th,
+        .vital-signs-table td {
+            border: 1px solid var(--alafia-border);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .vital-signs-table th {
+            background: var(--alafia-light);
+            font-weight: bold;
+            color: var(--alafia-primary);
+        }
+        
+        .vital-signs-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .assessment-item {
+            border-left: 4px solid var(--alafia-primary);
+            padding: 12px;
+            margin-bottom: 15px;
+            background: var(--alafia-light);
+        }
+        
+        .assessment-priority-1 { border-left-color: #dc2626; }
+        .assessment-priority-2 { border-left-color: #d97706; }
+        .assessment-priority-3 { border-left-color: var(--alafia-primary); }
+        
+        .priority-badge {
+            background: var(--alafia-primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            float: right;
+        }
+        
+        .priority-1 { background: #dc2626; }
+        .priority-2 { background: #d97706; }
+        .priority-3 { background: var(--alafia-primary); }
+        
+        .text-muted {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .emergency-contact {
+            background: var(--alafia-success-light);
+            border: 1px solid var(--alafia-success);
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .print-info {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--alafia-border);
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .no-print {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: var(--alafia-primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Print Controls -->
+    <div class="no-print">
+        <button onclick="window.print()" class="btn btn-primary">
+            🖨️ Print Patient Details
+        </button>
+        <a href="{% url 'patients:patient_detail' patient.patient_id %}" class="btn btn-secondary">
+            ← Back to Patient Profile
+        </a>
+    </div>
+
+    <!-- Document Header -->
+    <div class="invoice-header">
+        <div class="clinic-info">
+            {% if clinic_settings.logo %}
+                <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo">
+            {% endif %}
+            <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+            <div class="clinic-details">
+                {% if clinic_settings.address %}{{ clinic_settings.address }}<br>{% endif %}
+                {% if clinic_settings.phone %}Phone: {{ clinic_settings.phone }}{% endif %}
+                {% if clinic_settings.email %} • Email: {{ clinic_settings.email }}{% endif %}
+                {% if clinic_settings.website %}<br>{{ clinic_settings.website }}{% endif %}
+            </div>
+        </div>
+        
+        <div class="invoice-title">
+            <h1>PATIENT PROFILE</h1>
+            <div class="invoice-number">{{ patient.patient_id }}</div>
+            <div class="invoice-dates">
+                <strong>Name:</strong> {{ patient.get_full_name }}<br>
+                <strong>DOB:</strong> {{ patient.date_of_birth|date:"M d, Y" }}<br>
+                <strong>Generated:</strong> {{ "now"|date:"M d, Y" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="section">
+        <div class="section-header">Personal Information</div>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Full Name:</span>
+                    <span class="info-value">{{ patient.get_full_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Date of Birth:</span>
+                    <span class="info-value">{{ patient.date_of_birth|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Age:</span>
+                    <span class="info-value">{{ patient.get_age }} years</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Gender:</span>
+                    <span class="info-value">{{ patient.get_gender_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Blood Type:</span>
+                    <span class="info-value">{% if patient.blood_type %}{{ patient.blood_type }}{% else %}<span class="text-muted">Not specified</span>{% endif %}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Registration Date:</span>
+                    <span class="info-value">{{ patient.registration_date|date:"F d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="section">
+        <div class="section-header">Contact Information</div>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Phone Number:</span>
+                    <span class="info-value">{{ patient.phone }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email Address:</span>
+                    <span class="info-value">{% if patient.email %}{{ patient.email }}{% else %}<span class="text-muted">Not provided</span>{% endif %}</span>
+                </div>
+                <div class="info-item full-width">
+                    <span class="info-label">Address:</span>
+                    <span class="info-value">
+                        {{ patient.address_line1 }}<br>
+                        {% if patient.address_line2 %}{{ patient.address_line2 }}<br>{% endif %}
+                        {{ patient.city }}, {{ patient.state }} {{ patient.postal_code }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="section">
+        <div class="section-header">Emergency Contact</div>
+        <div class="section-content">
+            <div class="emergency-contact">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Contact Name:</span>
+                        <span class="info-value">{{ patient.emergency_contact_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Phone Number:</span>
+                        <span class="info-value">{{ patient.emergency_contact_phone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Relationship:</span>
+                        <span class="info-value">{{ patient.emergency_contact_relationship }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Information -->
+    <div class="section">
+        <div class="section-header">Medical Information</div>
+        <div class="section-content">
+            <div class="info-item full-width">
+                <span class="info-label">Known Allergies:</span>
+                <div class="info-value">
+                    {% if patient.allergies %}
+                        {{ patient.allergies|linebreaks }}
+                    {% else %}
+                        <span class="text-muted">No known allergies</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-item full-width">
+                <span class="info-label">Medical History:</span>
+                <div class="info-value">
+                    {% if patient.medical_history %}
+                        {{ patient.medical_history|linebreaks }}
+                    {% else %}
+                        <span class="text-muted">No medical history recorded</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-item full-width">
+                <span class="info-label">Current Medications:</span>
+                <div class="info-value">
+                    {% if patient.current_medications %}
+                        {{ patient.current_medications|linebreaks }}
+                    {% else %}
+                        <span class="text-muted">No current medications</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insurance Information -->
+    <div class="section">
+        <div class="section-header">Insurance Information</div>
+        <div class="section-content">
+            {% if patient.insurance_provider %}
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Insurance Provider:</span>
+                        <span class="info-value">{{ patient.insurance_provider }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Policy Number:</span>
+                        <span class="info-value">{{ patient.insurance_policy_number }}</span>
+                    </div>
+                    {% if patient.insurance_group_number %}
+                    <div class="info-item">
+                        <span class="info-label">Group Number:</span>
+                        <span class="info-value">{{ patient.insurance_group_number }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <span class="text-muted">No insurance information on file</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Vital Signs -->
+    <div class="section">
+        <div class="section-header">Recent Vital Signs</div>
+        <div class="section-content">
+            {% if vital_signs %}
+                <table class="vital-signs-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Height (cm)</th>
+                            <th>Weight (kg)</th>
+                            <th>BMI</th>
+                            <th>Blood Pressure</th>
+                            <th>Heart Rate</th>
+                            <th>Temperature (°C)</th>
+                            <th>Recorded By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vital in vital_signs|slice:":5" %}
+                        <tr>
+                            <td>{{ vital.recorded_date|date:"M d, Y" }}</td>
+                            <td>{{ vital.height }}</td>
+                            <td>{{ vital.weight }}</td>
+                            <td>{{ vital.bmi|floatformat:1 }}</td>
+                            <td>{{ vital.blood_pressure_systolic }}/{{ vital.blood_pressure_diastolic }}</td>
+                            <td>{{ vital.heart_rate }} bpm</td>
+                            <td>{{ vital.temperature }}</td>
+                            <td>{{ vital.recorded_by.get_full_name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <span class="text-muted">No vital signs recorded</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Triage Assessments -->
+    <div class="section">
+        <div class="section-header">Recent Triage Assessments</div>
+        <div class="section-content">
+            {% if triage_assessments %}
+                {% for assessment in triage_assessments|slice:":3" %}
+                <div class="assessment-item assessment-priority-{{ assessment.priority_level }}">
+                    <span class="priority-badge priority-{{ assessment.priority_level }}">
+                        Priority {{ assessment.priority_level }}
+                    </span>
+                    <div>
+                        <strong>{{ assessment.chief_complaint }}</strong><br>
+                        <small class="text-muted">{{ assessment.assessment_date|date:"M d, Y H:i" }} by {{ assessment.assessed_by.get_full_name }}</small>
+                    </div>
+                    {% if assessment.pain_scale %}
+                        <div style="margin-top: 8px;">
+                            <strong>Pain Level:</strong> {{ assessment.pain_scale }}/10
+                        </div>
+                    {% endif %}
+                    <div style="margin-top: 8px;">
+                        <strong>Symptoms:</strong> {{ assessment.symptoms }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <span class="text-muted">No triage assessments recorded</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Print Information -->
+    <div class="print-info">
+        <p>Document generated on {{ "now"|date:"F d, Y \a\t H:i" }}</p>
+        <p>{{ clinic_settings.clinic_name }} | Confidential Patient Information</p>
+    </div>
+</body>
+</html>

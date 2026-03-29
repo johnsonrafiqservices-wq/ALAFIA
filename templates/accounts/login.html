@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - {{ clinic_settings.clinic_name|default:'NDUNAT Diagnostics Wellness Centre' }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7f9fc;
+        }
+        .login-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 1fr);
+        }
+        .login-brand-panel {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, #185487 0%, #114a7c 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+        .login-brand-panel::before,
+        .login-brand-panel::after {
+            content: "";
+            position: absolute;
+            inset: auto;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .login-brand-panel::before {
+            width: 290px;
+            height: 290px;
+            top: 18px;
+            right: 62px;
+        }
+        .login-brand-panel::after {
+            width: 120px;
+            height: 120px;
+            top: -28px;
+            right: -18px;
+        }
+        .floating-bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .bubble-one {
+            width: 65px;
+            height: 65px;
+            top: 115px;
+            left: 52px;
+        }
+        .bubble-two {
+            width: 96px;
+            height: 96px;
+            top: 172px;
+            right: 78px;
+        }
+        .bubble-three {
+            width: 42px;
+            height: 42px;
+            bottom: 140px;
+            left: 52px;
+        }
+        .bubble-four {
+            width: 86px;
+            height: 86px;
+            bottom: -28px;
+            left: 152px;
+        }
+        .brand-wave,
+        .brand-wave-secondary {
+            position: absolute;
+            left: -8%;
+            right: -8%;
+            border-radius: 46% 54% 0 0 / 16% 18% 0 0;
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .brand-wave {
+            bottom: 88px;
+            height: 132px;
+        }
+        .brand-wave-secondary {
+            bottom: -18px;
+            height: 122px;
+            background: rgba(255, 255, 255, 0.09);
+        }
+        .brand-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 430px;
+        }
+        .brand-logo-wrap {
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            margin: 0 auto 1.25rem;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
+        }
+        .brand-logo-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .brand-logo-fallback {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #185487;
+        }
+        .brand-name {
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            margin-bottom: 1.1rem;
+        }
+        .brand-subtitle {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.9rem;
+            margin-bottom: 0.7rem;
+        }
+        .brand-title {
+            font-size: clamp(2rem, 4vw, 3.35rem);
+            line-height: 0.95;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            margin-bottom: 1.2rem;
+        }
+        .brand-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 340px;
+            margin: 0 auto;
+        }
+        .login-form-panel {
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+        }
+        .login-form-wrap {
+            width: 100%;
+            max-width: 420px;
+        }
+        .login-form-wrap h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            color: #111827;
+        }
+        .login-form-wrap p {
+            color: #6b7280;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .message-stack .alert {
+            border-radius: 14px;
+            font-size: 0.92rem;
+        }
+        .form-field {
+            margin-bottom: 1.35rem;
+        }
+        .form-field label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.45rem;
+        }
+        .form-field input {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #d6dce5;
+            border-left: 3px solid #185487;
+            background: transparent;
+            border-radius: 0;
+            padding: 0.9rem 0.85rem 0.8rem;
+            font-size: 0.96rem;
+            color: #111827;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-field input:focus {
+            outline: none;
+            border-bottom-color: #185487;
+            box-shadow: none;
+        }
+        .form-field input::placeholder {
+            color: #9ca3af;
+        }
+        .form-check {
+            margin: 0.5rem 0 1.5rem;
+        }
+        .form-check-input {
+            margin-top: 0.2rem;
+        }
+        .form-check-label {
+            font-size: 0.88rem;
+            color: #475569;
+        }
+        .btn-login {
+            background: #185487;
+            border: none;
+            border-radius: 999px;
+            padding: 0.95rem 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #fff;
+        }
+        .btn-login:hover {
+            background: #13456f;
+            color: #fff;
+        }
+        .login-footer-note {
+            margin-top: 1.3rem;
+            font-size: 0.78rem;
+            color: #9aa4b2;
+        }
+        .field-error,
+        .non-field-errors {
+            color: #b91c1c;
+            font-size: 0.82rem;
+            margin-top: 0.45rem;
+        }
+        .non-field-errors {
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 991.98px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+            }
+            .login-brand-panel {
+                min-height: 44vh;
+                padding: 2.5rem 1.5rem;
+            }
+            .login-form-panel {
+                min-height: 56vh;
+                padding: 2.5rem 1.5rem;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .brand-title {
+                font-size: 2.3rem;
+            }
+            .login-form-wrap h1 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <section class="login-brand-panel">
+            <span class="floating-bubble bubble-one"></span>
+            <span class="floating-bubble bubble-two"></span>
+            <span class="floating-bubble bubble-three"></span>
+            <span class="floating-bubble bubble-four"></span>
+            <div class="brand-wave"></div>
+            <div class="brand-wave-secondary"></div>
+            <div class="brand-content">
+                <div class="brand-logo-wrap">
+                    {% if clinic_settings.logo %}
+                        <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}">
+                    {% else %}
+                        <span class="brand-logo-fallback">{{ clinic_settings.clinic_name|default:'NDUNAT Diagnostics Wellness Centre'|slice:':2' }}</span>
+                    {% endif %}
+                </div>
+                <div class="brand-name">{{ clinic_settings.clinic_name|default:'NDUNAT Diagnostics Wellness Centre' }}</div>
+                <div class="brand-subtitle">Nice to see you again</div>
+                <div class="brand-title">WELCOME<br>BACK</div>
+                <div class="brand-description">
+                    Your trusted partner in health and wellness. Providing excellent medical care with compassion and dedication to every patient.
+                </div>
+            </div>
+        </section>
+
+        <section class="login-form-panel">
+            <div class="login-form-wrap">
+                <h1>Login Account</h1>
+                <p>Sign in to access your dashboard, manage patients, and continue providing excellent care.</p>
+
+                {% if messages %}
+                    <div class="message-stack">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                    <div class="non-field-errors">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-field">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Username" value="{{ form.username.value|default:'' }}" required autofocus>
+                        {% if form.username.errors %}
+                            <div class="field-error">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        {% if form.password.errors %}
+                            <div class="field-error">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="remember_me" name="remember_me">
+                        <label class="form-check-label" for="remember_me">Keep me signed in</label>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-login">SIGN IN</button>
+                    </div>
+                </form>
+
+                <div class="login-footer-note">
+                    &copy; {{ clinic_settings.clinic_name|default:'NDUNAT Diagnostics Wellness Centre' }}. Passionate about your health.
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

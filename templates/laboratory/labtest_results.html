@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Lab Test Results</h2>
+<a href="{% url 'laboratory:labtest_result_add' %}" class="btn btn-primary">Add Lab Test Result</a>
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Patient</th>
+            <th>Test</th>
+            <th>Result</th>
+            <th>Date Reported</th>
+            <th>Reported By</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td>{{ result.request.patient }}</td>
+            <td>{{ result.request.test }}</td>
+            <td>{{ result.result }}</td>
+            <td>{{ result.date_reported }}</td>
+            <td>{{ result.reported_by }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No results found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
