@@ -127,10 +127,19 @@ def database_management_view(request):
     db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
     db_modified = datetime.fromtimestamp(os.path.getmtime(db_path)) if os.path.exists(db_path) else None
     
+    # Format file size
+    if db_size < 1024:
+        db_size_formatted = f"{db_size} bytes"
+    elif db_size < 1048576:
+        db_size_formatted = f"{db_size / 1024:.2f} KB"
+    else:
+        db_size_formatted = f"{db_size / 1048576:.2f} MB"
+    
     context = {
         'db_name': db_name,
         'db_path': str(db_path),
         'db_size': db_size,
+        'db_size_formatted': db_size_formatted,
         'db_modified': db_modified,
     }
     return render(request, 'clinic_settings/database_management.html', context)

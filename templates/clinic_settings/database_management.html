@@ -31,7 +31,7 @@
                         </tr>
                         <tr>
                             <td class="fw-bold">File Size:</td>
-                            <td>{% if db_size < 1024 %}{{ db_size }} bytes{% elif db_size < 1048576 %}{{ db_size|div:1024|floatformat:2 }} KB{% else %}{{ db_size|div:1048576|floatformat:2 }} MB{% endif %}</td>
+                            <td>{{ db_size_formatted }}</td>
                         </tr>
                         <tr>
                             <td class="fw-bold">Last Modified:</td>
