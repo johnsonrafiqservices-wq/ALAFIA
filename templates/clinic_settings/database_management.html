@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Database Management - {{ clinic_settings.clinic_name }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-database-fill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
+        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Database Management</span>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Current Database Info -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex align-items-center">
+                <i class="bi bi-info-circle me-2" style="color: var(--alafia-primary);"></i>
+                <h6 class="m-0 font-weight-bold text-primary">Current Database</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="fw-bold" style="width: 40%;">Database Name:</td>
+                            <td>{{ db_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">File Path:</td>
+                            <td><code class="text-break">{{ db_path }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">File Size:</td>
+                            <td>{% if db_size < 1024 %}{{ db_size }} bytes{% elif db_size < 1048576 %}{{ db_size|div:1024|floatformat:2 }} KB{% else %}{{ db_size|div:1048576|floatformat:2 }} MB{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Last Modified:</td>
+                            <td>{{ db_modified|date:"Y-m-d H:i:s"|default:"N/A" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Database -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex align-items-center">
+                <i class="bi bi-download me-2 text-success"></i>
+                <h6 class="m-0 font-weight-bold text-success">Export Database</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Download a complete backup of your database. The file will be named with a timestamp.
+                </p>
+                <div class="alert alert-info" role="alert">
+                    <small>
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <strong>Tip:</strong> Regular backups are recommended. Store exported files in a secure location.
+                    </small>
+                </div>
+                <div class="d-grid">
+                    <a href="{% url 'clinic_settings:database_export' %}" class="btn btn-success">
+                        <i class="bi bi-download me-2"></i>Export Database
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Import Database -->
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex align-items-center">
+                <i class="bi bi-upload me-2 text-warning"></i>
+                <h6 class="m-0 font-weight-bold" style="color: var(--alafia-warning);">Import Database</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Warning:</strong> Importing a database will replace all current data. This action cannot be undone. 
+                    A backup of the current database will be created automatically.
+                </div>
+                
+                <form method="post" enctype="multipart/form-data" action="{% url 'clinic_settings:database_import' %}" id="importForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="database_file" class="form-label">
+                            <i class="bi bi-file-earmark me-1"></i>Select Database File
+                        </label>
+                        <input type="file" class="form-control" id="database_file" name="database_file" 
+                               accept=".sqlite3,.db,.sqlite" required>
+                        <div class="form-text">
+                            Accepted formats: .sqlite3, .db, .sqlite
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <button type="submit" class="btn btn-warning" onclick="return confirmImport()">
+                            <i class="bi bi-upload me-2"></i>Import Database
+                        </button>
+                        <a href="{% url 'clinic_settings:database_management' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-question-circle me-2 text-info"></i>Help & Information
+                </h6>
+                <div class="accordion" id="helpAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExport">
+                                How do I export my database?
+                            </button>
+                        </h2>
+                        <div id="collapseExport" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                Click the "Export Database" button above. A backup file will be downloaded to your computer 
+                                with a timestamp in the filename (e.g., backup_db.sqlite3_20240330_143022).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseImport">
+                                How do I import a database?
+                            </button>
+                        </h2>
+                        <div id="collapseImport" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                Select a previously exported database file (.sqlite3, .db, or .sqlite) using the file selector 
+                                above, then click "Import Database". <strong>Warning:</strong> This will replace all current data 
+                                in the system. A backup of your current database will be created automatically before importing.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBackup">
+                                Where are automatic backups stored?
+                            </button>
+                        </h2>
+                        <div id="collapseBackup" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                            <div class="accordion-body">
+                                When you import a database, the system automatically creates a backup of the current database 
+                                before replacing it. The backup is stored in the same location as the main database file 
+                                with a .backup_YYYYMMDD_HHMMSS extension.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmImport() {
+    return confirm('Are you sure you want to import this database?\n\nThis will replace ALL current data.\nA backup will be created automatically.\n\nClick OK to proceed or Cancel to abort.');
+}
+</script>
+{% endblock %}

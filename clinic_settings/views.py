@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
+from django.conf import settings
 from .models import ClinicSettings
 from .forms import ClinicSettingsForm, ThemeCustomizationForm
+import os
+import shutil
+import json
+from datetime import datetime
 
 
 def is_admin_or_superuser(user):
@@ -111,3 +116,89 @@ def theme_customization_view(request):
         'settings': settings,
     }
     return render(request, 'clinic_settings/theme_customization.html', context)
+
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def database_management_view(request):
+    """View for database export and import"""
+    db_path = settings.DATABASES['default']['NAME']
+    db_name = os.path.basename(db_path)
+    db_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
+    db_modified = datetime.fromtimestamp(os.path.getmtime(db_path)) if os.path.exists(db_path) else None
+    
+    context = {
+        'db_name': db_name,
+        'db_path': str(db_path),
+        'db_size': db_size,
+        'db_modified': db_modified,
+    }
+    return render(request, 'clinic_settings/database_management.html', context)
+
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def database_export_view(request):
+    """Export database as a downloadable file"""
+    db_path = settings.DATABASES['default']['NAME']
+    
+    if not os.path.exists(db_path):
+        messages.error(request, 'Database file not found.')
+        return redirect('clinic_settings:database_management')
+    
+    # Create filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    db_name = os.path.basename(db_path)
+    filename = f"backup_{db_name}_{timestamp}"
+    
+    # Read the database file
+    with open(db_path, 'rb') as f:
+        response = HttpResponse(f.read(), content_type='application/x-sqlite3')
+    
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    messages.success(request, 'Database exported successfully!')
+    return response
+
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def database_import_view(request):
+    """Import database from uploaded file"""
+    if request.method != 'POST':
+        return redirect('clinic_settings:database_management')
+    
+    if 'database_file' not in request.FILES:
+        messages.error(request, 'No file selected.')
+        return redirect('clinic_settings:database_management')
+    
+    uploaded_file = request.FILES['database_file']
+    db_path = settings.DATABASES['default']['NAME']
+    
+    # Validate file type
+    if not (uploaded_file.name.endswith('.sqlite3') or uploaded_file.name.endswith('.db') or uploaded_file.name.endswith('.sqlite')):
+        messages.error(request, 'Invalid file type. Please upload a SQLite database file.')
+        return redirect('clinic_settings:database_management')
+    
+    # Create backup of current database
+    backup_path = f"{db_path}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    try:
+        shutil.copy2(db_path, backup_path)
+    except Exception as e:
+        messages.error(request, f'Failed to create backup: {str(e)}')
+        return redirect('clinic_settings:database_management')
+    
+    # Replace current database with uploaded file
+    try:
+        with open(db_path, 'wb') as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+        messages.success(request, 'Database imported successfully! A backup of the previous database was created.')
+    except Exception as e:
+        # Restore from backup if import fails
+        try:
+            shutil.copy2(backup_path, db_path)
+            messages.error(request, f'Import failed: {str(e)}. Original database restored.')
+        except:
+            messages.error(request, f'Import failed: {str(e)}. Please check the backup file at {backup_path}')
+    
+    return redirect('clinic_settings:database_management')
