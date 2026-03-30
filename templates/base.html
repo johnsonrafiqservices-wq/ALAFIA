@@ -1328,6 +1328,11 @@
                         
                         {% if user.role == 'admin' or user.is_superuser %}
                         <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:user_permissions_list' %}">
+                                <i class="bi bi-shield-lock"></i> User Permissions
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'clinic_settings:settings' %}">
                                 <i class="bi bi-gear"></i> Clinic Settings
                             </a>
