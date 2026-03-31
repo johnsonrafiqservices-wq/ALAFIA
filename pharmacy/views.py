@@ -405,6 +405,7 @@ def medication_list(request):
     )
 
     # Apply filters
+    medications = base_medications
     if search:
         medications = medications.filter(
             Q(name__icontains=search) |
@@ -1217,6 +1218,98 @@ def medication_detail(request, pk):
     prescriptions = Prescription.objects.filter(
         Q(id__in=prescription_ids) | Q(medication=medication)
     ).select_related('patient', 'prescribed_by').prefetch_related('items__medication').distinct().order_by('-prescribed_date')
+    # Sales data for this medication
+    import json
+    from django.db.models.functions import TruncDate
+    from django.db.models import Count, Avg
+
+    med_batch_ids = batches.values_list('id', flat=True)
+    all_batch_ids = medication.batches.values_list('id', flat=True)  # include inactive for history
+
+    sales_qs = StockMovement.objects.filter(
+        batch_id__in=all_batch_ids,
+        movement_type='out',
+        reference__icontains='SALE',
+    ).select_related('batch', 'created_by')
+
+    total_units_sold = sales_qs.aggregate(total=Sum('quantity'))['total'] or 0
+    total_sales_count = sales_qs.count()
+    total_sales_revenue = sales_qs.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('quantity') * F('batch__selling_price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+    )['total'] or 0
+
+    # Daily sales for last 30 days
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+    daily_sales = list(
+        sales_qs.filter(created_at__date__gte=thirty_days_ago)
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(qty=Sum('quantity'), count=Count('id'))
+        .order_by('date')
+    )
+
+    # Build a complete 30-day series (fill gaps with 0)
+    from datetime import date as date_type
+    sales_by_date = {item['date']: item['qty'] for item in daily_sales}
+    chart_labels = []
+    chart_sales = []
+    chart_stock = []  # track cumulative stock depletion
+    current_stock = medication.current_stock
+    # We show remaining stock going forward from 30 days ago
+    # For simplicity, show current stock as a flat line for context
+    for i in range(31):
+        d = thirty_days_ago + timedelta(days=i)
+        chart_labels.append(d.strftime('%b %d'))
+        chart_sales.append(sales_by_date.get(d, 0))
+        chart_stock.append(int(current_stock))
+
+    chart_data_json = json.dumps({
+        'labels': chart_labels,
+        'sales': chart_sales,
+        'stock': chart_stock,
+        'reorder_level': medication.reorder_level,
+    })
+
+    recent_sales = sales_qs.order_by('-created_at')[:15]
+
+    # All stock movements for this medication (across all batches, including inactive)
+    all_movements = StockMovement.objects.filter(
+        batch_id__in=all_batch_ids,
+    ).select_related('batch', 'created_by').order_by('created_at')
+
+    # Calculate before/after amounts by walking forward through time per batch
+    batch_running = {}  # batch_id -> running total
+    movements_with_balance = []
+    for mv in all_movements:
+        bid = mv.batch_id
+        if bid not in batch_running:
+            # Reconstruct initial: walk back from current remaining
+            batch_obj = mv.batch
+            # Start at 0 – we'll build up as we encounter 'in' movements
+            batch_running[bid] = 0
+        before = batch_running[bid]
+        if mv.movement_type == 'in':
+            after = before + mv.quantity
+        else:  # out or adjustment
+            after = before - mv.quantity
+        batch_running[bid] = after
+        is_sale = mv.movement_type == 'out' and 'SALE' in (mv.reference or '').upper()
+        movements_with_balance.append({
+            'movement': mv,
+            'before': before,
+            'after': after,
+            'is_sale': is_sale,
+        })
+    # Reverse so newest first
+    movements_with_balance.reverse()
+    stock_movements = movements_with_balance[:50]
+
     context = {
         'medication': medication,
         'batches': batches,
@@ -1232,6 +1325,12 @@ def medication_detail(request, pk):
         'suppliers': Supplier.objects.filter(is_active=True).order_by('name'),
         'categories': Category.objects.all().order_by('name'),
         'title': medication.name,
+        'total_units_sold': total_units_sold,
+        'total_sales_count': total_sales_count,
+        'total_sales_revenue': total_sales_revenue,
+        'chart_data_json': chart_data_json,
+        'recent_sales': recent_sales,
+        'stock_movements': stock_movements,
     }
     return render(request, 'pharmacy/item_detail.html', context)
 
@@ -1278,6 +1377,13 @@ def batch_create(request):
             batch = form.save(commit=False)
             batch.received_by = request.user
             batch.save()
+            # Record initial stock-in movement (bulk_create bypasses StockMovement.save to avoid double-counting)
+            StockMovement.objects.bulk_create([StockMovement(
+                batch=batch, movement_type='in', quantity=batch.quantity_remaining,
+                reference=f'BATCH-RECEIVED-{batch.batch_number}',
+                notes=f'Initial stock received for batch {batch.batch_number}',
+                created_by=request.user,
+            )])
             messages.success(request, f'Batch {batch.batch_number} was created successfully.')
             return redirect('pharmacy:batch_list')
     else:
@@ -1286,8 +1392,81 @@ def batch_create(request):
 
 @login_required
 def batch_detail(request, pk):
-    batch = get_object_or_404(Batch.objects.select_related('medication', 'supplier'), pk=pk)
-    return render(request, 'pharmacy/batch_detail.html', {'batch': batch, 'title': f'Batch {batch.batch_number}'})
+    import json
+    from django.db.models.functions import TruncDate
+    from django.db.models import Count
+
+    batch = get_object_or_404(
+        Batch.objects.select_related('medication__category', 'supplier', 'received_by'), pk=pk
+    )
+
+    # All stock movements for this batch
+    movements = batch.movements.select_related('created_by').order_by('-created_at')
+
+    # Sales for this batch
+    sales_qs = movements.filter(movement_type='out', reference__icontains='SALE')
+    total_units_sold = sales_qs.aggregate(total=Sum('quantity'))['total'] or 0
+    total_sales_count = sales_qs.count()
+    total_sales_revenue = sales_qs.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('quantity') * F('batch__selling_price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+    )['total'] or 0
+
+    # Stock value
+    stock_value = batch.quantity_remaining * batch.selling_price
+    cost_value = batch.quantity_remaining * batch.cost_price
+
+    # Stock percentage
+    initial_qty = batch.quantity_received if hasattr(batch, 'quantity_received') and batch.quantity_received else (batch.quantity_remaining + total_units_sold)
+    stock_pct = round((batch.quantity_remaining / initial_qty * 100) if initial_qty > 0 else 0)
+
+    # Daily sales chart for last 30 days
+    today = timezone.now().date()
+    thirty_days_ago = today - timedelta(days=30)
+    daily_sales = list(
+        sales_qs.filter(created_at__date__gte=thirty_days_ago)
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(qty=Sum('quantity'), count=Count('id'))
+        .order_by('date')
+    )
+    sales_by_date = {item['date']: item['qty'] for item in daily_sales}
+    chart_labels = []
+    chart_sales = []
+    for i in range(31):
+        d = thirty_days_ago + timedelta(days=i)
+        chart_labels.append(d.strftime('%b %d'))
+        chart_sales.append(sales_by_date.get(d, 0))
+
+    chart_data_json = json.dumps({
+        'labels': chart_labels,
+        'sales': chart_sales,
+        'stock': [int(batch.quantity_remaining)] * 31,
+        'reorder_level': batch.medication.reorder_level,
+    })
+
+    recent_sales = sales_qs[:15]
+
+    context = {
+        'batch': batch,
+        'title': f'Batch {batch.batch_number}',
+        'movements': movements[:30],
+        'movements_count': movements.count(),
+        'total_units_sold': total_units_sold,
+        'total_sales_count': total_sales_count,
+        'total_sales_revenue': total_sales_revenue,
+        'stock_value': stock_value,
+        'cost_value': cost_value,
+        'initial_qty': initial_qty,
+        'stock_pct': stock_pct,
+        'chart_data_json': chart_data_json,
+        'recent_sales': recent_sales,
+    }
+    return render(request, 'pharmacy/batch_detail.html', context)
 
 @login_required
 def batch_edit(request, pk):
@@ -1438,6 +1617,50 @@ def sales_list(request):
         sales = sales.filter(created_at__date__lte=end_date)
     return render(request, 'pharmacy/sales_list.html', {'sales': sales, 'start_date': start_date, 'end_date': end_date})
 
+
+@login_required
+def sale_detail(request, pk):
+    """Display detailed view of a single sale transaction"""
+    sale = get_object_or_404(
+        StockMovement.objects.select_related(
+            'batch__medication__category', 'batch__supplier', 'created_by'
+        ),
+        pk=pk,
+        movement_type='out',
+        reference__icontains='SALE'
+    )
+    
+    # Calculate revenue
+    revenue = sale.quantity * sale.batch.selling_price
+    cost = sale.quantity * sale.batch.cost_price
+    profit = revenue - cost
+    
+    # Parse sale type from reference
+    ref = sale.reference.upper()
+    if 'PATIENT' in ref:
+        sale_type = 'Patient Sale'
+        sale_type_color = 'primary'
+        sale_type_icon = 'bi-person'
+    elif 'PRESCRIPTION' in ref:
+        sale_type = 'Prescription Dispensing'
+        sale_type_color = 'info'
+        sale_type_icon = 'bi-file-medical'
+    else:
+        sale_type = 'Walk-in Sale'
+        sale_type_color = 'success'
+        sale_type_icon = 'bi-shop'
+    
+    context = {
+        'sale': sale,
+        'revenue': revenue,
+        'cost': cost,
+        'profit': profit,
+        'sale_type': sale_type,
+        'sale_type_color': sale_type_color,
+        'sale_type_icon': sale_type_icon,
+    }
+    return render(request, 'pharmacy/sale_detail.html', context)
+
 @login_required
 def medication_create_ajax(request):
     if request.method != 'POST' or request.headers.get('X-Requested-With') != 'XMLHttpRequest':
@@ -1468,6 +1691,13 @@ def batch_create_ajax(request):
         batch = form.save(commit=False)
         batch.received_by = request.user
         batch.save()
+        # Record initial stock-in movement (bulk_create bypasses StockMovement.save to avoid double-counting)
+        StockMovement.objects.bulk_create([StockMovement(
+            batch=batch, movement_type='in', quantity=batch.quantity_remaining,
+            reference=f'BATCH-RECEIVED-{batch.batch_number}',
+            notes=f'Initial stock received for batch {batch.batch_number}',
+            created_by=request.user,
+        )])
         return JsonResponse({'success': True, 'message': f'Batch {batch.batch_number} created successfully!', 'batch_id': batch.id, 'redirect_url': reverse('pharmacy:batch_list')})
     return JsonResponse({'success': False, 'errors': form.errors, 'message': 'Please correct the errors below.'}, status=400)
 

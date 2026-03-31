@@ -44,6 +44,7 @@ urlpatterns = [
     # Sales Management
     path('sales/', views.sales_dashboard, name='sales_dashboard'),
     path('sales/list/', views.sales_list, name='sales_list'),
+    path('sales/<int:pk>/', views.sale_detail, name='sale_detail'),
     path('sales/report/', views.sales_report, name='sales_report'),
     path('sales/record-ajax/', views.record_sale_ajax, name='record_sale_ajax'),
     path('sales/add-to-invoice-ajax/', views.add_sale_to_invoice_ajax, name='add_sale_to_invoice_ajax'),

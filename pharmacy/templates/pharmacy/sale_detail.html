@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Sale Detail - {{ sale.batch.medication.name }}{% endblock %}
+
+{% block page_title %}
+    <div class="d-flex align-items-center">
+        <i class="bi bi-receipt me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
+        <div>
+            <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">{{ sale.batch.medication.name }}</span>
+            <div class="small fw-normal" style="-webkit-text-fill-color: #6b7280; font-size: 0.85rem;">{{ sale_type }} in {{ sale.batch.medication.name }}</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-cart-plus"></i> Sales Desk
+</a>
+<a href="{% url 'pharmacy:medication_detail' sale.batch.medication.pk %}" class="btn btn-info btn-sm text-white">
+    <i class="bi bi-capsule"></i> View Item
+</a>
+<button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
+    <i class="bi bi-printer"></i> Print Receipt
+</button>
+<a href="{% url 'pharmacy:sales_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════ HEADER CARD ═══════ -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                         style="width: 56px; height: 56px; background: var(--alafia-gradient); font-size: 1.2rem; font-weight: 700; color: #fff;">
+                        {{ sale.batch.medication.name|truncatechars:2|upper }}
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold d-flex align-items-center flex-wrap gap-2">
+                            {{ sale.batch.medication.name }}
+                            <span class="badge rounded-pill bg-{{ sale_type_color }}" style="font-size: 0.7rem; font-weight: 600;">{{ sale_type }}</span>
+                            <span class="badge rounded-pill bg-success" style="font-size: 0.7rem; font-weight: 600;">Completed</span>
+                        </h4>
+                        <div class="d-flex flex-wrap gap-2 text-muted small">
+                            <span><i class="bi bi-hash"></i> {{ sale.reference }}</span>
+                            <span class="text-muted">|</span>
+                            <span><i class="bi bi-calendar3"></i> {{ sale.created_at|date:"M d, Y" }}</span>
+                            <span class="text-muted">|</span>
+                            <span><i class="bi bi-clock"></i> {{ sale.created_at|date:"h:i A" }}</span>
+                            <span class="text-muted">|</span>
+                            <span><i class="bi bi-person-badge"></i> {{ sale.created_by.get_full_name|default:sale.created_by.username }}</span>
+                        </div>
+                        {% if sale.batch.medication.generic_name %}
+                        <div class="text-muted small mt-1">{{ sale.batch.medication.generic_name }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="d-flex flex-column gap-2">
+                    <a href="{% url 'pharmacy:medication_detail' sale.batch.medication.pk %}" class="btn btn-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2">
+                        <i class="bi bi-capsule"></i> View Medication Profile
+                    </a>
+                    <a href="{% url 'pharmacy:batch_detail' sale.batch.pk %}" class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2">
+                        <i class="bi bi-archive"></i> View Batch Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ STATS CARDS ═══════ -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body px-3 py-3">
+                <div class="text-uppercase fw-bold small text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Quantity Sold</div>
+                <h3 class="fw-bold mb-1">{{ sale.quantity }}</h3>
+                <div class="text-muted small">unit{{ sale.quantity|pluralize }} dispensed</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body px-3 py-3">
+                <div class="text-uppercase fw-bold small text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Revenue</div>
+                <h3 class="fw-bold mb-1">UGX {{ revenue|floatformat:0|intcomma }}</h3>
+                <div class="text-muted small">Based on selling price</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body px-3 py-3">
+                <div class="text-uppercase fw-bold small text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Cost</div>
+                <h3 class="fw-bold mb-1">UGX {{ cost|floatformat:0|intcomma }}</h3>
+                <div class="text-muted small">Based on cost price</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body px-3 py-3">
+                <div class="text-uppercase fw-bold small text-muted mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Profit</div>
+                <h3 class="fw-bold mb-1" style="color: #8b5cf6;">UGX {{ profit|floatformat:0|intcomma }}</h3>
+                <div class="text-muted small">Revenue minus cost</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ TWO-COLUMN BODY ═══════ -->
+<div class="row g-4">
+
+    <!-- LEFT: Sale Information -->
+    <div class="col-lg-7">
+
+        <!-- Sale Information -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <span class="badge rounded-pill mb-4" style="background: var(--alafia-gradient); font-size: 0.75rem; padding: 0.4rem 1rem; letter-spacing: 0.5px;">SALE INFORMATION</span>
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Sale Type</div>
+                        <div class="fw-semibold">{{ sale_type }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Reference</div>
+                        <div class="fw-semibold">{{ sale.reference }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Unit Price</div>
+                        <div class="fw-semibold">UGX {{ sale.batch.selling_price|floatformat:0|intcomma }}</div>
+                    </div>
+                </div>
+
+                <hr class="my-3" style="border-color: #e5e7eb;">
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Sold By</div>
+                        <div class="fw-semibold">{{ sale.created_by.get_full_name|default:sale.created_by.username }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Date & Time</div>
+                        <div class="fw-semibold">{{ sale.created_at|date:"M d, Y h:i A" }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Cost Price</div>
+                        <div class="fw-semibold">UGX {{ sale.batch.cost_price|floatformat:0|intcomma }}</div>
+                    </div>
+                </div>
+
+                <hr class="my-3" style="border-color: #e5e7eb;">
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Batch Number</div>
+                        <div class="fw-semibold">{{ sale.batch.batch_number }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Batch Expiry</div>
+                        <div class="fw-semibold">
+                            {{ sale.batch.expiry_date|date:"M d, Y" }}
+                            {% if sale.batch.is_expired %}
+                                <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Expired</span>
+                            {% elif sale.batch.is_expiring_soon %}
+                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;">Expiring</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Remaining Stock</div>
+                        <div class="fw-semibold">{{ sale.batch.quantity_remaining }} unit{{ sale.batch.quantity_remaining|pluralize }}</div>
+                    </div>
+                </div>
+
+                {% if sale.notes %}
+                <hr class="my-3" style="border-color: #e5e7eb;">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Notes</div>
+                        <div class="fw-semibold">{{ sale.notes }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Item Information -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <span class="badge rounded-pill mb-4" style="background: linear-gradient(135deg, #0ea5e9, #06b6d4); font-size: 0.75rem; padding: 0.4rem 1rem; letter-spacing: 0.5px;">ITEM INFORMATION</span>
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Item Type</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.get_item_type_display }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Category</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.category }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Unit of Measure</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.unit_of_measure }}</div>
+                    </div>
+                </div>
+
+                <hr class="my-3" style="border-color: #e5e7eb;">
+
+                <div class="row g-4">
+                    {% if sale.batch.medication.generic_name %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Generic / Alternate Name</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.generic_name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if sale.batch.medication.form %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Form</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.get_form_display }}</div>
+                    </div>
+                    {% endif %}
+                    {% if sale.batch.medication.strength %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Strength</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.strength }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if sale.batch.medication.manufacturer or sale.batch.supplier %}
+                <hr class="my-3" style="border-color: #e5e7eb;">
+                <div class="row g-4">
+                    {% if sale.batch.medication.manufacturer %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Manufacturer</div>
+                        <div class="fw-semibold">{{ sale.batch.medication.manufacturer }}</div>
+                    </div>
+                    {% endif %}
+                    {% if sale.batch.supplier %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Supplier</div>
+                        <div class="fw-semibold">{{ sale.batch.supplier.name }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Prescription Rule</div>
+                        <div class="fw-semibold">{% if sale.batch.medication.requires_prescription %}Required{% else %}Not Required{% endif %}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Management Flow -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <span class="badge rounded-pill mb-4" style="background: linear-gradient(135deg, #64748b, #475569); font-size: 0.75rem; padding: 0.4rem 1rem; letter-spacing: 0.5px;">MANAGEMENT FLOW</span>
+
+                <!-- View medication profile -->
+                <a href="{% url 'pharmacy:medication_detail' sale.batch.medication.pk %}" class="d-block text-decoration-none mb-3">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">View medication profile</div>
+                        <div class="text-muted small">See full details, batches, and prescriptions for this item.</div>
+                    </div>
+                </a>
+
+                <!-- View batch details -->
+                <a href="{% url 'pharmacy:batch_detail' sale.batch.pk %}" class="d-block text-decoration-none mb-3">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">View batch details</div>
+                        <div class="text-muted small">Check batch {{ sale.batch.batch_number }} stock, expiry, and movement history.</div>
+                    </div>
+                </a>
+
+                <!-- Record another sale -->
+                <a href="{% url 'pharmacy:sales_dashboard' %}" class="d-block text-decoration-none mb-3">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">Record another sale</div>
+                        <div class="text-muted small">Go to the sales desk to record a new walk-in, patient, or prescription sale.</div>
+                    </div>
+                </a>
+
+                <!-- View sales report -->
+                <a href="{% url 'pharmacy:sales_report' %}" class="d-block text-decoration-none mb-3">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">View sales report</div>
+                        <div class="text-muted small">Review sales analytics, trends, and revenue breakdowns.</div>
+                    </div>
+                </a>
+
+                {% if sale.batch.supplier %}
+                <!-- View supplier -->
+                <a href="{% url 'pharmacy:supplier_detail' sale.batch.supplier.pk %}" class="d-block text-decoration-none mb-3">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">View supplier</div>
+                        <div class="text-muted small">View {{ sale.batch.supplier.name }} contact and supply details.</div>
+                    </div>
+                </a>
+                {% endif %}
+
+                <!-- Print receipt -->
+                <div class="d-block text-decoration-none cursor-pointer" onclick="window.print()" style="cursor: pointer;">
+                    <div class="p-3 rounded-3 border" style="transition: all 0.2s; border-color: #e5e7eb !important;">
+                        <div class="fw-bold text-dark mb-1">Print receipt</div>
+                        <div class="text-muted small">Generate a printable receipt for this sale transaction.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hover effect for management flow cards */
+.col-lg-5 .border:hover {
+    border-color: var(--alafia-primary) !important;
+    background-color: #f8fafc;
+    transform: translateX(3px);
+}
+
+@media print {
+    .btn, .page-actions, .sidebar, .navbar, .col-lg-5 {
+        display: none !important;
+    }
+    .col-lg-7 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,103 +1,479 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
+{% block title %}{{ batch.batch_number }}{% endblock %}
+
 {% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-box-seam me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Batch Details</span>
+<div class="d-flex align-items-center gap-3">
+    <div class="rounded-circle d-flex align-items-center justify-content-center detail-page-icon">
+        <span><i class="bi bi-box-seam"></i></span>
     </div>
+    <div>
+        <div class="fw-bold page-title-gradient">{{ batch.batch_number }}</div>
+        <div class="small text-muted">Batch in {{ batch.medication.name }}</div>
+    </div>
+</div>
 {% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'pharmacy:batch_list' %}" class="btn btn-secondary btn-sm">
-    <i class="bi bi-arrow-left"></i> Back to List
-</a>
 <a href="{% url 'pharmacy:batch_edit' batch.pk %}" class="btn btn-primary btn-sm">
-    <i class="bi bi-pencil"></i> Edit Batch
+    <i class="bi bi-pencil-square"></i> Edit Batch
+</a>
+<a href="{% url 'pharmacy:medication_detail' batch.medication.pk %}" class="btn btn-info btn-sm text-white">
+    <i class="bi bi-capsule"></i> View Item
+</a>
+<a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success btn-sm">
+    <i class="bi bi-cart-check"></i> Sales Desk
+</a>
+<a href="{% url 'pharmacy:batch_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-8">
-        <!-- Batch Information Card -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-info-circle"></i> Batch Information
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Batch Number</h6>
-                        <h4>{{ batch.batch_number }}</h4>
+<div class="container-fluid py-4">
+    <!-- ═══════ HEADER SHELL ═══════ -->
+    <div class="card border-0 shadow-sm detail-shell-card mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-start gap-3 flex-wrap mb-3">
+                        <div class="rounded-circle hero-avatar d-flex align-items-center justify-content-center">
+                            {{ batch.batch_number|slice:':2'|upper }}
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                                <h2 class="h3 fw-bold mb-0">{{ batch.batch_number }}</h2>
+                                <span class="badge rounded-pill text-bg-light border">{{ batch.medication.name }}</span>
+                                {% if batch.is_active %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Inactive</span>
+                                {% endif %}
+                                {% if batch.is_expired %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Expired</span>
+                                {% elif batch.is_expiring_soon %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Expiring soon</span>
+                                {% endif %}
+                            </div>
+                            <div class="meta-line">
+                                <span><i class="bi bi-capsule"></i> {{ batch.medication.name }}</span>
+                                {% if batch.supplier %}<span><i class="bi bi-truck"></i> {{ batch.supplier.name }}</span>{% endif %}
+                                <span><i class="bi bi-calendar3"></i> Received {{ batch.received_date|date:'M d, Y' }}</span>
+                                <span><i class="bi bi-hourglass-split"></i> Expires {{ batch.expiry_date|date:'M d, Y' }}</span>
+                            </div>
+                            <div class="small text-muted mt-2">{{ batch.medication.generic_name|default:'No alternate name' }}</div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <h6 class="text-muted mb-2">Status</h6>
-                        <h4>
-                            {% if batch.is_active %}
-                                <span class="badge bg-success">Active</span>
-                            {% else %}
-                                <span class="badge bg-danger">Inactive</span>
-                            {% endif %}
-                        </h4>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="hero-action-stack d-inline-flex flex-column gap-2 w-100">
+                        <a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success">
+                            <i class="bi bi-cart-check me-2"></i>Sell from this Batch
+                        </a>
+                        <a href="{% url 'pharmacy:batch_edit' batch.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-sliders me-2"></i>Manage Batch Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav detail-nav-tabs mt-4" id="batchDetailTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overviewTab" type="button">Overview</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#salesTab" type="button">Sales & Stock</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#movementsTab" type="button">Stock Movements</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsTab" type="button">Details</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ═══════ STATS ROW ═══════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Remaining stock</div>
+                    <div class="stat-value">{{ batch.quantity_remaining|intcomma }}</div>
+                    <div class="small text-muted">{{ batch.medication.unit_of_measure }} on hand</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Stock value</div>
+                    <div class="stat-value">UGX {{ stock_value|floatformat:0|intcomma }}</div>
+                    <div class="small text-muted">Based on selling price</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Units sold</div>
+                    <div class="stat-value">{{ total_units_sold|intcomma }}</div>
+                    <div class="small text-muted">From this batch</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-label">Days until expiry</div>
+                    <div class="stat-value {% if batch.is_expired %}text-danger{% elif batch.is_expiring_soon %}text-warning{% endif %}">{{ batch.days_until_expiry }}</div>
+                    <div class="small text-muted">{{ batch.expiry_date|date:'M d, Y' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TAB CONTENT ═══════ -->
+    <div class="tab-content">
+
+        <!-- OVERVIEW TAB -->
+        <div class="tab-pane fade show active" id="overviewTab">
+            <div class="row g-4">
+                <div class="col-xl-8">
+                    <div class="card border-0 shadow-sm info-card h-100">
+                        <div class="card-body p-4">
+                            <div class="section-badge mb-3">Batch information</div>
+                            <div class="row g-4 info-grid">
+                                <div class="col-md-4">
+                                    <div class="info-label">Batch number</div>
+                                    <div class="info-value">{{ batch.batch_number }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Medication</div>
+                                    <div class="info-value">
+                                        <a href="{% url 'pharmacy:medication_detail' batch.medication.pk %}" class="text-decoration-none">{{ batch.medication.name }}</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Category</div>
+                                    <div class="info-value">{{ batch.medication.category.name }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Supplier</div>
+                                    <div class="info-value">
+                                        {% if batch.supplier %}
+                                        <a href="{% url 'pharmacy:supplier_detail' batch.supplier.pk %}" class="text-decoration-none">{{ batch.supplier.name }}</a>
+                                        {% else %}-{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Cost price</div>
+                                    <div class="info-value">UGX {{ batch.cost_price|floatformat:0|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Selling price</div>
+                                    <div class="info-value">UGX {{ batch.selling_price|floatformat:0|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Received date</div>
+                                    <div class="info-value">{{ batch.received_date|date:'M d, Y' }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Expiry date</div>
+                                    <div class="info-value">
+                                        {{ batch.expiry_date|date:'M d, Y' }}
+                                        {% if batch.is_expired %}<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Expired</span>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Manufacturing date</div>
+                                    <div class="info-value">{{ batch.manufacturing_date|date:'M d, Y'|default:'-' }}</div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4" style="border-color: #e5e7eb;">
+
+                            <div class="section-badge mb-3">Stock levels</div>
+                            <div class="row g-4 info-grid">
+                                <div class="col-md-4">
+                                    <div class="info-label">Initial quantity</div>
+                                    <div class="info-value">{{ initial_qty|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Remaining</div>
+                                    <div class="info-value">{{ batch.quantity_remaining|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Stock level</div>
+                                    <div class="info-value">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 8px; border-radius: 4px;">
+                                                <div class="progress-bar {% if stock_pct < 20 %}bg-danger{% elif stock_pct < 50 %}bg-warning{% else %}bg-success{% endif %}"
+                                                     style="width: {{ stock_pct }}%; border-radius: 4px;"></div>
+                                            </div>
+                                            <span class="small fw-bold">{{ stock_pct }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Stock value (sell)</div>
+                                    <div class="info-value">UGX {{ stock_value|floatformat:0|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Stock value (cost)</div>
+                                    <div class="info-value">UGX {{ cost_value|floatformat:0|intcomma }}</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-label">Sales revenue</div>
+                                    <div class="info-value">UGX {{ total_sales_revenue|floatformat:0|intcomma }}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-muted">Medication</h6>
-                        <p class="mb-0"><strong>{{ batch.medication.name }}</strong></p>
-                        <small class="text-muted">{{ batch.medication.generic_name }}</small>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-muted">Supplier</h6>
-                        <p class="mb-0">{{ batch.supplier|default:"N/A" }}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-muted">Manufacturing Date</h6>
-                        <p class="mb-0">{{ batch.manufacturing_date|date:"M d, Y" }}</p>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-muted">Expiry Date</h6>
-                        <p class="mb-0">
-                            {{ batch.expiry_date|date:"M d, Y" }}
-                            {% if batch.is_expired %}
-                                <span class="badge bg-danger ms-2">Expired</span>
-                            {% elif batch.is_expiring_soon %}
-                                <span class="badge bg-warning ms-2">Expiring Soon</span>
-                            {% endif %}
-                        </p>
+                <div class="col-xl-4">
+                    <div class="card border-0 shadow-sm h-100 action-flow-card">
+                        <div class="card-body p-4">
+                            <div class="section-badge mb-3">Management flow</div>
+                            <div class="d-grid gap-3">
+                                <a href="{% url 'pharmacy:batch_edit' batch.pk %}" class="flow-link-card">
+                                    <div class="flow-title">Update batch details</div>
+                                    <div class="flow-text">Adjust pricing, dates, and operational information for this batch.</div>
+                                </a>
+                                <a href="{% url 'pharmacy:medication_detail' batch.medication.pk %}" class="flow-link-card">
+                                    <div class="flow-title">View medication profile</div>
+                                    <div class="flow-text">See full details, all batches, and prescriptions for {{ batch.medication.name }}.</div>
+                                </a>
+                                <a href="{% url 'pharmacy:sales_dashboard' %}" class="flow-link-card">
+                                    <div class="flow-title">Sell or dispense</div>
+                                    <div class="flow-text">Move stock from this batch into the pharmacy sales workflow.</div>
+                                </a>
+                                {% if batch.supplier %}
+                                <a href="{% url 'pharmacy:supplier_detail' batch.supplier.pk %}" class="flow-link-card">
+                                    <div class="flow-title">View supplier</div>
+                                    <div class="flow-text">View {{ batch.supplier.name }} contact and supply details.</div>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'pharmacy:sales_list' %}" class="flow-link-card">
+                                    <div class="flow-title">View all sales</div>
+                                    <div class="flow-text">Browse all sales transactions across all batches and items.</div>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Stock Information Card -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-box"></i> Stock Information
+        <!-- SALES & STOCK TAB -->
+        <div class="tab-pane fade" id="salesTab">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body px-3 py-3">
+                            <div class="stat-label">Total units sold</div>
+                            <div class="stat-value">{{ total_units_sold|intcomma }}</div>
+                            <div class="small text-muted">From this batch</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body px-3 py-3">
+                            <div class="stat-label">Sales revenue</div>
+                            <div class="stat-value">UGX {{ total_sales_revenue|floatformat:0|intcomma }}</div>
+                            <div class="small text-muted">Based on selling price</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body px-3 py-3">
+                            <div class="stat-label">Sale transactions</div>
+                            <div class="stat-value">{{ total_sales_count|intcomma }}</div>
+                            <div class="small text-muted">Individual sale records</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <h6 class="text-muted">Initial Quantity</h6>
-                        <h4>{{ batch.quantity_received|intcomma }}</h4>
-                        <small class="text-muted">{{ batch.medication.unit }}</small>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="section-badge mb-3">Sales trend vs remaining stock — last 30 days</div>
+                    <div style="position: relative; height: 320px;">
+                        <canvas id="batchSalesChart"></canvas>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <h6 class="text-muted">Quantity Remaining</h6>
-                        <h4 class="text-primary">{{ batch.quantity_remaining|intcomma }}</h4>
-                        <small class="text-muted">{{ batch.medication.unit }}</small>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">Recent sales</h5>
+                        <small class="text-muted">Latest sales from batch {{ batch.batch_number }}.</small>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <h6 class="text-muted">Stock Level</h6>
-                        <div class="progress" style="height: 25px;">
-                            {% widthratio batch.quantity_remaining batch.quantity_received 100 as stock_percentage %}
-                            <div class="progress-bar {% if stock_percentage < 20 %}bg-danger{% elif stock_percentage < 50 %}bg-warning{% else %}bg-success{% endif %}" 
-                                 style="width: {{ stock_percentage }}%">
-                                {{ stock_percentage }}%
+                    <a href="{% url 'pharmacy:sales_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-up-right"></i> All Sales
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_sales %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Reference</th>
+                                    <th>Qty</th>
+                                    <th>Revenue</th>
+                                    <th>Sold by</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ sale.created_at|date:'M d, Y' }}</div>
+                                        <small class="text-muted">{{ sale.created_at|date:'h:i A' }}</small>
+                                    </td>
+                                    <td class="small">{{ sale.reference }}</td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                                            {{ sale.quantity }} unit{{ sale.quantity|pluralize }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold text-success">
+                                        {% widthratio sale.quantity 1 batch.selling_price as line_total %}
+                                        UGX {{ line_total|intcomma }}
+                                    </td>
+                                    <td>{{ sale.created_by.get_full_name|default:sale.created_by.username }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'pharmacy:sale_detail' sale.pk %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 px-3">
+                        <div class="empty-icon mb-3"><i class="bi bi-cart-x"></i></div>
+                        <h5 class="fw-semibold">No sales recorded yet</h5>
+                        <p class="text-muted">No sale transactions have been recorded from this batch.</p>
+                        <a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success">
+                            <i class="bi bi-cart-plus me-2"></i>Go to Sales Desk
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- STOCK MOVEMENTS TAB -->
+        <div class="tab-pane fade" id="movementsTab">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">Stock movements</h5>
+                        <small class="text-muted">{{ movements_count }} movement{{ movements_count|pluralize }} recorded for this batch.</small>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if movements %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Reference</th>
+                                    <th>By</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mv in movements %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ mv.created_at|date:'M d, Y' }}</div>
+                                        <small class="text-muted">{{ mv.created_at|date:'h:i A' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if mv.movement_type == 'in' %}
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Stock In</span>
+                                        {% elif mv.movement_type == 'out' %}
+                                        <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Stock Out</span>
+                                        {% else %}
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Adjustment</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-semibold">{{ mv.quantity }}</td>
+                                    <td class="small">{{ mv.reference|default:'-' }}</td>
+                                    <td>{{ mv.created_by.get_full_name|default:mv.created_by.username }}</td>
+                                    <td class="small text-muted">{{ mv.notes|truncatechars:50|default:'-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 px-3">
+                        <div class="empty-icon mb-3"><i class="bi bi-arrow-left-right"></i></div>
+                        <h5 class="fw-semibold">No stock movements yet</h5>
+                        <p class="text-muted">No stock movements have been recorded for this batch.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAILS TAB -->
+        <div class="tab-pane fade" id="detailsTab">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="section-badge mb-3">Batch notes</div>
+                            <div class="text-muted">{{ batch.notes|default:'No notes recorded for this batch.'|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="section-badge mb-3">Additional details</div>
+                            <div class="row g-3 info-grid">
+                                <div class="col-6">
+                                    <div class="info-label">Invoice number</div>
+                                    <div class="info-value">{{ batch.invoice_number|default:'-' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-label">Status</div>
+                                    <div class="info-value">{{ batch.get_status_display }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-label">Received by</div>
+                                    <div class="info-value">{{ batch.received_by.get_full_name|default:'-' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-label">Last quality check</div>
+                                    <div class="info-value">{{ batch.last_quality_check|date:'M d, Y H:i'|default:'Not checked' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-label">Created</div>
+                                    <div class="info-value">{{ batch.created_at|date:'M d, Y H:i' }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-label">Last updated</div>
+                                    <div class="info-value">{{ batch.updated_at|date:'M d, Y H:i' }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -105,54 +481,226 @@
             </div>
         </div>
     </div>
-
-    <div class="col-lg-4">
-        <!-- Pricing Information Card -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-currency-dollar"></i> Pricing
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <h6 class="text-muted">Cost Price</h6>
-                    <h4>UGX {{ batch.cost_price|floatformat:0|intcomma }}</h4>
-                </div>
-                <div class="mb-3">
-                    <h6 class="text-muted">Selling Price</h6>
-                    <h4 class="text-success">UGX {{ batch.selling_price|floatformat:0|intcomma }}</h4>
-                </div>
-                <hr>
-                <div>
-                    <h6 class="text-muted">Total Value</h6>
-                    {% widthratio batch.quantity_remaining 1 batch.selling_price as total_value %}
-                    <h4 class="text-primary">UGX {{ total_value|floatformat:0|intcomma }}</h4>
-                    <small class="text-muted">Based on remaining stock</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Additional Information Card -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-info-circle"></i> Additional Info
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <h6 class="text-muted">Storage Location</h6>
-                    <p>{{ batch.storage_location|default:"Not specified" }}</p>
-                </div>
-                <div class="mb-3">
-                    <h6 class="text-muted">Created Date</h6>
-                    <p>{{ batch.created_at|date:"M d, Y H:i" }}</p>
-                </div>
-                {% if batch.notes %}
-                <div>
-                    <h6 class="text-muted">Notes</h6>
-                    <p>{{ batch.notes }}</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.detail-page-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #185487, #2b6ea5);
+    color: #fff;
+    font-weight: 700;
+}
+.page-title-gradient {
+    background: linear-gradient(135deg, #185487, #2b6ea5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.15rem;
+}
+.detail-shell-card,
+.stat-card,
+.info-card,
+.action-flow-card {
+    border-radius: 1rem;
+}
+.hero-avatar {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #1b7f7a, #2d9ca0);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+.meta-line i {
+    margin-right: 0.35rem;
+}
+.detail-nav-tabs {
+    border-bottom: 1px solid #e7edf5;
+    gap: 0.5rem;
+}
+.detail-nav-tabs .nav-link {
+    border: 0;
+    color: #667789;
+    font-weight: 600;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid transparent;
+}
+.detail-nav-tabs .nav-link.active {
+    color: #185487;
+    background: transparent;
+    border-bottom-color: #185487;
+}
+.stat-card .card-body {
+    padding: 1.35rem;
+}
+.stat-label {
+    color: #68778a;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+.stat-value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #13263b;
+    margin-top: 0.25rem;
+}
+.section-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(24, 84, 135, 0.08);
+    color: #185487;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.info-label {
+    font-size: 0.76rem;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.35rem;
+}
+.info-value {
+    font-weight: 600;
+    color: #10263c;
+}
+.flow-link-card {
+    display: block;
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    border: 1px solid #e4edf7;
+    background: #fbfdff;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+.flow-link-card:hover {
+    border-color: #bed6ec;
+    background: #f7fbff;
+}
+.flow-title {
+    font-weight: 700;
+    color: #16395b;
+    margin-bottom: 0.25rem;
+}
+.flow-text {
+    color: #6f8092;
+    font-size: 0.9rem;
+}
+.detail-table thead th {
+    background: #f8fbff;
+    color: #607086;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid #e6eef7;
+}
+.empty-icon {
+    font-size: 3rem;
+    color: #9cb0c4;
+}
+@media (max-width: 991.98px) {
+    .hero-action-stack {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+// ── Batch Sales & Stock Chart ──
+(function() {
+    const chartDataRaw = '{{ chart_data_json|escapejs }}';
+    let chartData;
+    try { chartData = JSON.parse(chartDataRaw); } catch(e) { chartData = null; }
+
+    function initBatchChart() {
+        const canvas = document.getElementById('batchSalesChart');
+        if (!canvas || !chartData) return;
+        if (canvas.dataset.chartInit === '1') return;
+        canvas.dataset.chartInit = '1';
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Units Sold',
+                        data: chartData.sales,
+                        backgroundColor: 'rgba(14, 165, 233, 0.7)',
+                        borderColor: '#0ea5e9',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Current Stock',
+                        data: chartData.stock,
+                        type: 'line',
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.3,
+                        order: 1,
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'Reorder Level',
+                        data: chartData.labels.map(function() { return chartData.reorder_level; }),
+                        type: 'line',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false,
+                        order: 0,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+                    tooltip: { backgroundColor: '#1e293b', titleFont: { size: 13 }, bodyFont: { size: 12 }, padding: 12, cornerRadius: 8 }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 15 } },
+                    y: { position: 'left', title: { display: true, text: 'Units Sold', font: { size: 12 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { precision: 0 } },
+                    y1: { position: 'right', title: { display: true, text: 'Stock Level', font: { size: 12 } }, beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var salesTabBtn = document.querySelector('[data-bs-target="#salesTab"]');
+        if (salesTabBtn) salesTabBtn.addEventListener('shown.bs.tab', initBatchChart);
+        if (document.getElementById('salesTab') && document.getElementById('salesTab').classList.contains('active')) initBatchChart();
+    });
+})();
+</script>
 {% endblock %}

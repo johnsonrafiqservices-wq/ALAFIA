@@ -91,6 +91,12 @@
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#prescriptionsTab" type="button">Prescription History</button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#salesTab" type="button">Sales History</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stockTab" type="button">Stock History</button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsTab" type="button">Details</button>
                 </li>
             </ul>
@@ -350,6 +356,189 @@
             </div>
         </div>
 
+        <!-- SALES HISTORY TAB -->
+        <div class="tab-pane fade" id="salesTab">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0">Recent sales</h6>
+                    <small class="text-muted">Latest sale transactions for {{ medication.name }}.</small>
+                </div>
+                <a href="{% url 'pharmacy:sales_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-up-right"></i> All Sales
+                </a>
+            </div>
+            {% if recent_sales %}
+            <div class="table-responsive sales-table-wrap mb-4">
+                <table class="table table-hover align-middle mb-0 detail-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Batch</th>
+                            <th>Qty</th>
+                            <th>Revenue</th>
+                            <th>Sold by</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in recent_sales %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ sale.created_at|date:'M d, Y' }}</div>
+                                <small class="text-muted">{{ sale.created_at|date:'h:i A' }}</small>
+                            </td>
+                            <td>{{ sale.batch.batch_number }}</td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                                    {{ sale.quantity }} unit{{ sale.quantity|pluralize }}
+                                </span>
+                            </td>
+                            <td class="fw-semibold text-success">
+                                {% widthratio sale.quantity 1 sale.batch.selling_price as line_total %}
+                                UGX {{ line_total|intcomma }}
+                            </td>
+                            <td>{{ sale.created_by.get_full_name|default:sale.created_by.username }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'pharmacy:sale_detail' sale.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 px-3 mb-4">
+                <div class="empty-icon mb-3"><i class="bi bi-cart-x"></i></div>
+                <h5 class="fw-semibold">No sales recorded yet</h5>
+                <p class="text-muted">No sale transactions have been recorded for this item.</p>
+                <a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success">
+                    <i class="bi bi-cart-plus me-2"></i>Go to Sales Desk
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="sales-stats-strip mb-4">
+                <div class="sales-stat-item">
+                    <span class="sales-stat-number">{{ total_units_sold|intcomma }}</span>
+                    <span class="sales-stat-label">Units sold</span>
+                </div>
+                <div class="sales-stat-divider"></div>
+                <div class="sales-stat-item">
+                    <span class="sales-stat-number">UGX {{ total_sales_revenue|floatformat:0|intcomma }}</span>
+                    <span class="sales-stat-label">Revenue</span>
+                </div>
+                <div class="sales-stat-divider"></div>
+                <div class="sales-stat-item">
+                    <span class="sales-stat-number">{{ total_sales_count|intcomma }}</span>
+                    <span class="sales-stat-label">Transactions</span>
+                </div>
+            </div>
+
+            <div class="section-badge mb-3">Daily sales — last 30 days</div>
+            <div class="sales-chart-wrap">
+                <canvas id="salesStockChart"></canvas>
+            </div>
+        </div>
+
+        <!-- STOCK HISTORY TAB -->
+        <div class="tab-pane fade" id="stockTab">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h6 class="fw-bold mb-0">Stock movements</h6>
+                    <small class="text-muted">All sales, stock-ins, and adjustments for {{ medication.name }}.</small>
+                </div>
+                <button type="button" class="btn btn-success btn-sm open-batch-create-modal" data-medication-id="{{ medication.pk }}" data-medication-name="{{ medication.name }}">
+                    <i class="bi bi-plus-circle"></i> Receive Batch
+                </button>
+            </div>
+            {% if stock_movements %}
+            <div class="table-responsive sales-table-wrap mb-4">
+                <table class="table table-hover align-middle mb-0 detail-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Batch</th>
+                            <th>Qty</th>
+                            <th class="text-end">Before</th>
+                            <th class="text-end">After</th>
+                            <th class="text-center">Trend</th>
+                            <th>Reference</th>
+                            <th>By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in stock_movements %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ entry.movement.created_at|date:'M d, Y' }}</div>
+                                <small class="text-muted">{{ entry.movement.created_at|date:'h:i A' }}</small>
+                            </td>
+                            <td>
+                                {% if entry.movement.movement_type == 'in' %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                                    <i class="bi bi-box-arrow-in-down me-1"></i>Stock In
+                                </span>
+                                {% elif entry.is_sale %}
+                                <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                                    <i class="bi bi-cart me-1"></i>Sale
+                                </span>
+                                {% elif entry.movement.movement_type == 'out' %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+                                    <i class="bi bi-box-arrow-up me-1"></i>Stock Out
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                    <i class="bi bi-wrench me-1"></i>Adjustment
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'pharmacy:batch_detail' entry.movement.batch.pk %}" class="text-decoration-none fw-semibold">
+                                    {{ entry.movement.batch.batch_number }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if entry.movement.movement_type == 'in' %}
+                                <span class="fw-bold text-success">+{{ entry.movement.quantity|intcomma }}</span>
+                                {% else %}
+                                <span class="fw-bold text-danger">-{{ entry.movement.quantity|intcomma }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end text-muted">{{ entry.before|intcomma }}</td>
+                            <td class="text-end fw-semibold">{{ entry.after|intcomma }}</td>
+                            <td class="text-center">
+                                {% if entry.movement.movement_type == 'in' %}
+                                <i class="bi bi-arrow-up-circle-fill text-success" style="font-size: 1.1rem;" title="Stock increased"></i>
+                                {% elif entry.after == 0 %}
+                                <i class="bi bi-exclamation-circle-fill text-danger" style="font-size: 1.1rem;" title="Out of stock"></i>
+                                {% else %}
+                                <i class="bi bi-arrow-down-circle-fill text-danger" style="font-size: 1.1rem;" title="Stock decreased"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted small">{{ entry.movement.reference|default:'-'|truncatechars:30 }}</span>
+                            </td>
+                            <td>{{ entry.movement.created_by.get_full_name|default:entry.movement.created_by.username }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 px-3 mb-4">
+                <div class="empty-icon mb-3"><i class="bi bi-arrow-left-right"></i></div>
+                <h5 class="fw-semibold">No stock movements yet</h5>
+                <p class="text-muted">No stock movements have been recorded for this item.</p>
+                <button type="button" class="btn btn-success open-batch-create-modal" data-medication-id="{{ medication.pk }}" data-medication-name="{{ medication.name }}">
+                    <i class="bi bi-plus-circle me-2"></i>Receive First Batch
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
         <div class="tab-pane fade" id="detailsTab">
             <div class="row g-4">
                 <div class="col-lg-6">
@@ -504,6 +693,66 @@
     font-size: 3rem;
     color: #9cb0c4;
 }
+/* ── Sales & Stock tab (cardless) ── */
+.sales-stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(135deg, #f0f6fd 0%, #f8fbff 100%);
+    border-radius: 0.75rem;
+    border: 1px solid #e4edf7;
+    flex-wrap: wrap;
+}
+.sales-stat-item {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 120px;
+    text-align: center;
+}
+.sales-stat-number {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #13263b;
+    line-height: 1.2;
+}
+.sales-stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #718096;
+    margin-top: 0.2rem;
+    font-weight: 600;
+}
+.sales-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: #d2dce9;
+    flex-shrink: 0;
+}
+.sales-chart-wrap {
+    position: relative;
+    height: 320px;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e7edf5;
+}
+.sales-table-wrap {
+    border: 1px solid #e7edf5;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+@media (max-width: 575.98px) {
+    .sales-stats-strip {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    .sales-stat-divider {
+        width: 60%;
+        height: 1px;
+    }
+}
 @media (max-width: 991.98px) {
     .hero-action-stack {
         width: 100%;
@@ -513,7 +762,172 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
+// ── Sales & Stock Chart ──
+(function() {
+    const chartDataRaw = '{{ chart_data_json|escapejs }}';
+    let chartData;
+    try { chartData = JSON.parse(chartDataRaw); } catch(e) { chartData = null; }
+
+    function initSalesChart() {
+        const canvas = document.getElementById('salesStockChart');
+        if (!canvas || !chartData) return;
+        if (canvas.dataset.chartInit === '1') return;
+        canvas.dataset.chartInit = '1';
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Units Sold',
+                        data: chartData.sales,
+                        backgroundColor: 'rgba(14, 165, 233, 0.7)',
+                        borderColor: '#0ea5e9',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Current Stock',
+                        data: chartData.stock,
+                        type: 'line',
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.3,
+                        order: 1,
+                        yAxisID: 'y1',
+                    },
+                    {
+                        label: 'Reorder Level',
+                        data: chartData.labels.map(() => chartData.reorder_level),
+                        type: 'line',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false,
+                        order: 0,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 20, font: { size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        padding: 12,
+                        cornerRadius: 8,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 15 }
+                    },
+                    y: {
+                        position: 'left',
+                        title: { display: true, text: 'Units Sold', font: { size: 12 } },
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        ticks: { precision: 0 }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: { display: true, text: 'Stock Level', font: { size: 12 } },
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false },
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    function initStockChart() {
+        const canvas = document.getElementById('stockHistoryChart');
+        if (!canvas || !chartData) return;
+        if (canvas.dataset.chartInit === '1') return;
+        canvas.dataset.chartInit = '1';
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Current Stock',
+                        data: chartData.stock,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.10)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.3,
+                    },
+                    {
+                        label: 'Reorder Level',
+                        data: chartData.labels.map(function() { return chartData.reorder_level; }),
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false,
+                    },
+                    {
+                        label: 'Units Sold',
+                        data: chartData.sales,
+                        type: 'bar',
+                        backgroundColor: 'rgba(99, 102, 241, 0.35)',
+                        borderColor: '#6366f1',
+                        borderWidth: 1,
+                        borderRadius: 3,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+                    tooltip: { backgroundColor: '#1e293b', titleFont: { size: 13 }, bodyFont: { size: 12 }, padding: 12, cornerRadius: 8 }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 15 } },
+                    y: { position: 'left', title: { display: true, text: 'Stock Level', font: { size: 12 } }, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { precision: 0 } },
+                    y1: { position: 'right', title: { display: true, text: 'Units Sold', font: { size: 12 } }, beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var salesTabBtn = document.querySelector('[data-bs-target="#salesTab"]');
+        if (salesTabBtn) salesTabBtn.addEventListener('shown.bs.tab', initSalesChart);
+
+        var stockTabBtn = document.querySelector('[data-bs-target="#stockTab"]');
+        if (stockTabBtn) stockTabBtn.addEventListener('shown.bs.tab', initStockChart);
+    });
+})();
+
 window.submitBatchForm = function(formId, url) {
     const form = document.getElementById(formId);
     if (!form) {

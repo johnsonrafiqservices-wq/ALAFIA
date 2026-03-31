@@ -89,11 +89,14 @@
                         <th class="py-3">
                             <i class="bi bi-person-badge me-1"></i>Sold By
                         </th>
+                        <th class="text-center py-3">
+                            <i class="bi bi-eye me-1"></i>Action
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for sale in sales %}
-                    <tr style="border-left: 3px solid transparent; transition: all 0.2s;">
+                    <tr style="border-left: 3px solid transparent; transition: all 0.2s; cursor: pointer;" onclick="window.location='{% url 'pharmacy:sale_detail' sale.pk %}'">
                         <td class="px-4">
                             <div class="d-flex align-items-center">
                                 <div class="text-center me-3" style="min-width: 50px;">
@@ -156,6 +159,11 @@
                                     <small class="text-muted">Staff</small>
                                 </div>
                             </div>
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'pharmacy:sale_detail' sale.pk %}" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">
+                                <i class="bi bi-eye"></i> View
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
