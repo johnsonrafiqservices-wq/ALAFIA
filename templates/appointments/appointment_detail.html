@@ -2,200 +2,149 @@
 
 {% block title %}Appointment Details - {{ appointment.patient.get_full_name }}{% endblock %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-calendar-event-fill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Appointment Details</span>
-    </div>
-{% endblock %}
+{% block page_title %}Appointment – {{ appointment.patient.get_full_name }}{% endblock %}
 
 {% block page_actions %}
-    
-    {% if user.is_staff or user == appointment.patient.user %}
-        {% if appointment.status != 'confirmed' %}
-        <button type="button" class="btn btn-success" onclick="document.getElementById('confirmForm{{ appointment.id }}').submit()">
-            <i class="fas fa-check"></i> Confirm Appointment
-        </button>
-        <form id="confirmForm{{ appointment.id }}" method="post" action="{% url 'appointments:appointment_confirm' appointment.id %}" style="display: none;">
-            {% csrf_token %}
-        </form>
-        {% endif %}
-        {% if user.is_staff %}
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointmentUpdateModal" onclick="loadAppointmentData({{ appointment.id }})">
-            <i class="fas fa-edit"></i> Edit
-        </button>
-        {% endif %}
+{% if user.is_staff or user == appointment.patient.user %}
+    {% if appointment.status != 'confirmed' %}
+    <button type="button" class="btn btn-success btn-sm" onclick="document.getElementById('confirmForm{{ appointment.id }}').submit()">
+        <i class="bi bi-check-lg me-1"></i>Confirm
+    </button>
+    <form id="confirmForm{{ appointment.id }}" method="post" action="{% url 'appointments:appointment_confirm' appointment.id %}" style="display: none;">{% csrf_token %}</form>
     {% endif %}
-    {% if appointment.status in 'scheduled,confirmed' %}
-        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#appointmentRescheduleModal" onclick="loadRescheduleData({{ appointment.id }})">
-            <i class="bi bi-calendar-event"></i> Reschedule
-        </button>
-        <button class="btn btn-danger" onclick="confirmCancelAppointment({{ appointment.id }})">
-            <i class="bi bi-x"></i> Cancel
-        </button>
+    {% if user.is_staff %}
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#appointmentUpdateModal" onclick="loadAppointmentData({{ appointment.id }})">
+        <i class="bi bi-pencil-square me-1"></i>Edit
+    </button>
     {% endif %}
+{% endif %}
+{% if appointment.status in 'scheduled,confirmed' %}
+    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#appointmentRescheduleModal" onclick="loadRescheduleData({{ appointment.id }})">
+        <i class="bi bi-calendar-event me-1"></i>Reschedule
+    </button>
+    <button class="btn btn-outline-danger btn-sm" onclick="confirmCancelAppointment({{ appointment.id }})">
+        <i class="bi bi-x-lg me-1"></i>Cancel
+    </button>
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="row">
+<!-- Header Card -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3 px-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #ede9fe; color: #7c3aed; font-weight: 700; font-size: 1.1rem;">
+                    {{ appointment.patient.get_full_name|slice:":1"|upper }}
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">{{ appointment.patient.get_full_name }}</h5>
+                    <div class="text-muted" style="font-size: 0.85rem;">{{ appointment.service.name }} &bull; {{ appointment.appointment_date|date:"M d, Y" }} at {{ appointment.appointment_time|time:"g:i A" }} &bull; Dr. {{ appointment.provider.get_full_name }}</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if appointment.priority == 'high' %}
+                <span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626; font-size: 0.75rem;">{{ appointment.get_priority_display }}</span>
+                {% elif appointment.priority == 'medium' %}
+                <span class="badge rounded-pill" style="background: #fef3c7; color: #d97706; font-size: 0.75rem;">{{ appointment.get_priority_display }}</span>
+                {% else %}
+                <span class="badge rounded-pill" style="background: #dbeafe; color: #2563eb; font-size: 0.75rem;">{{ appointment.get_priority_display }}</span>
+                {% endif %}
+                {% if appointment.status == 'scheduled' %}
+                <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b;">{{ appointment.get_status_display }}</span>
+                {% elif appointment.status == 'confirmed' %}
+                <span class="badge rounded-pill" style="background: #dbeafe; color: #2563eb;">{{ appointment.get_status_display }}</span>
+                {% elif appointment.status == 'in_progress' %}
+                <span class="badge rounded-pill" style="background: #fef3c7; color: #d97706;">{{ appointment.get_status_display }}</span>
+                {% elif appointment.status == 'completed' %}
+                <span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a;">{{ appointment.get_status_display }}</span>
+                {% elif appointment.status == 'cancelled' %}
+                <span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626;">{{ appointment.get_status_display }}</span>
+                {% else %}
+                <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b;">{{ appointment.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
     <div class="col-lg-8">
-        <!-- Appointment Information -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Appointment Information</h6>
+        <!-- Appointment Info -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Appointment Details</h6>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Appointment ID:</strong></td>
-                                <td><span class="badge bg-primary">{{ appointment.id }}</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Date:</strong></td>
-                                <td>{{ appointment.appointment_date|date:"F d, Y" }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Time:</strong></td>
-                                <td>{{ appointment.appointment_time|time:"g:i A" }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Duration:</strong></td>
-                                <td>{{ appointment.service.duration }} minutes</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Status:</strong></td>
-                                <td>
-                                    <span class="badge bg-{% if appointment.status == 'scheduled' %}secondary{% elif appointment.status == 'confirmed' %}primary{% elif appointment.status == 'in_progress' %}warning{% elif appointment.status == 'completed' %}success{% elif appointment.status == 'cancelled' %}danger{% else %}dark{% endif %}">
-                                        {{ appointment.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
+                        <div class="mb-2"><span class="text-muted">Date:</span> <strong>{{ appointment.appointment_date|date:"F d, Y" }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">Time:</span> {{ appointment.appointment_time|time:"g:i A" }}</div>
+                        <div class="mb-2"><span class="text-muted">Duration:</span> {{ appointment.service.duration }} min</div>
+                        <div class="mb-2"><span class="text-muted">Created:</span> {{ appointment.created_at|date:"M d, Y H:i" }}</div>
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Service:</strong></td>
-                                <td>{{ appointment.service.name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Provider:</strong></td>
-                                <td>{{ appointment.provider.get_full_name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Price:</strong></td>
-                                <td>${{ appointment.service.price }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Priority:</strong></td>
-                                <td>
-                                    <span class="badge bg-{% if appointment.priority == 'high' %}danger{% elif appointment.priority == 'medium' %}warning{% else %}info{% endif %}">
-                                        {{ appointment.get_priority_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Created:</strong></td>
-                                <td>{{ appointment.created_at|date:"M d, Y H:i" }}</td>
-                            </tr>
-                        </table>
+                        <div class="mb-2"><span class="text-muted">Service:</span> <strong>{{ appointment.service.name }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">Provider:</span> {{ appointment.provider.get_full_name }}</div>
+                        <div class="mb-2"><span class="text-muted">Price:</span> ${{ appointment.service.price }}</div>
                     </div>
                 </div>
-                
                 {% if appointment.reason_for_visit %}
-                <div class="mt-3">
-                    <strong>Reason for Visit:</strong>
-                    <p class="mt-1">{{ appointment.reason_for_visit }}</p>
-                </div>
+                <hr class="my-2">
+                <div><span class="text-muted">Reason:</span> {{ appointment.reason_for_visit }}</div>
                 {% endif %}
-                
                 {% if appointment.notes %}
-                <div class="mt-3">
-                    <strong>Notes:</strong>
-                    <p class="mt-1">{{ appointment.notes }}</p>
-                </div>
+                <hr class="my-2">
+                <div><span class="text-muted">Notes:</span> {{ appointment.notes }}</div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Patient Information -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Patient Information</h6>
-                <a href="{% url 'patients:patient_detail' appointment.patient.patient_id %}" class="btn btn-sm btn-outline-primary">
-                    View Full Profile
-                </a>
+        <!-- Patient Info -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold">Patient</h6>
+                <a href="{% url 'patients:patient_detail' appointment.patient.patient_id %}" class="btn btn-outline-primary btn-sm" style="font-size: 0.75rem;">View Profile</a>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Name:</strong></td>
-                                <td>{{ appointment.patient.get_full_name }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Patient ID:</strong></td>
-                                <td>{{ appointment.patient.patient_id }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Age:</strong></td>
-                                <td>{{ appointment.patient.get_age }} years</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Gender:</strong></td>
-                                <td>{{ appointment.patient.get_gender_display }}</td>
-                            </tr>
-                        </table>
+                        <div class="mb-2"><span class="text-muted">Name:</span> <strong>{{ appointment.patient.get_full_name }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">ID:</span> {{ appointment.patient.patient_id }}</div>
+                        <div class="mb-2"><span class="text-muted">Age:</span> {{ appointment.patient.get_age }} years</div>
+                        <div class="mb-2"><span class="text-muted">Gender:</span> {{ appointment.patient.get_gender_display }}</div>
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td><strong>Phone:</strong></td>
-                                <td>{{ appointment.patient.phone }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Email:</strong></td>
-                                <td>{% if appointment.patient.email %}{{ appointment.patient.email }}{% else %}<em>Not provided</em>{% endif %}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Insurance:</strong></td>
-                                <td>{% if appointment.patient.insurance_provider %}{{ appointment.patient.insurance_provider }}{% else %}<em>No insurance</em>{% endif %}</td>
-                            </tr>
-                        </table>
+                        <div class="mb-2"><i class="bi bi-telephone text-muted me-1"></i>{{ appointment.patient.phone }}</div>
+                        <div class="mb-2"><i class="bi bi-envelope text-muted me-1"></i>{% if appointment.patient.email %}{{ appointment.patient.email }}{% else %}<em class="text-muted">Not provided</em>{% endif %}</div>
+                        {% if appointment.patient.insurance_provider %}<div class="mb-2"><i class="bi bi-shield-check text-muted me-1"></i>{{ appointment.patient.insurance_provider }}</div>{% endif %}
                     </div>
                 </div>
-                
                 {% if appointment.patient.allergies %}
-                <div class="alert alert-warning mt-3">
-                    <strong><i class="bi bi-exclamation-triangle"></i> Allergies:</strong>
-                    {{ appointment.patient.allergies }}
+                <div class="alert alert-warning py-1 px-2 mt-2 mb-0" style="font-size: 0.8rem;">
+                    <i class="bi bi-exclamation-triangle me-1"></i><strong>Allergies:</strong> {{ appointment.patient.allergies }}
                 </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Treatment Session (singular) -->
+        <!-- Treatment Session -->
         {% if treatment_session %}
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Treatment Session</h6>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Treatment Session</h6>
             </div>
-            <div class="card-body">
-                <div class="border-bottom pb-3 mb-3">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6>{% if treatment_session.completed_at %}{{ treatment_session.completed_at|date:"M d, Y H:i" }}{% else %}{{ appointment.appointment_date|date:"M d, Y" }}{% endif %}</h6>
-                            <p class="mb-1"><strong>Treatment:</strong> {{ treatment_session.treatment_provided }}</p>
-                            {% if treatment_session.assessment_findings %}
-                                <p class="mb-1"><strong>Assessment:</strong> {{ treatment_session.assessment_findings|truncatechars:100 }}</p>
-                            {% endif %}
-                        </div>
-                        <span class="badge bg-success">{{ appointment.duration_minutes }} min</span>
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold">{% if treatment_session.completed_at %}{{ treatment_session.completed_at|date:"M d, Y H:i" }}{% else %}{{ appointment.appointment_date|date:"M d, Y" }}{% endif %}</div>
+                        <div class="mb-1"><span class="text-muted">Treatment:</span> {{ treatment_session.treatment_provided }}</div>
+                        {% if treatment_session.assessment_findings %}
+                        <div class="mb-1"><span class="text-muted">Assessment:</span> {{ treatment_session.assessment_findings|truncatechars:100 }}</div>
+                        {% endif %}
+                        <small class="text-muted">By {{ appointment.provider.get_full_name }}</small>
                     </div>
-                    <small class="text-muted">By {{ appointment.provider.get_full_name }}</small>
+                    <span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a; font-size: 0.7rem;">{{ appointment.duration_minutes }} min</span>
                 </div>
             </div>
         </div>
@@ -204,117 +153,93 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Actions</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body px-3 py-2">
                 <div class="d-grid gap-2">
                     {% if user.is_staff and appointment.status in 'scheduled,confirmed' %}
                     <form method="post" action="{% url 'appointments:send_reminder' appointment.id %}" style="margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-warning w-100">
-                            <i class="bi bi-bell"></i> Send Reminder Now
-                        </button>
+                        <button type="submit" class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-bell me-1"></i>Send Reminder</button>
                     </form>
                     {% endif %}
-                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#vitalSignsModal" onclick="setVitalSignsPatient('{{ appointment.patient.patient_id }}')">
-                        <i class="bi bi-heart-pulse"></i> Record Vitals
-                    </button>
-                    <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#medicalRecordModal" onclick="setMedicalRecordPatient('{{ appointment.patient.patient_id }}')">
-                        <i class="bi bi-file-medical"></i> Add Medical Record
-                    </button>
-                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#paymentModal" onclick="setPaymentAppointment('{{ appointment.patient.id }}', '{{ appointment.id }}')">
-                        <i class="bi bi-credit-card"></i> Record Payment
-                    </button>
+                    <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#vitalSignsModal" onclick="setVitalSignsPatient('{{ appointment.patient.patient_id }}')"><i class="bi bi-heart-pulse me-1"></i>Record Vitals</button>
+                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#medicalRecordModal" onclick="setMedicalRecordPatient('{{ appointment.patient.patient_id }}')"><i class="bi bi-file-medical me-1"></i>Add Medical Record</button>
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#paymentModal" onclick="setPaymentAppointment('{{ appointment.patient.id }}', '{{ appointment.id }}')"><i class="bi bi-credit-card me-1"></i>Record Payment</button>
                 </div>
             </div>
         </div>
 
-        <!-- Service Information -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Service Details</h6>
+        <!-- Service -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Service</h6>
             </div>
-            <div class="card-body">
-                <h6>{{ appointment.service.name }}</h6>
-                <p class="text-muted">{{ appointment.service.description }}</p>
-                <div class="row">
-                    <div class="col-6">
-                        <small><strong>Duration:</strong><br>{{ appointment.service.duration }} minutes</small>
-                    </div>
-                    <div class="col-6">
-                        <small><strong>Price:</strong><br>${{ appointment.service.price }}</small>
-                    </div>
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="fw-semibold">{{ appointment.service.name }}</div>
+                {% if appointment.service.description %}<div class="text-muted mb-2" style="font-size: 0.8rem;">{{ appointment.service.description }}</div>{% endif %}
+                <div class="d-flex gap-3">
+                    <div><i class="bi bi-clock text-muted me-1"></i>{{ appointment.service.duration }} min</div>
+                    <div><i class="bi bi-tag text-muted me-1"></i>${{ appointment.service.price }}</div>
                 </div>
             </div>
         </div>
 
-        <!-- Provider Information -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Provider Details</h6>
+        <!-- Provider -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Provider</h6>
             </div>
-            <div class="card-body">
-                <h6>{{ appointment.provider.get_full_name }}</h6>
-                <p class="text-muted">{{ appointment.provider.get_role_display }}</p>
-                {% if appointment.provider.email %}
-                    <small><strong>Email:</strong> {{ appointment.provider.email }}</small>
-                {% endif %}
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="fw-semibold">{{ appointment.provider.get_full_name }}</div>
+                <div class="text-muted" style="font-size: 0.8rem;">{{ appointment.provider.get_role_display }}</div>
+                {% if appointment.provider.email %}<div class="mt-1"><i class="bi bi-envelope text-muted me-1"></i>{{ appointment.provider.email }}</div>{% endif %}
             </div>
         </div>
 
-        <!-- Reminder History -->
+        <!-- Reminders -->
         {% if reminders %}
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Reminder History</h6>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Reminders</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body px-3 py-2" style="font-size: 0.8rem;">
                 {% for reminder in reminders %}
-                <div class="border-bottom pb-2 mb-2">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <small class="text-muted">{{ reminder.sent_at|date:"M d, Y H:i" }}</small>
-                            <div>
-                                <strong>{{ reminder.get_method_display }} to {{ reminder.recipient_name }}</strong>
-                                <span class="badge bg-{% if reminder.status == 'sent' %}success{% elif reminder.status == 'failed' %}danger{% else %}secondary{% endif %} ms-2">
-                                    {{ reminder.get_status_display }}
-                                </span>
-                            </div>
-                            <small class="text-muted">{{ reminder.get_reminder_type_display }} - {{ reminder.get_recipient_type_display }}</small>
-                            {% if reminder.error_message %}
-                            <div class="text-danger small">{{ reminder.error_message|truncatechars:50 }}</div>
-                            {% endif %}
-                        </div>
+                <div class="{% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
+                    <small class="text-muted">{{ reminder.sent_at|date:"M d, Y H:i" }}</small>
+                    <div class="fw-semibold">{{ reminder.get_method_display }} to {{ reminder.recipient_name }}
+                        {% if reminder.status == 'sent' %}<span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a; font-size: 0.65rem;">Sent</span>
+                        {% elif reminder.status == 'failed' %}<span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626; font-size: 0.65rem;">Failed</span>
+                        {% else %}<span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b; font-size: 0.65rem;">{{ reminder.get_status_display }}</span>{% endif %}
                     </div>
+                    {% if reminder.error_message %}<div class="text-danger" style="font-size: 0.75rem;">{{ reminder.error_message|truncatechars:50 }}</div>{% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
 
-        <!-- Appointment History -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Patient's Recent Appointments</h6>
+        <!-- Recent Appointments -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Recent Appointments</h6>
             </div>
-            <div class="card-body">
+            <div class="card-body px-3 py-2" style="font-size: 0.8rem;">
                 {% if recent_appointments %}
                     {% for recent in recent_appointments %}
-                    <div class="border-bottom pb-2 mb-2">
+                    <div class="{% if not forloop.last %}border-bottom pb-2 mb-2{% endif %}">
                         <small class="text-muted">{{ recent.appointment_date|date:"M d, Y" }}</small>
-                        <div>
-                            <strong>{{ recent.service.name }}</strong>
-                            <span class="badge bg-{% if recent.status == 'completed' %}success{% elif recent.status == 'cancelled' %}danger{% else %}secondary{% endif %} ms-2">
-                                {{ recent.get_status_display }}
-                            </span>
+                        <div class="fw-semibold">{{ recent.service.name }}
+                            {% if recent.status == 'completed' %}<span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a; font-size: 0.65rem;">{{ recent.get_status_display }}</span>
+                            {% elif recent.status == 'cancelled' %}<span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626; font-size: 0.65rem;">{{ recent.get_status_display }}</span>
+                            {% else %}<span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b; font-size: 0.65rem;">{{ recent.get_status_display }}</span>{% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">No previous appointments.</p>
+                    <div class="text-muted">No previous appointments.</div>
                 {% endif %}
             </div>
         </div>

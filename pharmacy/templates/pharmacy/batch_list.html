@@ -2,118 +2,108 @@
 {% load static %}
 {% load humanize %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-boxes me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Medication Batches</span>
-    </div>
-{% endblock %}
+{% block page_title %}Medication Batches{% endblock %}
 
 {% block page_actions %}
 <a href="{% url 'pharmacy:pharmacy_list' %}" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left"></i> Back to Dashboard
+    <i class="bi bi-arrow-left me-1"></i>Dashboard
 </a>
 <button type="button" class="btn btn-primary btn-sm open-batch-create-modal">
-    <i class="bi bi-plus-circle"></i> Receive Batch
+    <i class="bi bi-plus-circle me-1"></i>Receive Batch
 </button>
 {% endblock %}
 
 {% block content %}
 
     <!-- Filters -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label small">Filter by Status</label>
-                    <select name="low_stock" class="form-select">
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2 px-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label mb-1" style="font-size:0.75rem;">Filter</label>
+                    <select name="low_stock" class="form-select form-select-sm">
                         <option value="">All Batches</option>
                         <option value="1" {% if low_stock_filter %}selected{% endif %}>Low Stock Only</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-filter me-2"></i>Apply
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Apply</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Batches Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <h5 class="card-title mb-0">Batch List ({{ batches.count }} batches)</h5>
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between">
+            <h6 class="mb-0 fw-semibold" style="font-size:0.85rem;">Batch List</h6>
+            <span class="badge rounded-pill" style="background:#dbeafe;color:#2563eb;font-size:0.7rem;">{{ batches.count }} batches</span>
         </div>
         <div class="card-body p-0">
             {% if batches %}
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="bg-light">
+                <table class="table table-hover align-middle mb-0" style="font-size:0.8rem;">
+                    <thead style="background:#f8fafc;">
                         <tr>
-                            <th>Batch Number</th>
-                            <th>Medication</th>
-                            <th>Supplier</th>
-                            <th>Quantity</th>
-                            <th>Received Date</th>
-                            <th>Expiry Date</th>
-                            <th>Days Until Expiry</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Batch #</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Medication</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Supplier</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Qty</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Received</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Expiry</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Shelf Life</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Status</th>
+                            <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for batch in batches %}
                         <tr>
-                            <td><strong>{{ batch.batch_number }}</strong></td>
-                            <td>
-                                <a href="{% url 'pharmacy:medication_detail' batch.medication.pk %}" class="text-decoration-none">
-                                    {{ batch.medication.name }}
-                                </a>
-                                <br><small class="text-muted">{{ batch.medication.generic_name }}</small>
+                            <td style="padding:0.35rem 0.5rem;"><span class="fw-medium">{{ batch.batch_number }}</span></td>
+                            <td style="padding:0.35rem 0.5rem;">
+                                <a href="{% url 'pharmacy:medication_detail' batch.medication.pk %}" class="text-decoration-none">{{ batch.medication.name }}</a>
+                                <br><span class="text-muted" style="font-size:0.7rem;">{{ batch.medication.generic_name }}</span>
                             </td>
-                            <td>{{ batch.supplier.name }}</td>
-                            <td>
-                                {% if batch.quantity_remaining <= 10 %}
-                                    <span class="badge bg-danger">{{ batch.quantity_remaining }}</span>
-                                {% elif batch.quantity_remaining <= 50 %}
-                                    <span class="badge bg-warning text-dark">{{ batch.quantity_remaining }}</span>
-                                {% else %}
-                                    <span class="badge bg-success">{{ batch.quantity_remaining }}</span>
+                            <td style="padding:0.35rem 0.5rem;">{{ batch.supplier.name }}</td>
+                            <td style="padding:0.35rem 0.5rem;">
+                                {% if batch.quantity_remaining <= 10 %}<span class="badge rounded-pill" style="background:#fee2e2;color:#dc2626;font-size:0.68rem;">{{ batch.quantity_remaining }}</span>
+                                {% elif batch.quantity_remaining <= 50 %}<span class="badge rounded-pill" style="background:#fef3c7;color:#d97706;font-size:0.68rem;">{{ batch.quantity_remaining }}</span>
+                                {% else %}<span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.68rem;">{{ batch.quantity_remaining }}</span>
                                 {% endif %}
-                                / {{ batch.quantity_received }}
+                                <span class="text-muted" style="font-size:0.7rem;">/ {{ batch.quantity_received }}</span>
                             </td>
-                            <td>{{ batch.received_date|date:"M d, Y" }}</td>
-                            <td>{{ batch.expiry_date|date:"M d, Y" }}</td>
-                            <td>
+                            <td style="padding:0.35rem 0.5rem;">{{ batch.received_date|date:"M d, Y" }}</td>
+                            <td style="padding:0.35rem 0.5rem;">{{ batch.expiry_date|date:"M d, Y" }}</td>
+                            <td style="padding:0.35rem 0.5rem;">
                                 {% with days=batch.get_remaining_shelf_life_days %}
-                                    {% if days <= 0 %}
-                                        <span class="badge bg-dark">Expired</span>
-                                    {% elif days <= 30 %}
-                                        <span class="badge bg-danger">{{ days }} days</span>
-                                    {% elif days <= 90 %}
-                                        <span class="badge bg-warning text-dark">{{ days }} days</span>
-                                    {% else %}
-                                        <span class="badge bg-success">{{ days }} days</span>
+                                    {% if days <= 0 %}<span class="badge rounded-pill" style="background:#1e293b;color:#fff;font-size:0.68rem;">Expired</span>
+                                    {% elif days <= 30 %}<span class="badge rounded-pill" style="background:#fee2e2;color:#dc2626;font-size:0.68rem;">{{ days }}d</span>
+                                    {% elif days <= 90 %}<span class="badge rounded-pill" style="background:#fef3c7;color:#d97706;font-size:0.68rem;">{{ days }}d</span>
+                                    {% else %}<span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.68rem;">{{ days }}d</span>
                                     {% endif %}
                                 {% endwith %}
                             </td>
-                            <td>
-                                {% if batch.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inactive</span>
+                            <td style="padding:0.35rem 0.5rem;">
+                                {% if batch.is_active %}<span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.68rem;">Active</span>
+                                {% else %}<span class="badge rounded-pill" style="background:#f1f5f9;color:#64748b;font-size:0.68rem;">Inactive</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'pharmacy:batch_edit' batch.pk %}" class="btn btn-outline-warning" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger toggle-batch-status-btn" data-batch-id="{{ batch.pk }}" title="Toggle Status">
-                                        <i class="fas fa-power-off"></i>
-                                    </button>
-                                </div>
+                            <td style="padding:0.35rem 0.5rem;">
+                                <button type="button" class="btn btn-sm border-0 text-warning p-0 me-1" title="Edit"
+                                    onclick="openBatchEditModal(this)"
+                                    data-batch-id="{{ batch.pk }}"
+                                    data-medication="{{ batch.medication.pk }}"
+                                    data-supplier="{{ batch.supplier.pk }}"
+                                    data-batch-number="{{ batch.batch_number }}"
+                                    data-invoice="{{ batch.invoice_number|default:'' }}"
+                                    data-qty="{{ batch.quantity_remaining }}"
+                                    data-cost="{{ batch.cost_price }}"
+                                    data-sell="{{ batch.selling_price }}"
+                                    data-mfg="{{ batch.manufacturing_date|date:'Y-m-d' }}"
+                                    data-exp="{{ batch.expiry_date|date:'Y-m-d' }}"
+                                    data-notes="{{ batch.notes|default:'' }}"
+                                    data-active="{{ batch.is_active|yesno:'true,false' }}"><i class="bi bi-pencil"></i></button>
+                                <button type="button" class="btn btn-sm border-0 text-danger p-0 toggle-batch-status-btn" data-batch-id="{{ batch.pk }}" title="Toggle"><i class="bi bi-power"></i></button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -121,10 +111,10 @@
                 </table>
             </div>
             {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No batches found</p>
-                <button type="button" class="btn btn-primary open-batch-create-modal">Receive First Batch</button>
+            <div class="text-center py-4">
+                <i class="bi bi-boxes text-muted" style="font-size:2rem;"></i>
+                <div class="text-muted mt-2" style="font-size:0.85rem;">No batches found</div>
+                <button type="button" class="btn btn-primary btn-sm mt-2 open-batch-create-modal">Receive First Batch</button>
             </div>
             {% endif %}
         </div>

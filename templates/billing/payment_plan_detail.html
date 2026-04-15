@@ -3,204 +3,164 @@
 
 {% block title %}Payment Plan {{ payment_plan.plan_id }} - Physio & Nutrition Clinic{% endblock %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-calendar-event me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Payment Plan {{ payment_plan.plan_id }}</span>
-    </div>
-{% endblock %}
+{% block page_title %}Payment Plan – {{ payment_plan.plan_id }}{% endblock %}
 
 {% block page_actions %}
-<div class="btn-group">
-    <a href="{% url 'billing:payment_plan_list' %}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Plans
-    </a>
-    <a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}" class="btn btn-outline-primary">
-        <i class="bi bi-receipt"></i> View Invoice
-    </a>
-</div>
+<a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-receipt me-1"></i>Invoice
+</a>
+<a href="{% url 'billing:payment_plan_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back
+</a>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <!-- Payment Plan Details -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Plan Details</h6>
+<!-- Header Card -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3 px-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #dbeafe; color: #2563eb; font-weight: 700; font-size: 1.2rem;">
+                    <i class="bi bi-calendar-range"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0">{{ payment_plan.patient.get_full_name }}</h5>
+                    <div class="text-muted" style="font-size: 0.85rem;">{{ payment_plan.plan_id }} &bull; {{ payment_plan.invoice.invoice_number }} &bull; Started {{ payment_plan.start_date|date:"M d, Y" }}</div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill" style="background: #1e3a5f; color: #fff; font-size: 0.8rem;">{{ payment_plan.plan_id }}</span>
+                {% if payment_plan.status == 'active' %}
+                <span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a;">{{ payment_plan.get_status_display }}</span>
+                {% elif payment_plan.status == 'completed' %}
+                <span class="badge rounded-pill" style="background: #dbeafe; color: #2563eb;">{{ payment_plan.get_status_display }}</span>
+                {% elif payment_plan.status == 'defaulted' %}
+                <span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626;">{{ payment_plan.get_status_display }}</span>
+                {% else %}
+                <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b;">{{ payment_plan.get_status_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <!-- Plan Details -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Plan Details</h6>
+            </div>
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <p><strong>Plan ID:</strong> {{ payment_plan.plan_id }}</p>
-                        <p><strong>Patient:</strong> {{ payment_plan.patient.get_full_name }}</p>
-                        <p><strong>Invoice:</strong> 
-                            <a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}">
-                                {{ payment_plan.invoice.invoice_number }}
-                            </a>
-                        </p>
-                        <p><strong>Status:</strong> 
-                            <span class="badge bg-{% if payment_plan.status == 'active' %}success{% elif payment_plan.status == 'completed' %}primary{% elif payment_plan.status == 'defaulted' %}danger{% else %}secondary{% endif %}">
-                                {{ payment_plan.get_status_display }}
-                            </span>
-                        </p>
+                        <div class="mb-2"><span class="text-muted">Plan ID:</span> <strong>{{ payment_plan.plan_id }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">Patient:</span> <strong>{{ payment_plan.patient.get_full_name }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">Invoice:</span> <a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}" class="text-decoration-none">{{ payment_plan.invoice.invoice_number }}</a></div>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Total Amount:</strong> UGX {{ payment_plan.total_amount }}</p>
-                        <p><strong>Monthly Payment:</strong> UGX {{ payment_plan.monthly_payment }}</p>
-                        <p><strong>Number of Payments:</strong> {{ payment_plan.number_of_payments }}</p>
-                        <p><strong>Start Date:</strong> {{ payment_plan.start_date }}</p>
+                        <div class="mb-2"><span class="text-muted">Total:</span> <strong>UGX {{ payment_plan.total_amount }}</strong></div>
+                        <div class="mb-2"><span class="text-muted">Monthly:</span> UGX {{ payment_plan.monthly_payment }}</div>
+                        <div class="mb-2"><span class="text-muted">Payments:</span> {{ payment_plan.number_of_payments }}</div>
+                        <div class="mb-2"><span class="text-muted">Start:</span> {{ payment_plan.start_date }}</div>
                     </div>
                 </div>
-                
                 {% if payment_plan.notes %}
-                <div class="mt-3">
-                    <strong>Notes:</strong>
-                    <p class="text-muted">{{ payment_plan.notes }}</p>
-                </div>
+                <hr class="my-2">
+                <div><span class="text-muted">Notes:</span> {{ payment_plan.notes }}</div>
                 {% endif %}
             </div>
         </div>
         
         <!-- Payment Progress -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Payment Progress</h6>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Payment Progress</h6>
             </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-primary">{{ payment_plan.payments_made }}</h4>
-                        <small class="text-muted">Payments Made</small>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-warning">{{ payment_plan.number_of_payments|add:"-"|add:payment_plan.payments_made }}</h4>
-                        <small class="text-muted">Remaining</small>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-success">UGX {{ payment_plan.remaining_balance }}</h4>
-                        <small class="text-muted">Balance</small>
-                    </div>
+            <div class="card-body px-3 py-2">
+                <div class="row g-3 mb-3 text-center" style="font-size: 0.85rem;">
+                    <div class="col-md-4"><div class="fw-bold fs-5" style="color: #2563eb;">{{ payment_plan.payments_made }}</div><small class="text-muted">Payments Made</small></div>
+                    <div class="col-md-4"><div class="fw-bold fs-5 text-warning">{{ payment_plan.number_of_payments|add:"-"|add:payment_plan.payments_made }}</div><small class="text-muted">Remaining</small></div>
+                    <div class="col-md-4"><div class="fw-bold fs-5" style="color: #16a34a;">UGX {{ payment_plan.remaining_balance }}</div><small class="text-muted">Balance</small></div>
                 </div>
-                
-                <div class="progress mb-3" style="height: 25px;">
+                <div class="progress mb-2" style="height: 8px; border-radius: 4px;">
                     {% widthratio payment_plan.payments_made payment_plan.number_of_payments 100 as progress_percent %}
-                    <div class="progress-bar bg-success" style="width: {{ progress_percent }}%">
-                        {{ progress_percent }}% Complete
-                    </div>
+                    <div class="progress-bar" style="width: {{ progress_percent }}%; background: #16a34a; border-radius: 4px;"></div>
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Amount Paid:</strong> UGX {{ payment_plan.payments_made|floatformat:2|intcomma|mul:payment_plan.monthly_payment }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Next Payment Due:</strong> 
-                            {% if payment_plan.status == 'active' %}
-                                {{ payment_plan.start_date|add_months:payment_plan.payments_made }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
+                <div class="text-center text-muted" style="font-size: 0.75rem;">{{ progress_percent }}% Complete</div>
             </div>
         </div>
         
         <!-- Payment Schedule -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Payment Schedule</h6>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Payment Schedule</h6>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Payment #</th>
-                                <th>Due Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.8rem;">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th class="ps-3 py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">#</th>
+                            <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Due Date</th>
+                            <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Amount</th>
+                            <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in payment_plan.number_of_payments|make_list %}
+                            {% with forloop.counter as payment_num %}
+                            <tr class="border-bottom">
+                                <td class="ps-3 py-1">{{ payment_num }}</td>
+                                <td class="py-1">{{ payment_plan.start_date|add_months:forloop.counter0 }}</td>
+                                <td class="py-1">UGX {{ payment_plan.monthly_payment }}</td>
+                                <td class="py-1">
+                                    {% if payment_num <= payment_plan.payments_made %}
+                                    <span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a; font-size: 0.7rem;">Paid</span>
+                                    {% elif payment_num == payment_plan.payments_made|add:1 %}
+                                    <span class="badge rounded-pill" style="background: #fef3c7; color: #d97706; font-size: 0.7rem;">Due</span>
+                                    {% else %}
+                                    <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b; font-size: 0.7rem;">Pending</span>
+                                    {% endif %}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for i in payment_plan.number_of_payments|make_list %}
-                                {% with forloop.counter as payment_num %}
-                                <tr class="{% if payment_num <= payment_plan.payments_made %}table-success{% elif payment_num == payment_plan.payments_made|add:1 %}table-warning{% endif %}">
-                                    <td>{{ payment_num }}</td>
-                                    <td>{{ payment_plan.start_date|add_months:forloop.counter0 }}</td>
-                                    <td>UGX {{ payment_plan.monthly_payment }}</td>
-                                    <td>
-                                        {% if payment_num <= payment_plan.payments_made %}
-                                            <span class="badge bg-success">Paid</span>
-                                        {% elif payment_num == payment_plan.payments_made|add:1 %}
-                                            <span class="badge bg-warning">Due</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endwith %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
         <!-- Quick Actions -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Actions</h6>
             </div>
-            <div class="card-body">
-                {% if payment_plan.status == 'active' %}
+            <div class="card-body px-3 py-2">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-success" onclick="recordPayment()">
-                        <i class="bi bi-credit-card"></i> Record Payment
-                    </button>
-                    <button class="btn btn-warning" onclick="modifyPlan()">
-                        <i class="bi bi-pencil"></i> Modify Plan
-                    </button>
-                    <button class="btn btn-danger" onclick="cancelPlan()">
-                        <i class="bi bi-x-circle"></i> Cancel Plan
-                    </button>
-                </div>
-                {% endif %}
-                
-                <hr>
-                
-                <div class="d-grid gap-2">
-                    <a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}" class="btn btn-outline-primary">
-                        <i class="bi bi-receipt"></i> View Invoice
-                    </a>
-                    <button class="btn btn-outline-secondary" onclick="printSchedule()">
-                        <i class="bi bi-printer"></i> Print Schedule
-                    </button>
+                    {% if payment_plan.status == 'active' %}
+                    <button class="btn btn-success btn-sm" onclick="recordPayment()"><i class="bi bi-credit-card me-1"></i>Record Payment</button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="modifyPlan()"><i class="bi bi-pencil me-1"></i>Modify Plan</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="cancelPlan()"><i class="bi bi-x-circle me-1"></i>Cancel Plan</button>
+                    <hr class="my-1">
+                    {% endif %}
+                    <a href="{% url 'billing:invoice_detail' payment_plan.invoice.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-receipt me-1"></i>View Invoice</a>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="printSchedule()"><i class="bi bi-printer me-1"></i>Print Schedule</button>
                 </div>
             </div>
         </div>
-        
-        <!-- Patient Information -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Patient Information</h6>
+
+        <!-- Patient -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2 px-3">
+                <h6 class="mb-0 fw-semibold">Patient</h6>
             </div>
-            <div class="card-body">
-                <p><strong>Name:</strong> {{ payment_plan.patient.get_full_name }}</p>
-                <p><strong>Phone:</strong> {{ payment_plan.patient.phone_number }}</p>
-                <p><strong>Email:</strong> {{ payment_plan.patient.email }}</p>
-                {% if payment_plan.patient.insurance_provider %}
-                <p><strong>Insurance:</strong> {{ payment_plan.patient.insurance_provider }}</p>
-                {% endif %}
-                
-                <div class="mt-3">
-                    <a href="{% url 'patients:patient_detail' payment_plan.patient.patient_id %}" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-person"></i> View Patient
-                    </a>
-                </div>
+            <div class="card-body px-3 py-2" style="font-size: 0.85rem;">
+                <div class="fw-semibold">{{ payment_plan.patient.get_full_name }}</div>
+                {% if payment_plan.patient.phone_number %}<div class="mb-1"><i class="bi bi-telephone text-muted me-1"></i>{{ payment_plan.patient.phone_number }}</div>{% endif %}
+                {% if payment_plan.patient.email %}<div class="mb-1"><i class="bi bi-envelope text-muted me-1"></i>{{ payment_plan.patient.email }}</div>{% endif %}
+                <a href="{% url 'patients:patient_detail' payment_plan.patient.patient_id %}" class="btn btn-outline-primary btn-sm mt-2 w-100"><i class="bi bi-person me-1"></i>View Patient</a>
             </div>
         </div>
     </div>

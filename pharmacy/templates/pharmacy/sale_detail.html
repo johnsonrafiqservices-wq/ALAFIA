@@ -4,15 +4,7 @@
 
 {% block title %}Sale Detail - {{ sale.batch.medication.name }}{% endblock %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-receipt me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <div>
-            <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">{{ sale.batch.medication.name }}</span>
-            <div class="small fw-normal" style="-webkit-text-fill-color: #6b7280; font-size: 0.85rem;">{{ sale_type }} in {{ sale.batch.medication.name }}</div>
-        </div>
-    </div>
-{% endblock %}
+{% block page_title %}Sale Detail – {{ sale.batch.medication.name }}{% endblock %}
 
 {% block page_actions %}
 <a href="{% url 'pharmacy:sales_dashboard' %}" class="btn btn-success btn-sm">

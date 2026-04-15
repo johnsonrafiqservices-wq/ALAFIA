@@ -10,8 +10,8 @@
 
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            line-height: 1.5;
+            font-size: 9pt;
+            line-height: 1.35;
             color: #333;
             background: white;
             padding: 4mm;
@@ -21,7 +21,10 @@
             max-width: 210mm;
             margin: 0 auto;
             background: white;
-            padding: 12px 16px;
+            padding: 8px 12px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Action Buttons */
@@ -98,7 +101,7 @@
             text-transform: uppercase;
             padding: 5px 10px;
             letter-spacing: 0.4px;
-            margin-top: 10px;
+            margin-top: 6px;
             margin-bottom: 0;
             border-radius: 4px 4px 0 0;
         }
@@ -108,10 +111,10 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 9pt;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
         .info-table td {
-            padding: 5px 8px;
+            padding: 3px 6px;
             border-bottom: 1px solid #e7edf4;
             vertical-align: top;
             line-height: 1.45;
@@ -125,7 +128,7 @@
         }
 
         .section-block {
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             border: 1px solid #dbe7f3;
             border-top: none;
             border-radius: 0 0 4px 4px;
@@ -143,13 +146,13 @@
 
         .patient-info-box {
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
         .patient-info-grid {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
         .patient-info-grid td {
             width: 33.33%;
@@ -198,6 +201,12 @@
         }
         .instructions strong { color: #92400e; }
 
+        /* ── Page-bottom wrapper ── */
+        .page-bottom {
+            margin-top: auto;
+            padding-bottom: 5px;
+        }
+
         /* ── Bottom / Signature / Footer ── */
         .terms {
             font-size: 7.8pt;
@@ -211,7 +220,7 @@
         .terms strong { color: #1B5E96; }
 
         .signature {
-            margin-top: 16px;
+            margin-top: 10px;
             text-align: right;
             font-size: 8.5pt;
             color: #555;
@@ -221,7 +230,7 @@
             border-top: 1px solid #333;
             width: 180px;
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 14px;
         }
         .signature-label {
             font-size: 8pt;
@@ -232,8 +241,8 @@
         }
 
         .footer {
-            margin-top: 14px;
-            padding-top: 6px;
+            margin-top: 8px;
+            padding-top: 4px;
             border-top: 1px solid #ddd;
             text-align: center;
             font-size: 7pt;
@@ -246,6 +255,13 @@
             .no-print  { display: none !important; }
             .action-buttons { display: none !important; }
             @page { margin: 12mm; size: A4; }
+            .page-bottom {
+                position: fixed;
+                bottom: 5px;
+                left: 12mm;
+                right: 12mm;
+                background: white;
+            }
         }
     </style>
 </head>
@@ -372,16 +388,14 @@
                     <div class="clinic-name">{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }}</div>
                     <div class="clinic-details">
                         {{ clinic_settings.address|default:"Makindye, Lukuli road" }}<br>
-                        Phone: {{ clinic_settings.phone|default:"+256792327738" }}<br>
-                        Email: {{ clinic_settings.email|default:"Alafiapoint@gmail.com" }}
+                        Phone: {{ clinic_settings.phone|default:"+256792327738" }} | Email: {{ clinic_settings.email|default:"Alafiapoint@gmail.com" }}
                     </div>
                 </td>
                 <td class="header-right">
                     <div class="doc-title"><span class="rx-symbol">&#x211E;</span> CLINICAL ASSESSMENT</div>
                     <div class="asm-badge">ASM-{{ assessment.id|stringformat:"05d" }}</div>
                     <div class="doc-dates">
-                        <strong>Assessment Date:</strong> {{ assessment.assessment_date|date:"F d, Y" }}<br>
-                        <strong>Time:</strong> {{ assessment.assessment_date|time:"g:i A" }}<br>
+                        <strong>Date:</strong> {{ assessment.assessment_date|date:"d/m/Y" }} {{ assessment.assessment_date|time:"g:i A" }}<br>
                         <strong>Department:</strong> {{ assessment.get_department_display }}
                     </div>
                 </td>
@@ -394,80 +408,44 @@
             <table class="patient-info-grid">
                 <tr>
                     <td>
-                        <div class="patient-info-item"><span class="patient-info-label">Patient Name:</span> {{ patient.get_full_name|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Name:</span> {{ patient.get_full_name }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">ID:</span> {{ patient.patient_id }}</div>
+                    </td>
+                    <td>
                         <div class="patient-info-item"><span class="patient-info-label">Gender:</span> {{ patient.get_gender_display|default:"N/A" }}</div>
-                        <div class="patient-info-item"><span class="patient-info-label">Email:</span> {{ patient.email|default:"N/A" }}</div>
-                    </td>
-                    <td>
-                        <div class="patient-info-item"><span class="patient-info-label">Patient ID:</span> {{ patient.patient_id }}</div>
-                        <div class="patient-info-item"><span class="patient-info-label">Phone:</span> {{ patient.phone|default:"N/A" }}</div>
-                        <div class="patient-info-item"><span class="patient-info-label">Type:</span> {{ assessment.get_assessment_type_display }}</div>
-                    </td>
-                    <td>
                         <div class="patient-info-item"><span class="patient-info-label">Age:</span> {{ patient.get_age }} years</div>
-                        <div class="patient-info-item"><span class="patient-info-label">Nationality:</span> {{ patient.country|default:"N/A" }}</div>
-                        <div class="patient-info-item"><span class="patient-info-label">Ref. Doctor:</span> {{ assessment.assessed_by.get_full_name|default:"N/A" }}</div>
+                    </td>
+                    <td>
+                        <div class="patient-info-item"><span class="patient-info-label">Phone:</span> {{ patient.phone|default:"N/A" }}</div>
+                        <div class="patient-info-item"><span class="patient-info-label">Assessed By:</span> {{ assessment.assessed_by.get_full_name|default:"N/A" }}</div>
                     </td>
                 </tr>
             </table>
-            <table class="patient-info-grid">
-                <!-- <tr>
-                    <td>
-                        <div class="patient-info-item"><span class="patient-info-label">Department:</span> {{ assessment.get_department_display }}</div>
-                    </td>
-                    <td>
-                        <div class="patient-info-item"><span class="patient-info-label">Assessment Date:</span> {{ assessment.assessment_date|date:"d/m/Y" }}</div>
-                    </td>
-                    <td>
-                        <div class="patient-info-item"><span class="patient-info-label">Assessment Time:</span> {{ assessment.assessment_date|time:"g:i A" }}</div>
-                    </td>
-                </tr> -->
-            </table>
         </div>
 
+        <!-- ═══ ASSESSMENT & CLINICAL FINDINGS (merged, only populated fields) ═══ -->
         <div class="section-header">Assessment Details</div>
         <div class="section-block">
             <table class="info-table compact-table">
-                <tr>
-                    <td class="lbl">Chief Complaint</td>
-                    <td class="compact-value">{{ assessment.chief_complaint|default:"Not recorded" }}</td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="section-header">Diagnosis &amp; Treatment Plan</div>
-        <div class="section-block">
-            <table class="info-table compact-table">
-                <tr>
-                    <td class="lbl">Diagnosis</td>
-                    <td class="compact-value">{{ assessment.diagnosis|default:"Not recorded" }}</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Treatment Plan</td>
-                    <td class="compact-value">{{ assessment.treatment_plan|default:"Not recorded" }}</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- ═══ CLINICAL FINDINGS ═══ -->
-        <div class="section-header">Clinical Findings</div>
-        <div class="section-block">
-            <table class="info-table compact-table">
-                <tr>
-                    <td class="lbl">History of Present Illness</td>
-                    <td class="compact-value">{{ assessment.history_of_present_illness|default:"Not recorded" }}</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Physical Examination</td>
-                    <td class="compact-value">{{ assessment.physical_examination|default:"Not recorded" }}</td>
-                </tr>
+                {% if assessment.chief_complaint %}
+                <tr><td class="lbl">Chief Complaint</td><td class="compact-value">{{ assessment.chief_complaint }}</td></tr>
+                {% endif %}
+                {% if assessment.history_of_present_illness %}
+                <tr><td class="lbl">History of Present Illness</td><td class="compact-value">{{ assessment.history_of_present_illness }}</td></tr>
+                {% endif %}
+                {% if assessment.physical_examination %}
+                <tr><td class="lbl">Physical Examination</td><td class="compact-value">{{ assessment.physical_examination }}</td></tr>
+                {% endif %}
+                {% if assessment.diagnosis %}
+                <tr><td class="lbl">Diagnosis</td><td class="compact-value">{{ assessment.diagnosis }}</td></tr>
+                {% endif %}
+                {% if assessment.treatment_plan %}
+                <tr><td class="lbl">Treatment Plan</td><td class="compact-value">{{ assessment.treatment_plan }}</td></tr>
+                {% endif %}
 
                 {% if assessment.department == 'physiotherapy' %}
                     {% if assessment.pain_location %}
                     <tr><td class="lbl">Pain Location</td><td class="compact-value">{{ assessment.pain_location }}</td></tr>
-                    {% endif %}
-                    {% if assessment.functional_assessment %}
-                    <tr><td class="lbl">Functional Assessment</td><td class="compact-value">{{ assessment.functional_assessment }}</td></tr>
                     {% endif %}
                     {% if assessment.range_of_motion %}
                     <tr><td class="lbl">Range of Motion</td><td class="compact-value">{{ assessment.range_of_motion }}</td></tr>
@@ -475,10 +453,15 @@
                     {% if assessment.muscle_strength %}
                     <tr><td class="lbl">Muscle Strength</td><td class="compact-value">{{ assessment.muscle_strength }}</td></tr>
                     {% endif %}
+                    {% if assessment.functional_assessment %}
+                    <tr><td class="lbl">Functional Assessment</td><td class="compact-value">{{ assessment.functional_assessment }}</td></tr>
+                    {% endif %}
                     {% if assessment.posture_analysis %}
                     <tr><td class="lbl">Posture Analysis</td><td class="compact-value">{{ assessment.posture_analysis }}</td></tr>
                     {% endif %}
-                    <tr><td class="lbl">Mobility Status</td><td class="compact-value">{{ assessment.mobility_status|default:"Not assessed" }}</td></tr>
+                    {% if assessment.mobility_status %}
+                    <tr><td class="lbl">Mobility Status</td><td class="compact-value">{{ assessment.mobility_status }}</td></tr>
+                    {% endif %}
                 {% endif %}
 
                 {% if assessment.department == 'nutrition' %}
@@ -502,9 +485,62 @@
                     {% endif %}
                 {% endif %}
 
-                <tr><td class="lbl">Mental Status</td><td class="compact-value">{{ assessment.mental_status|default:"Not assessed" }}</td></tr>
+                {% if assessment.mental_status %}
+                <tr><td class="lbl">Mental Status</td><td class="compact-value">{{ assessment.mental_status }}</td></tr>
+                {% endif %}
             </table>
         </div>
+
+        {% if assessment.department == 'physiotherapy' and assessment.physiotherapy_crf %}
+        {% with crf=assessment.physiotherapy_crf.crf_data %}
+        <div class="section-header">Clinical Reasoning Form (CRF)</div>
+        <div class="section-block">
+            <table class="info-table compact-table">
+                {% if crf.crf_intake %}
+                <tr><td class="lbl">Intake</td><td class="compact-value">{{ crf.crf_intake }}</td></tr>
+                {% endif %}
+
+                {% if crf.crf_subjective or crf.crf_subjective_symptoms or crf.crf_subjective_pip or crf.crf_subjective_cc or crf.crf_subjective_factors %}
+                <tr><td colspan="2" style="font-weight:700;padding:4px 6px;background:#f0f0f0;">Subjective</td></tr>
+                {% if crf.crf_subjective %}<tr><td class="lbl">Score</td><td class="compact-value">{{ crf.crf_subjective }}</td></tr>{% endif %}
+                {% if crf.crf_subjective_symptoms %}<tr><td class="lbl">Symptoms</td><td class="compact-value">{{ crf.crf_subjective_symptoms }}</td></tr>{% endif %}
+                {% if crf.crf_subjective_pip %}<tr><td class="lbl">PIP</td><td class="compact-value">{{ crf.crf_subjective_pip }}</td></tr>{% endif %}
+                {% if crf.crf_subjective_cc %}<tr><td class="lbl">CC</td><td class="compact-value">{{ crf.crf_subjective_cc }}</td></tr>{% endif %}
+                {% if crf.crf_subjective_factors %}<tr><td class="lbl">+/- Factors</td><td class="compact-value">{{ crf.crf_subjective_factors }}</td></tr>{% endif %}
+                {% endif %}
+
+                {% if crf.crf_diagnosis or crf.crf_diagnosis_moi or crf.crf_diagnosis_nature or crf.crf_diagnosis_patho or crf.crf_diagnosis_movement or crf.crf_msd_template %}
+                <tr><td colspan="2" style="font-weight:700;padding:4px 6px;background:#f0f0f0;">Diagnosis</td></tr>
+                {% if crf.crf_diagnosis %}<tr><td class="lbl">Score</td><td class="compact-value">{{ crf.crf_diagnosis }}</td></tr>{% endif %}
+                {% if crf.crf_diagnosis_moi %}<tr><td class="lbl">MOI</td><td class="compact-value">{{ crf.crf_diagnosis_moi }}</td></tr>{% endif %}
+                {% if crf.crf_diagnosis_nature %}<tr><td class="lbl">Nature</td><td class="compact-value">{{ crf.crf_diagnosis_nature }}</td></tr>{% endif %}
+                {% if crf.crf_diagnosis_patho %}<tr><td class="lbl">Patho-Anatomic</td><td class="compact-value">{{ crf.crf_diagnosis_patho }}</td></tr>{% endif %}
+                {% if crf.crf_diagnosis_movement %}<tr><td class="lbl">Movement Dx</td><td class="compact-value">{{ crf.crf_diagnosis_movement }}</td></tr>{% endif %}
+                {% if crf.crf_msd_template %}<tr><td class="lbl">MSD Template</td><td class="compact-value">{{ crf.crf_msd_template }}</td></tr>{% endif %}
+                {% endif %}
+
+                {% if crf.crf_symptoms_tissue or crf.crf_symptoms_severity or crf.crf_symptoms_irritability or crf.crf_symptoms_phase or crf.crf_symptoms_slope or crf.crf_symptoms_stage %}
+                <tr><td colspan="2" style="font-weight:700;padding:4px 6px;background:#f0f0f0;">Symptoms &amp; Tissue</td></tr>
+                {% if crf.crf_symptoms_tissue %}<tr><td class="lbl">Tissue</td><td class="compact-value">{{ crf.crf_symptoms_tissue }}</td></tr>{% endif %}
+                {% if crf.crf_symptoms_severity %}<tr><td class="lbl">Severity</td><td class="compact-value">{{ crf.crf_symptoms_severity }}</td></tr>{% endif %}
+                {% if crf.crf_symptoms_irritability %}<tr><td class="lbl">Irritability</td><td class="compact-value">{{ crf.crf_symptoms_irritability }}</td></tr>{% endif %}
+                {% if crf.crf_symptoms_phase %}<tr><td class="lbl">Phase of Tx</td><td class="compact-value">{{ crf.crf_symptoms_phase }}</td></tr>{% endif %}
+                {% if crf.crf_symptoms_slope %}<tr><td class="lbl">Slope</td><td class="compact-value">{{ crf.crf_symptoms_slope }}</td></tr>{% endif %}
+                {% if crf.crf_symptoms_stage %}<tr><td class="lbl">Stage</td><td class="compact-value">{{ crf.crf_symptoms_stage }}</td></tr>{% endif %}
+                {% endif %}
+
+                {% if crf.crf_intervention or crf.crf_intervention_npip or crf.crf_intervention_strategy or crf.crf_intervention_tactics or crf.crf_intervention_post_test %}
+                <tr><td colspan="2" style="font-weight:700;padding:4px 6px;background:#f0f0f0;">Intervention</td></tr>
+                {% if crf.crf_intervention %}<tr><td class="lbl">Score</td><td class="compact-value">{{ crf.crf_intervention }}</td></tr>{% endif %}
+                {% if crf.crf_intervention_npip %}<tr><td class="lbl">NPIP</td><td class="compact-value">{{ crf.crf_intervention_npip }}</td></tr>{% endif %}
+                {% if crf.crf_intervention_strategy %}<tr><td class="lbl">Strategy</td><td class="compact-value">{{ crf.crf_intervention_strategy }}</td></tr>{% endif %}
+                {% if crf.crf_intervention_tactics %}<tr><td class="lbl">Tactics</td><td class="compact-value">{{ crf.crf_intervention_tactics }}</td></tr>{% endif %}
+                {% if crf.crf_intervention_post_test %}<tr><td class="lbl">Post Test</td><td class="compact-value">{{ crf.crf_intervention_post_test }}</td></tr>{% endif %}
+                {% endif %}
+            </table>
+        </div>
+        {% endwith %}
+        {% endif %}
 
         {% if assessment.follow_up_required %}
         <div class="section-header">Follow-up Care</div>
@@ -525,24 +561,20 @@
         <div class="instructions"><strong>Additional Notes:</strong> {{ assessment.notes }}</div>
         {% endif %}
 
-        <!-- ═══ IMPORTANT INFORMATION ═══ -->
-        <div class="section-header" style="margin-top: 18px;">Important Information</div>
-        <div class="terms">
-            <strong>Confidentiality:</strong> This clinical assessment contains confidential medical information.&nbsp;
-            <strong>Validity:</strong> This assessment is valid for medical record purposes and ongoing care.&nbsp;
-            <strong>Follow-up:</strong> Patient should follow prescribed treatment plan and attend scheduled follow-up appointments.
-            This is a legal medical document and should be retained in the patient's medical records.
-        </div>
+        <div class="page-bottom">
+            <div class="signature">
+                <div>Assessed By: {{ assessment.assessed_by.get_full_name }}</div>
+                <div class="signature-line"></div>
+                <div class="signature-label">Healthcare Provider Signature</div>
+            </div>
 
-        <div class="signature">
-            <div>Assessed By: {{ assessment.assessed_by.get_full_name }}</div>
-            <div class="signature-line"></div>
-            <div class="signature-label">Healthcare Provider Signature</div>
-        </div>
+            <div class="terms" style="margin-top:10px;font-size:7pt;">
+                Confidential medical document. Retain in patient records. Patient should follow prescribed treatment and attend follow-up appointments.
+            </div>
 
-        <div class="footer">
-            <p>{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }} | Generated: {% now "M d, Y h:i A" %}</p>
-            <p>This is a computer-generated clinical assessment document.</p>
+            <div class="footer">
+                <p>{{ clinic_settings.clinic_name|default:"PhysioNutrition Clinic" }} | {% now "d/m/Y h:i A" %}</p>
+            </div>
         </div>
 
     </div>

@@ -2,138 +2,214 @@
 {% load static %}
 {% load humanize %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-capsule me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Medications</span>
-    </div>
+{% block extra_css %}
+<style>
+    .filter-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #94a3b8;
+        margin-bottom: 0.25rem;
+    }
+    .badge-soft {
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .badge-soft-success { background: #dcfce7; color: #166534; }
+    .badge-soft-warning { background: #fef3c7; color: #92400e; }
+    .badge-soft-danger  { background: #fee2e2; color: #991b1b; }
+    .badge-soft-info    { background: #dbeafe; color: #1e40af; }
+    .badge-soft-secondary { background: #f1f5f9; color: #475569; }
+    .action-btn-sm {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+    }
+    .action-btn-sm:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .action-btn-sm.view    { color: #3b82f6; border-color: #bfdbfe; }
+    .action-btn-sm.edit    { color: #f59e0b; border-color: #fde68a; }
+    .action-btn-sm.stock   { color: #10b981; border-color: #a7f3d0; }
+    .action-btn-sm.toggle  { color: #ef4444; border-color: #fecaca; }
+    .medication-row:hover { background: #f8fafc; }
+</style>
 {% endblock %}
+
+{% block page_title %}Pharmacy Item Management{% endblock %}
 
 {% block page_actions %}
 <a href="{% url 'pharmacy:pharmacy_list' %}" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left"></i> Back to Dashboard
+    <i class="bi bi-arrow-left me-1"></i>Back to Inventory
 </a>
 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
-    <i class="bi bi-plus-circle"></i> Add Medication
+    <i class="bi bi-plus-circle me-1"></i>Add Item
+</button>
+<button type="button" class="btn btn-success btn-sm">
+    <i class="bi bi-box-seam me-1"></i>Receive Batch
 </button>
 {% endblock %}
 
 {% block content %}
-
-    <!-- Filters -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-4">
-                    <input type="text" name="search" class="form-control" placeholder="Search medications..." value="{{ search }}">
-                </div>
-                <div class="col-md-3">
-                    <select name="category" class="form-select">
-                        <option value="">All Categories</option>
-                        {% for cat in categories %}
-                            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="status" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="low_stock" {% if status == 'low_stock' %}selected{% endif %}>Low Stock</option>
-                        <option value="out_of_stock" {% if status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search me-2"></i>Filter
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Medications Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <h5 class="card-title mb-0">Medication List ({{ medications.count }} items)</h5>
-        </div>
-        <div class="card-body p-0">
-            {% if medications %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Name</th>
-                            <th>Generic Name</th>
-                            <th>Category</th>
-                            <th>Form</th>
-                            <th>Stock</th>
-                            <th>Reorder Level</th>
-                            <th>Unit Price</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for medication in medications %}
-                        <tr>
-                            <td>
-                                <strong>{{ medication.name }}</strong>
-                                {% if medication.strength %}
-                                <br><small class="text-muted">{{ medication.strength }}</small>
-                                {% endif %}
-                            </td>
-                            <td>{{ medication.generic_name }}</td>
-                            <td>
-                                <span class="badge bg-info">{{ medication.category }}</span>
-                            </td>
-                            <td>{{ medication.dosage_form }}</td>
-                            <td>
-                                {% if medication.total_stock <= 0 %}
-                                    <span class="badge bg-danger">{{ medication.total_stock|default:0 }}</span>
-                                {% elif medication.total_stock <= medication.reorder_level %}
-                                    <span class="badge bg-warning">{{ medication.total_stock|default:0 }}</span>
-                                {% else %}
-                                    <span class="badge bg-success">{{ medication.total_stock|default:0 }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ medication.reorder_level }}</td>
-                            <td>UGX {{ medication.unit_price|floatformat:0|intcomma }}</td>
-                            <td>
-                                {% if medication.is_active %}
-                                    <span class="badge bg-success">Active</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Inactive</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'pharmacy:medication_detail' medication.pk %}" class="btn btn-outline-primary" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{% url 'pharmacy:medication_edit' medication.pk %}" class="btn btn-outline-warning" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger" onclick="toggleStatus({{ medication.pk }})" title="Toggle Status">
-                                        <i class="fas fa-power-off"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <div class="filter-label">Search</div>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by name or generic name" value="{{ search }}">
             </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-pills fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No medications found</p>
-                <a href="{% url 'pharmacy:medication_create' %}" class="btn btn-primary">Add First Medication</a>
+            <div class="col-md-2">
+                <div class="filter-label">Category</div>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            {% endif %}
-        </div>
+            <div class="col-md-2">
+                <div class="filter-label">Form</div>
+                <select name="form" class="form-select form-select-sm">
+                    <option value="">All forms</option>
+                    <option value="tablet">Tablet</option>
+                    <option value="capsule">Capsule</option>
+                    <option value="syrup">Syrup</option>
+                    <option value="injection">Injection</option>
+                    <option value="powder">Powder</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="filter-label">Stock Status</div>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All status</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="low_stock" {% if status == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                    <option value="out_of_stock" {% if status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <i class="bi bi-funnel me-1"></i>Apply
+                </button>
+                <a href="{% url 'pharmacy:medication_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </a>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- Item Register Table -->
+{% if medications %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-2 px-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-0 fw-semibold">Item register</h6>
+                <small class="text-muted" style="font-size: 0.75rem;">Tap any row for detailed management.</small>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-box-seam me-1"></i>Receive batch
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
+                    <i class="bi bi-plus-circle me-1"></i>Add Item
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle" style="font-size: 0.85rem;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th class="fw-semibold text-uppercase ps-3 py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Item</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Type</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Category</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Form / Strength</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Stock</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Unit Price</th>
+                    <th class="fw-semibold text-uppercase py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Status</th>
+                    <th class="fw-semibold text-uppercase text-center pe-3 py-2" style="font-size: 0.7rem; color: #64748b; letter-spacing: 0.5px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medication in medications %}
+                <tr class="medication-row" style="cursor: pointer;" onclick="window.location.href='{% url 'pharmacy:medication_detail' medication.pk %}'">
+                    <td class="ps-3">
+                        <div class="fw-semibold">{{ medication.name }}</div>
+                        {% if medication.generic_name %}
+                        <small class="text-muted">{{ medication.generic_name }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-soft badge-soft-info">Medication</span>
+                    </td>
+                    <td>{{ medication.category }}</td>
+                    <td>
+                        {% if medication.dosage_form %}{{ medication.dosage_form }}{% endif %}
+                        {% if medication.strength %}<br><small class="text-muted">{{ medication.strength }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {% if medication.total_stock <= 0 %}
+                            <span class="badge badge-soft badge-soft-danger">{{ medication.total_stock|default:0 }}</span>
+                        {% elif medication.total_stock <= medication.reorder_level %}
+                            <span class="badge badge-soft badge-soft-warning">{{ medication.total_stock|default:0 }}</span>
+                        {% else %}
+                            <span class="badge badge-soft badge-soft-success">{{ medication.total_stock|default:0 }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-semibold">UGX {{ medication.unit_price|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if medication.is_active %}
+                            <span class="badge badge-soft badge-soft-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-soft badge-soft-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-3 text-center">
+                        <div class="d-flex justify-content-center gap-1" onclick="event.stopPropagation();">
+                            <a href="{% url 'pharmacy:medication_detail' medication.pk %}" class="action-btn-sm view" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'pharmacy:medication_edit' medication.pk %}" class="action-btn-sm edit" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="action-btn-sm stock" title="Stock">
+                                <i class="bi bi-box-seam"></i>
+                            </button>
+                            <button type="button" class="action-btn-sm toggle" onclick="toggleStatus({{ medication.pk }}); event.stopPropagation();" title="Toggle">
+                                <i class="bi bi-power"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-capsule text-muted" style="font-size: 3rem;"></i>
+        <h5 class="text-muted mt-3 mb-2">No medications found</h5>
+        <p class="text-muted mb-3" style="font-size: 0.85rem;">Try adjusting your filters or add your first item</p>
+        <a href="{% url 'pharmacy:medication_create' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Add First Medication
+        </a>
+    </div>
+</div>
+{% endif %}
 
 <!-- Toggle Status Form -->
 <form id="toggleStatusForm" method="post" action="{% url 'pharmacy:medication_toggle_status' %}" style="display: none;">
@@ -143,9 +219,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Load Pharmacy Modal JavaScript -->
 <script src="{% static 'js/pharmacy-modals.js' %}"></script>
-
 <script>
 function toggleStatus(medicationId) {
     if (confirm('Are you sure you want to toggle the status of this medication?')) {
@@ -154,7 +228,5 @@ function toggleStatus(medicationId) {
     }
 }
 </script>
-
-<!-- Include Pharmacy Modals -->
 {% include 'pharmacy/modals/all_pharmacy_modals.html' %}
 {% endblock %}

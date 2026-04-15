@@ -4,34 +4,18 @@
 
 {% block title %}{{ budget.name }} - {{ clinic_settings.clinic_name }}{% endblock %}
 
-{% block page_title %}
-    <div>
-        <nav aria-label="breadcrumb" class="mb-2">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{% url 'budget:dashboard' %}">Budget</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'budget:budget_list' %}">All Budgets</a></li>
-                <li class="breadcrumb-item active">{{ budget.name }}</li>
-            </ol>
-        </nav>
-        <div class="d-flex align-items-center">
-            <i class="bi bi-clipboard-check me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-            <span style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">
-                {{ budget.name }}
-            </span>
-        </div>
-        {% if budget.description %}<p class="text-muted mt-2 mb-0">{{ budget.description }}</p>{% endif %}
-    </div>
-{% endblock %}
+{% block page_title %}Budget – {{ budget.name }}{% endblock %}
 
 {% block page_actions %}
-<div class="btn-group" role="group">
-    <a href="{% url 'budget:budget_edit' budget.pk %}" class="btn btn-outline-primary">
-        <i class="bi bi-pencil"></i> Edit
-    </a>
-    <button type="button" class="btn btn-success" onclick="openBudgetItemModal({{ budget.pk }}, '{{ budget.name|escapejs }}', {{ budget.total_amount }}, {{ budget.get_spent_amount|default:0 }})">
-        <i class="bi bi-plus-circle"></i> Add Item
-    </button>
-</div>
+<a href="{% url 'budget:budget_edit' budget.pk %}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil me-1"></i>Edit
+</a>
+<button type="button" class="btn btn-success btn-sm" onclick="openBudgetItemModal({{ budget.pk }}, '{{ budget.name|escapejs }}', {{ budget.total_amount }}, {{ budget.get_spent_amount|default:0 }})">
+    <i class="bi bi-plus-circle me-1"></i>Add Item
+</button>
+<a href="{% url 'budget:budget_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back
+</a>
 {% endblock %}
 
 {% block extra_css %}

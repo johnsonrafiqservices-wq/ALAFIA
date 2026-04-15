@@ -15,7 +15,7 @@ from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
-from .models import Patient, VitalSigns, Triage, Assessment, TriageAssessment, BirthdayWish
+from .models import Patient, VitalSigns, Triage, Assessment, TriageAssessment, BirthdayWish, PhysiotherapyClinicalReasoningForm
 from datetime import date as date_cls
 from .forms import PatientForm, VisitingPatientForm, VitalSignsForm, TriageForm, AssessmentForm, PhysiotherapyAssessmentForm, NutritionAssessmentForm, TriageAssessmentForm, AssessmentUpdateForm
 from appointments.models import Appointment, Service
@@ -101,6 +101,9 @@ def dashboard(request):
         visit_count=Count('assessments')
     ).filter(visit_count__gt=1).order_by('-visit_count')[:5]
 
+    # Today's appointments
+    today_appointments_count = Appointment.objects.filter(appointment_date=today).count()
+
     context = {
         'total_patients': total_patients,
         'recent_patients': recent_patients,
@@ -115,6 +118,7 @@ def dashboard(request):
         'return_rate_dashboard': return_rate_dashboard,
         'lapsed_patients': lapsed_patients,
         'top_returning_dashboard': top_returning_dashboard,
+        'today_appointments_count': today_appointments_count,
     }
     return render(request, 'dashboard/dashboard.html', context)
 
@@ -548,6 +552,26 @@ def assessment_create(request, patient_id):
             assessment.assessed_by = request.user
             assessment.department = department
             assessment.save()
+
+            if department == 'physiotherapy':
+                crf_data = {}
+                for key, value in request.POST.items():
+                    if not key.startswith('crf_'):
+                        continue
+                    cleaned = value.strip() if isinstance(value, str) else value
+                    if cleaned in (None, ''):
+                        continue
+                    try:
+                        crf_data[key] = int(cleaned)
+                    except (TypeError, ValueError):
+                        crf_data[key] = cleaned
+
+                if crf_data:
+                    PhysiotherapyClinicalReasoningForm.objects.update_or_create(
+                        assessment=assessment,
+                        defaults={'crf_data': crf_data},
+                    )
+
             messages.success(request, f'{department.title()} assessment completed successfully!')
             return redirect('patients:patient_detail', patient_id=patient.patient_id)
         else:
@@ -809,6 +833,24 @@ def physiotherapy_assessment_ajax(request, patient_id):
                 pass
         
         assessment.save()
+
+        crf_data = {}
+        for key, value in request.POST.items():
+            if not key.startswith('crf_'):
+                continue
+            cleaned = value.strip() if isinstance(value, str) else value
+            if cleaned in (None, ''):
+                continue
+            try:
+                crf_data[key] = int(cleaned)
+            except (TypeError, ValueError):
+                crf_data[key] = cleaned
+
+        if crf_data:
+            PhysiotherapyClinicalReasoningForm.objects.update_or_create(
+                assessment=assessment,
+                defaults={'crf_data': crf_data},
+            )
         
         # Handle follow-up appointment creation
         appointment_created = False

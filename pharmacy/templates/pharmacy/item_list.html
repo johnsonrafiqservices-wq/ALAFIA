@@ -10,7 +10,7 @@
     </div>
     <div>
         <div class="fw-bold page-title-gradient">Pharmacy Item Management</div>
-        <div class="small text-muted">Manage medications, supplements, devices, supplies, and stock actions from one front end.</div>
+        <!-- <div class="small text-muted">Manage medications, supplements, devices, supplies, and stock actions from one front end.</div> -->
     </div>
 </div>
 {% endblock %}
@@ -28,196 +28,191 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm mb-4 hero-panel">
-        <div class="card-body p-4 position-relative overflow-hidden">
-            <div class="hero-gradient"></div>
-            <div class="d-flex flex-column flex-lg-row align-items-start gap-4">
-                <div class="hero-text">
-                    <div class="hero-pill">Pharmacy Intelligence</div>
-                    <h3 class="fw-bold mb-2 text-white">Command the pharmacy catalog with clarity.</h3>
-                    <p class="text-white-75 mb-3">Every medication, supplement, device, and supply is listed here with live stock insights so the pharmacy front desk can act fast.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
-                            <i class="bi bi-plus-circle me-1"></i>Add Item
-                        </button>
-                        <a href="{% url 'pharmacy:stock_report' %}" class="btn btn-light btn-sm">
-                            <i class="bi bi-bar-chart-line me-1"></i>Stock report
-                        </a>
-                    </div>
+<!-- Quick Stats Row -->
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #dbeafe;">
+                    <i class="bi bi-capsule" style="color: #2563eb; font-size: 1.1rem;"></i>
                 </div>
-                <div class="hero-meta text-white">
-                    <div class="small text-white-50">Last refreshed</div>
-                    <div class="fs-5 fw-bold">{{ last_refreshed|date:"M d, Y H:i" }}</div>
-                    <div class="text-white-50 mt-2">Syncs automatically with stock movements.</div>
-                </div>
-            </div>
-            <div class="row g-3 mt-4 hero-stats">
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div class="stat-label">Active meds</div>
-                        <div class="stat-value">{{ total_active_medications }}</div>
-                        <div class="stat-caption">Live across all categories</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div class="stat-label">Low stock</div>
-                        <div class="stat-value text-warning">{{ low_stock_total }}</div>
-                        <div class="stat-caption">At or below reorder level</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div class="stat-label">Out of stock</div>
-                        <div class="stat-value text-danger">{{ out_of_stock_total }}</div>
-                        <div class="stat-caption">Requires restock</div>
-                    </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Active Items</div>
+                    <div class="fw-bold fs-5" style="color: #1e3a5f;">{{ total_active_medications }}</div>
                 </div>
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #fef3c7;">
+                    <i class="bi bi-exclamation-triangle" style="color: #d97706; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Low Stock</div>
+                    <div class="fw-bold fs-5 text-warning">{{ low_stock_total }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #fee2e2;">
+                    <i class="bi bi-x-circle" style="color: #dc2626; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Out of Stock</div>
+                    <div class="fw-bold fs-5 text-danger">{{ out_of_stock_total }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <div class="card border-0 shadow-sm mb-4 filter-card">
-        <div class="card-body p-4">
-            <form method="get" class="row g-3">
-                <div class="col-lg-4 col-md-6">
-                    <label class="form-label small text-uppercase text-muted fw-semibold">Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Search by name or generic name" value="{{ search }}">
-                </div>
-                <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-uppercase text-muted fw-semibold">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All categories</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-uppercase text-muted fw-semibold">Form</label>
-                    <select name="form" class="form-select">
-                        <option value="">All forms</option>
-                        {% for value, label in form_choices %}
-                        <option value="{{ value }}" {% if form_filter == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-6">
-                    <label class="form-label small text-uppercase text-muted fw-semibold">Stock status</label>
-                    <select name="stock_status" class="form-select">
-                        <option value="">All status</option>
-                        <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Low stock</option>
-                        <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Out of stock</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-md-12 d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search me-1"></i>Apply
-                    </button>
-                </div>
-            </form>
-        </div>
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label mb-1" style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px;">Search</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by name or generic name" value="{{ search }}">
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label mb-1" style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px;">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if category_filter == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label mb-1" style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px;">Form</label>
+                <select name="form" class="form-select form-select-sm">
+                    <option value="">All forms</option>
+                    {% for value, label in form_choices %}
+                    <option value="{{ value }}" {% if form_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label mb-1" style="font-size: 0.7rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px;">Stock Status</label>
+                <select name="stock_status" class="form-select form-select-sm">
+                    <option value="">All status</option>
+                    <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Low stock</option>
+                    <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Out of stock</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                    <i class="bi bi-search me-1"></i>Apply
+                </button>
+                <a href="{% url 'pharmacy:medication_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="card border-0 shadow-sm overflow-hidden">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h5 class="card-title mb-1">Item register</h5>
-                <small class="text-muted">Tap any row for detailed management.</small>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <button type="button" class="btn btn-sm btn-outline-success open-batch-create-modal">
-                    <i class="bi bi-box-seam me-1"></i>Receive batch
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
-                    <i class="bi bi-plus-circle me-1"></i>Add item
-                </button>
-            </div>
+<!-- Item Register Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0 fw-semibold">Item register</h6>
+            <small class="text-muted" style="font-size: 0.75rem;">Tap any row for detailed management.</small>
         </div>
-        <div class="card-body p-0">
-            {% if medications %}
-            <div class="table-responsive">
-                <table class="table table-borderless align-middle mb-0 item-table">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Type</th>
-                            <th>Category</th>
-                            <th>Form / Strength</th>
-                            <th>Stock</th>
-                            <th>Unit price</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for medication in medications %}
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ medication.name }}</div>
-                                <div class="small text-muted">{{ medication.generic_name|default:'No alternate name' }}</div>
-                            </td>
-                            <td>
-                                <span class="badge rounded-pill text-bg-light border">{{ medication.get_item_type_display }}</span>
-                            </td>
-                            <td>{{ medication.category.name }}</td>
-                            <td>
-                                {% if medication.form %}{% if medication.form == 'other' %}Other{% else %}{{ medication.get_form_display }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
-                                {% if medication.strength %}<div class="small text-muted">{{ medication.strength }}</div>{% endif %}
-                            </td>
-                            <td>
-                                {% with stock=medication.total_stock|default:0 %}
-                                    {% if stock <= 0 %}
-                                    <span class="badge stock-badge stock-empty">{{ stock }}</span>
-                                    {% elif stock <= medication.reorder_level %}
-                                    <span class="badge stock-badge stock-low">{{ stock }}</span>
-                                    {% else %}
-                                    <span class="badge stock-badge stock-good">{{ stock }}</span>
-                                    {% endif %}
-                                {% endwith %}
-                            </td>
-                            <td>UGX {{ medication.unit_price|floatformat:0|intcomma }}</td>
-                            <td>
-                                {% if medication.is_active %}
-                                <span class="badge status-badge status-active">Active</span>
-                                {% else %}
-                                <span class="badge status-badge status-inactive">Inactive</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{% url 'pharmacy:medication_detail' medication.pk %}" class="btn btn-outline-primary">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'pharmacy:medication_edit' medication.pk %}" class="btn btn-outline-warning">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-success open-batch-create-modal" data-medication-id="{{ medication.pk }}" data-medication-name="{{ medication.name }}">
-                                        <i class="bi bi-box-seam"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger toggle-status-btn" data-medication-id="{{ medication.pk }}">
-                                        <i class="bi bi-power"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-5 px-3">
-                <div class="empty-icon mb-3"><i class="bi bi-box2-heart"></i></div>
-                <h5 class="fw-semibold">No items found</h5>
-                <p class="text-muted">Start by creating your first sellable item.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
-                    <i class="bi bi-plus-circle me-2"></i>Add First Item
-                </button>
-            </div>
-            {% endif %}
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-success open-batch-create-modal">
+                <i class="bi bi-box-seam me-1"></i>Receive batch
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
+                <i class="bi bi-plus-circle me-1"></i>Add item
+            </button>
         </div>
     </div>
+    {% if medications %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+            <thead style="background: #f8fafc;">
+                <tr>
+                    <th class="ps-3 py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Item</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Type</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Category</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Form / Strength</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Stock</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Unit Price</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                    <th class="py-2 pe-3 text-end" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medication in medications %}
+                <tr class="border-bottom">
+                    <td class="ps-3">
+                        <div class="fw-semibold">{{ medication.name }}</div>
+                        <div class="small text-muted">{{ medication.generic_name|default:'No alternate name' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill text-bg-light border" style="font-size: 0.75rem;">{{ medication.get_item_type_display }}</span>
+                    </td>
+                    <td>{{ medication.category.name }}</td>
+                    <td>
+                        {% if medication.form %}{% if medication.form == 'other' %}Other{% else %}{{ medication.get_form_display }}{% endif %}{% else %}<span class="text-muted">-</span>{% endif %}
+                        {% if medication.strength %}<div class="small text-muted">{{ medication.strength }}</div>{% endif %}
+                    </td>
+                    <td>
+                        {% with stock=medication.total_stock|default:0 %}
+                            {% if stock <= 0 %}
+                            <span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.8rem;">{{ stock }}</span>
+                            {% elif stock <= medication.reorder_level %}
+                            <span class="badge" style="background: #fef3c7; color: #d97706; font-size: 0.8rem;">{{ stock }}</span>
+                            {% else %}
+                            <span class="badge" style="background: #dcfce7; color: #16a34a; font-size: 0.8rem;">{{ stock }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td class="fw-semibold">UGX {{ medication.unit_price|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if medication.is_active %}
+                        <span class="badge rounded-pill" style="background: #dbeafe; color: #2563eb; font-size: 0.75rem;">Active</span>
+                        {% else %}
+                        <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'pharmacy:medication_detail' medication.pk %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'pharmacy:medication_edit' medication.pk %}" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <button type="button" class="btn btn-outline-success btn-sm open-batch-create-modal" data-medication-id="{{ medication.pk }}" data-medication-name="{{ medication.name }}">
+                                <i class="bi bi-box-seam"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm toggle-status-btn" data-medication-id="{{ medication.pk }}">
+                                <i class="bi bi-power"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5">
+        <i class="bi bi-box2-heart text-muted" style="font-size: 3rem;"></i>
+        <h5 class="fw-semibold mt-3">No items found</h5>
+        <p class="text-muted">Start by creating your first sellable item.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#medicationCreateModal">
+            <i class="bi bi-plus-circle me-1"></i>Add First Item
+        </button>
+    </div>
+    {% endif %}
 </div>
 
 <form id="toggleStatusForm" method="post" action="{% url 'pharmacy:medication_toggle_status' %}" class="d-none">
@@ -228,163 +223,20 @@
 
 {% block extra_css %}
 <style>
-.item-page-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #185487, #2b6ea5);
-    color: #fff;
-    font-size: 1.2rem;
-}
-.page-title-gradient {
-    background: linear-gradient(135deg, #185487, #2b6ea5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.15rem;
-}
-.list-hero-card,
-.mini-stat-card {
-    border-radius: 1rem;
-}
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(24, 84, 135, 0.08);
-    color: #185487;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-.mini-stat-card {
-    border: 1px solid #e3edf7;
-    background: #fbfdff;
-    padding: 1rem;
-    height: 100%;
-}
-.mini-stat-label {
-    color: #6c7a89;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-.mini-stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #13263b;
-}
-.item-table thead th {
-    background: #f8fbff;
-    color: #607086;
-    font-size: 0.76rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-bottom: 1px solid #e6eef7;
-}
-.item-table tbody tr:hover {
-    background: #fbfdff;
-}
-.empty-icon {
-    font-size: 3rem;
-    color: #9cb0c4;
-}
-.hero-panel {
-    border-radius: 1.25rem;
-    background: #12263c;
-    color: #fff;
-}
-.hero-gradient {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(24, 84, 135, 0.6), rgba(59, 123, 191, 0.45));
-    mix-blend-mode: multiply;
-    z-index: 1;
-    border-radius: 1.25rem;
-}
-.hero-panel .card-body > * {
-    position: relative;
-    z-index: 2;
-}
-.hero-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.9rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-.hero-stats .stat-card {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 1rem;
-    border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.stat-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.7);
-}
-.stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-.stat-caption {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-}
-.filter-card {
-    border-radius: 1rem;
-}
-.item-table {
-    border-collapse: separate;
-    border-spacing: 0 0.5rem;
-}
-.item-table tbody tr {
-    background: #fff;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 20px rgba(18, 38, 60, 0.08);
-}
-.item-table tbody tr td {
-    vertical-align: middle;
-}
-.stock-badge {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.9rem;
-    border-radius: 0.75rem;
-}
-.stock-empty {
-    background: #ffe7ea;
-    color: #d32f2f;
-}
-.stock-low {
-    background: #fff4e5;
-    color: #f57c00;
-}
-.stock-good {
-    background: #e9f5ec;
-    color: #2e7d32;
-}
-.status-badge {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.8rem;
-    border-radius: 0.75rem;
-    border: 1px solid transparent;
-}
-.status-active {
-    background: #e8f6ff;
-    color: #0d6efd;
-    border-color: rgba(13, 110, 253, 0.4);
-}
-.status-inactive {
-    background: #f3f4f5;
-    color: #6c757d;
-}
+    .item-page-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #185487, #2b6ea5);
+        color: #fff;
+        font-size: 1rem;
+    }
+    .page-title-gradient {
+        background: linear-gradient(135deg, #185487, #2b6ea5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 1.1rem;
+    }
 </style>
 {% endblock %}
 

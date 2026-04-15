@@ -39,7 +39,7 @@
                 </button>
             </li> -->
             {% if user.role not in 'doctor,nutritionist' %}
-            <li class="nav-item" role="presentation">
+            <!-- <li class="nav-item" role="presentation">
                 <button class="nav-link {% if active_tab == 'patients' %}active{% endif %}" 
                         id="patients-tab" 
                         data-bs-toggle="tab" 
@@ -50,7 +50,7 @@
                         aria-selected="{% if active_tab == 'patients' %}true{% else %}false{% endif %}">
                     <i class="bi bi-people me-2"></i> <a href="http://192.168.1.3:8000/admin/">Admin</a> 
                 </button>
-            </li>
+            </li> -->
             {% endif %}
         </ul>
     </div>
@@ -64,11 +64,11 @@
          role="tabpanel" 
          aria-labelledby="overview-tab">
         <!-- Clinical Metrics Overview -->
-<div class="row g-4 mb-4">
+<div class="row g-3 mb-3">
     <!-- Patient Census -->
     <div class="col-xl-3 col-md-6">
-        <div class="card border-start border-4 h-100" style="border-left-color: var(--alafia-primary) !important;">
-            <div class="card-body">
+        <div class="card border-start h-100" >
+            <div class="card-body py-3">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="metric-label">Patient Census</div>
@@ -85,14 +85,12 @@
 
     <!-- Daily Schedule -->
     <div class="col-xl-3 col-md-6">
-        <div class="card border-start border-4 h-100" style="border-left-color: var(--alafia-success) !important;">
-            <div class="card-body">
+        <div class="card border-start h-100" >
+            <div class="card-body py-3">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="metric-label">Today's Schedule</div>
-                        <div class="metric-value" style="color: var(--alafia-success);">
-                            {% if appointments_today %}{{ appointments_today.count }}{% else %}0{% endif %}
-                        </div>
+                        <div class="metric-value" style="color: var(--alafia-success);">{{ today_appointments_count|default:"0" }}</div>
                         <div class="metric-subtitle">Appointments</div>
                     </div>
                     <div class="metric-icon">
@@ -105,8 +103,8 @@
 
     <!-- Enhanced New This Month -->
     <div class="col-xl-3 col-md-6">
-        <div class="card border-start border-4 h-100" style="border-left-color: var(--alafia-primary) !important;">
-            <div class="card-body">
+        <div class="card border-start h-100" >
+            <div class="card-body py-3">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="metric-label">New This Month</div>
@@ -129,8 +127,8 @@
 
     <!-- Enhanced Returning Patients -->
     <div class="col-xl-3 col-md-6">
-        <div class="card border-start border-4 h-100" style="border-left-color: var(--alafia-success) !important;">
-            <div class="card-body">
+        <div class="card border-start  h-100" >
+            <div class="card-body py-3">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="metric-label">Returning Patients</div>
@@ -152,30 +150,25 @@
     </div>
 </div>
 
-<!-- Today's Birthdays Widget -->
+<!-- Today's Birthdays (only show if exists) -->
 {% if birthday_patients %}
-<div class="row g-3 mb-4">
-    <div class="col-12 col-lg-6">
-        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important; background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%);">
-            <div class="card-body py-3">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-3">
-                        <span style="font-size: 1.8rem; line-height:1;">🎂</span>
-                        <div>
-                            <div class="fw-bold" style="color: #92400e; font-size: 0.85rem;">Today's Birthdays</div>
-                            <div class="small text-muted">{{ today|date:"F j, Y" }}</div>
-                            <div class="d-flex flex-wrap gap-1 mt-2">
-                                {% for bp in birthday_patients %}
-                                <a href="{% url 'patients:patient_detail' bp.patient_id %}" class="badge text-decoration-none" style="background:#f59e0b; color:#fff; font-size:0.75rem; padding:4px 8px; border-radius:12px; font-weight:500;">
-                                    🎈 {{ bp.get_full_name }}
-                                </a>
-                                {% endfor %}
-                            </div>
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-left: 4px solid #f59e0b !important; background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%);">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center gap-3">
+                    <span style="font-size: 1.5rem; line-height:1;">🎂</span>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold" style="color: #92400e; font-size: 0.85rem;">Today's Birthdays</div>
+                        <div class="small text-muted" style="font-size:0.7rem;">{{ today|date:"F j, Y" }}</div>
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            {% for bp in birthday_patients %}
+                            <a href="{% url 'patients:patient_detail' bp.patient_id %}" class="badge text-decoration-none" style="background:#f59e0b; color:#fff; font-size:0.72rem; padding:4px 8px; border-radius:12px; font-weight:500;">
+                                🎈 {{ bp.get_full_name }}
+                            </a>
+                            {% endfor %}
                         </div>
                     </div>
-                    <a href="#" class="btn btn-sm" style="background:#f59e0b; color:#fff; border:none; border-radius:20px; font-size:0.75rem;" onclick="sendBirthdayWishes(event)">
-                        <i class="bi bi-envelope-heart me-1"></i>Send Wishes
-                    </a>
                 </div>
             </div>
         </div>
@@ -183,51 +176,72 @@
 </div>
 {% endif %}
 
-<!-- Patient Statistics Widget -->
-<div class="row g-3 mb-4">
-    <!-- Lapsed / at-risk -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #d97706 !important;">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="text-muted small text-uppercase fw-semibold" style="font-size:.7rem;">Lapsed (&gt;30 days)</div>
-                        <div class="fw-bold fs-3 text-warning">{{ lapsed_patients }}</div>
-                        <div class="small text-muted">Need follow-up</div>
-                    </div>
-                    <div class="rounded-3 p-2" style="background:#fef3e2;">
-                        <i class="bi bi-clock-history fs-4" style="color:#d97706;"></i>
-                    </div>
+<!-- Quick Actions Row -->
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light py-2">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-lightning-charge-fill me-2" style="color: var(--alafia-primary); font-size: 0.9rem;"></i>
+                    <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;">Quick Actions</h6>
                 </div>
             </div>
-        </div>
-    </div>
-    <!-- Top returning + link -->
-    <div class="col-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #7c3aed !important;">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <div class="text-muted small text-uppercase fw-semibold" style="font-size:.7rem;">Top Returning</div>
-                    <a href="{% url 'reports:statistics' %}" class="text-decoration-none small" style="color:#7c3aed; font-size:.72rem;">Full Stats →</a>
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    {% if user.role in 'admin,receptionist,nurse' %}
+                    <div class="col-md-3 col-6">
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100 d-flex flex-column align-items-center gap-1" style="border: 1px solid var(--alafia-primary); color: var(--alafia-primary); background: white; padding: 8px;" data-bs-toggle="modal" data-bs-target="#patientRegistrationModal">
+                            <i class="bi bi-person-plus-fill" style="font-size: 1rem;"></i>
+                            <span class="fw-semibold" style="font-size:.7rem;">Register Patient</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.role in 'admin,receptionist' %}
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'appointments:appointment_create' %}" class="btn btn-outline-success btn-sm w-100 d-flex flex-column align-items-center gap-1 text-decoration-none" style="border: 1px solid var(--alafia-success); color: var(--alafia-success); background: white; padding: 8px;">
+                            <i class="bi bi-calendar-plus-fill" style="font-size: 1rem;"></i>
+                            <span class="fw-semibold" style="font-size:.7rem;">Schedule</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.role in 'admin,billing,receptionist' %}
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'billing:invoice_create' %}" class="btn btn-outline-info btn-sm w-100 d-flex flex-column align-items-center gap-1 text-decoration-none" style="border: 1px solid var(--alafia-info); color: var(--alafia-info); background: white; padding: 8px;">
+                            <i class="bi bi-receipt-cutoff" style="font-size: 1rem;"></i>
+                            <span class="fw-semibold" style="font-size:.7rem;">Invoice</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- <div class="col-md-3 col-6">
+                        <a href="{% url 'patients:patient_list' %}" class="btn btn-outline-secondary btn-sm w-100 d-flex flex-column align-items-center gap-1 text-decoration-none" style="border: 1px solid var(--alafia-secondary); color: var(--alafia-secondary); background: white; padding: 8px;">
+                            <i class="bi bi-search" style="font-size: 1rem;"></i>
+                            <span class="fw-semibold" style="font-size:.7rem;">Search</span>
+                        </a>
+                    </div> -->
+                    
+                    <div class="col-md-3 col-6">
+                        <a href="{% url 'reports:statistics' %}" class="btn btn-outline-purple btn-sm w-100 d-flex flex-column align-items-center gap-1 text-decoration-none" style="border: 1px solid #7c3aed; color: #7c3aed; background: white; padding: 8px;">
+                            <i class="bi bi-bar-chart-line" style="font-size: 1rem;"></i>
+                            <span class="fw-semibold" style="font-size:.7rem;">Reports</span>
+                        </a>
+                    </div>
                 </div>
-                {% for tp in top_returning_dashboard %}
-                <div class="d-flex justify-content-between align-items-center" style="font-size:.78rem; padding:1px 0;">
-                    <a href="{% url 'patients:patient_detail' tp.patient_id %}" class="text-truncate text-decoration-none text-dark fw-medium" style="max-width:140px;">{{ tp.get_full_name }}</a>
-                    <span class="badge rounded-pill" style="background:#7c3aed; font-size:.65rem;">{{ tp.visit_count }}v</span>
-                </div>
-                {% empty %}
-                <div class="text-muted small mt-1">No repeat visits yet.</div>
-                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Clinical Data Tables -->
-<div class="row g-4 mb-4">
+<!-- Lapsed Patients (only show if exists) -->
+
+
+<!-- Recent Admissions + Right Sidebar -->
+<div class="row g-3 mb-3" style="min-height: 400px;">
     <!-- Recent Patient Admissions -->
-    <div class="col-md-12">
-        <div class="card hospital-data-card h-100">
+    <div class="col-lg-8">
+        <div class="card hospital-data-card h-100 d-flex flex-column">
             <div class="card-header hospital-card-header">
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
@@ -239,7 +253,7 @@
                     </a>
                 </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0 flex-grow-1">
                 {% if recent_patients %}
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 hospital-table">
@@ -276,62 +290,53 @@
         </div>
     </div>
 
-    <!-- Priority Triage Queue -->
-    <!-- <div class="col-lg-6">
-        <div class="card hospital-data-card h-100">
-            <div class="card-header hospital-card-header">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-exclamation-triangle-fill me-2" style="color: var(--alafia-warning);"></i>
-                        <h6 class="mb-0 fw-semibold">Priority Triage Queue</h6>
+    <!-- Right Sidebar Column -->
+    <div class="col-lg-4">
+        <div class="d-flex flex-column h-100 gap-3">
+            <!-- Lapsed Patients -->
+            {% if lapsed_patients > 0 %}
+            <div class="card border-0 shadow-sm" >
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold" style="font-size:.7rem;">Overdue Appointments (&gt;30 days)</div>
+                            <div class="fw-bold fs-4 text-warning">{{ lapsed_patients }}</div>
+                            <div class="small text-muted">Need follow-up</div>
+                        </div>
+                        <div class="rounded-3 p-2" style="background:#fef3e2;">
+                            <i class="bi bi-clock-history fs-5" style="color:#d97706;"></i>
+                        </div>
                     </div>
-                    <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-arrow-right me-1"></i>View All
-                    </a>
                 </div>
             </div>
-            <div class="card-body p-0">
-                {% if pending_triage %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 hospital-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="border-0 fw-semibold">Patient</th>
-                                    <th class="border-0 fw-semibold">Priority</th>
-                                    <th class="border-0 fw-semibold">Chief Complaint</th>
-                                    <th class="border-0 fw-semibold">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for triage in pending_triage %}
-                                <tr class="hospital-table-row">
-                                    <td>
-                                        <a href="{% url 'patients:patient_detail' triage.patient.patient_id %}" 
-                                           class="text-decoration-none text-hospital-dark fw-medium">
-                                            {{ triage.patient.get_full_name }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{% if triage.priority_level == '1' %}danger{% elif triage.priority_level == '2' %}warning{% else %}info{% endif %}">
-                                            {{ triage.get_priority_level_display }}
-                                        </span>
-                                    </td>
-                                    <td class="text-muted">{{ triage.chief_complaint|truncatechars:25 }}</td>
-                                    <td class="text-muted fw-medium">{{ triage.assessment_date|time:"H:i" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            {% endif %}
+            
+            <!-- Top Returning Patients -->
+            {% if top_returning_dashboard %}
+            <div class="card border-0 shadow-sm flex-grow-1 d-flex flex-column" >
+                <div class="card-header bg-light py-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-arrow-repeat me-2" style="color: #7c3aed; font-size: 0.9rem;"></i>
+                            <h6 class="mb-0 fw-semibold" style="font-size: 0.85rem;">Top Returning</h6>
+                        </div>
+                        <a href="{% url 'reports:statistics' %}" class="text-decoration-none small" style="color:#7c3aed; font-size:.72rem;">Full Stats &rarr;</a>
                     </div>
-                {% else %}
-                    <div class="p-4 text-center">
-                        <i class="bi bi-check-circle mb-2" style="font-size: 2rem; color: var(--alafia-success);"></i>
-                        <p class="text-muted mb-0">No pending triage assessments</p>
+                </div>
+                <div class="card-body py-2 flex-grow-1">
+                    {% for tp in top_returning_dashboard %}
+                    <div class="d-flex justify-content-between align-items-center" style="font-size:.78rem; padding:2px 0;">
+                        <a href="{% url 'patients:patient_detail' tp.patient_id %}" class="text-truncate text-decoration-none text-dark fw-medium" style="max-width:180px;">{{ tp.get_full_name }}</a>
+                        <span class="badge rounded-pill" style="background:#7c3aed; font-size:.65rem;">{{ tp.visit_count }}v</span>
                     </div>
-                {% endif %}
+                    {% empty %}
+                    <div class="text-muted small mt-1">No repeat visits yet.</div>
+                    {% endfor %}
+                </div>
             </div>
+            {% endif %}
         </div>
-    </div> -->
+    </div>
 </div>
 
     </div> <!-- End of Overview Tab -->
@@ -349,7 +354,7 @@
                     <div class="card-header">
                         <h5 class="mb-0">Patient Directory</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body py-3">
                         {% if recent_patients %}
                             <div class="table-responsive">
                                 <table class="table table-hover">
@@ -419,75 +424,6 @@
             </div>
         </div>
     </div> <!-- End of Patients Tab -->
-</div>
-
-<!-- Clinical Workflow Actions -->
-<div class="row">
-    <div class="col-12">
-        <div class="card" style="background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);">
-            <div class="card-header hospital-card-header">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-lightning-charge-fill me-2" style="color: var(--alafia-primary);"></i>
-                    <h6 class="mb-0 fw-semibold">Clinical Workflow Actions</h6>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    {% if user.role in 'admin,receptionist,nurse' %}
-                    <div class="col-xl-3 col-md-6">
-                        <button type="button" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center border-0" style="background: var(--alafia-gradient); color: white;" data-bs-toggle="modal" data-bs-target="#patientRegistrationModal">
-                            <i class="bi bi-person-plus-fill mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Register Patient</span>
-                            <small class="text-muted mt-1">New admission</small>
-                        </button>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user.role in 'admin,receptionist' %}
-                    <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'appointments:appointment_create' %}" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, var(--alafia-success) 0%, var(--alafia-accent) 100%); color: white; text-decoration: none;">
-                            <i class="bi bi-calendar-plus-fill mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Schedule Appointment</span>
-                            <small class="text-muted mt-1">Book consultation</small>
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user.role in 'admin,billing,receptionist' %}
-                    <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'billing:invoice_create' %}" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, var(--alafia-info) 0%, var(--alafia-primary) 100%); color: white; text-decoration: none;">
-                            <i class="bi bi-receipt-cutoff mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Create Invoice</span>
-                            <small class="text-muted mt-1">Billing & charges</small>
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'patients:patient_list' %}" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, var(--alafia-secondary) 0%, var(--alafia-secondary-dark) 100%); color: white; text-decoration: none;">
-                            <i class="bi bi-search mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Search Patients</span>
-                            <small class="text-muted mt-1">Find records</small>
-                        </a>
-                    </div>
-                    <!-- <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'inventory:drug_list' %}" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); color: white; text-decoration: none;">
-                            <i class="bi bi-capsule-pill mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Drugs Inventory</span>
-                            <small class="text-muted mt-1">Stock & usage</small>
-                        </a>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'laboratory:labtest_list' %}" class="alafia-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%); color: white; text-decoration: none;">
-                            <i class="bi bi-flask mb-2" style="font-size: 1.5rem;"></i>
-                            <span class="fw-semibold">Laboratory</span>
-                            <small class="text-muted mt-1">Tests & results</small>
-                        </a>
-                    </div> -->
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Patient Registration Modal -->

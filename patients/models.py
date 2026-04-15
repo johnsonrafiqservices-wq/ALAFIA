@@ -222,6 +222,20 @@ class Assessment(models.Model):
     class Meta:
         ordering = ['-assessment_date']
 
+
+class PhysiotherapyClinicalReasoningForm(models.Model):
+    assessment = models.OneToOneField(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name='physiotherapy_crf',
+    )
+    crf_data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"CRF for {self.assessment.patient.get_full_name()} ({self.assessment.assessment_date:%Y-%m-%d})"
+
 # Legacy model - keep for backward compatibility during migration
 class TriageAssessment(models.Model):
     PRIORITY_CHOICES = [

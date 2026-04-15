@@ -1650,174 +1650,190 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <!-- Assessment Guidelines -->
-                    <div class="alert alert-info mb-4">
-                        <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Assessment Guidelines</h6>
-                        <ul class="mb-0 small">
-                            <li>Complete all sections thoroughly for accurate assessment</li>
-                            <li>Use the body diagram to mark affected areas precisely</li>
-                            <li>Document pain levels using the 0-10 scale consistently</li>
-                            <li>Include functional limitations and mobility restrictions</li>
-                            <li>Record any special tests performed and their results</li>
-                        </ul>
-                    </div>
-                    
-                    <form id="physiotherapyAssessmentForm" method="post" action="{% url 'patients:physiotherapy_assessment' patient.patient_id %}">
+                    <style>
+                        .crf-title {
+                            font-family: Georgia, serif;
+                            letter-spacing: 0.5px;
+                            color: #2e6b57;
+                        }
+                        .crf-outline {
+                            font-family: Georgia, serif;
+                        }
+                        .crf-section {
+                            font-weight: 700;
+                            text-decoration: underline;
+                            color: #1f4e79;
+                        }
+                        .crf-item {
+                            color: #1f4e79;
+                            text-decoration: underline;
+                        }
+                        .crf-indent-1 { padding-left: 18px; }
+                        .crf-indent-2 { padding-left: 36px; }
+                        .crf-score {
+                            width: 72px;
+                            text-align: center;
+                        }
+                    </style>
+
+                    <form id="physiotherapyAssessmentForm" method="post" action="{% url 'patients:physiotherapy_assessment_ajax' patient.patient_id %}">
                         {% csrf_token %}
-                        
-                        <!-- Assessment Information -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Assessment Information</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_assessment_type" class="form-label">Assessment Type</label>
-                                    <select class="form-select" id="id_assessment_type" name="assessment_type" required>
-                                        <option value="">Select assessment type</option>
-                                        <option value="initial">Initial Assessment</option>
-                                        <option value="follow_up">Follow-up Assessment</option>
-                                        <option value="discharge">Discharge Assessment</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_related_triage" class="form-label">Related Triage</label>
-                                    <select class="form-select" id="id_related_triage" name="related_triage">
-                                        <option value="">Select triage record</option>
-                                    </select>
-                                    <small class="text-muted">Link to triage record if applicable</small>
-                                </div>
-                            </div>
+
+                        <div class="text-center mb-3">
+                            <div class="h4 crf-title mb-0">Clinical Reasoning Form</div>
+                            <div class="h5 crf-title">(CRF) KEY</div>
                         </div>
 
-                        <!-- Chief Complaint -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Chief Complaint</h6>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_chief_complaint" class="form-label">Chief Complaint</label>
-                                    <textarea class="form-control" id="id_chief_complaint" name="chief_complaint" rows="3" placeholder="Primary reason for physiotherapy consultation" required></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pain Assessment -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Pain Assessment</h6>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_pain_location" class="form-label">Pain Location & Description</label>
-                                    <textarea class="form-control" id="id_pain_location" name="pain_location" rows="3" placeholder="Describe location, quality, intensity, and pattern of pain"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Clinical History -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Clinical History</h6>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_history_of_present_illness" class="form-label">History of Present Illness</label>
-                                    <textarea class="form-control" id="id_history_of_present_illness" name="history_of_present_illness" rows="4" placeholder="Onset, duration, aggravating/relieving factors, previous treatments"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Physical Examination -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Physical Examination</h6>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="mb-3">
-                                    <label for="id_physical_examination" class="form-label">Physical Examination Findings</label>
-                                    <textarea class="form-control" id="id_physical_examination" name="physical_examination" rows="4" placeholder="Observation, palpation, movement analysis"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_mobility_status" class="form-label">Mobility Status</label>
-                                    <select class="form-select" id="id_mobility_status" name="mobility_status">
-                                        <option value="">Select mobility status</option>
-                                        <option value="independent">Independent</option>
-                                        <option value="assisted">Assisted</option>
-                                        <option value="wheelchair">Wheelchair dependent</option>
-                                        <option value="bedbound">Bedbound</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_posture_analysis" class="form-label">Posture Analysis</label>
-                                    <textarea class="form-control" id="id_posture_analysis" name="posture_analysis" rows="2" placeholder="Postural deviations and alignment"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Functional Assessment -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Functional Assessment</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_range_of_motion" class="form-label">Range of Motion</label>
-                                    <textarea class="form-control" id="id_range_of_motion" name="range_of_motion" rows="3" placeholder="ROM measurements and limitations"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="id_muscle_strength" class="form-label">Muscle Strength</label>
-                                    <textarea class="form-control" id="id_muscle_strength" name="muscle_strength" rows="3" placeholder="Manual muscle testing results"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_functional_assessment" class="form-label">Functional Assessment</label>
-                                    <textarea class="form-control" id="id_functional_assessment" name="functional_assessment" rows="3" placeholder="Activities of daily living, functional limitations"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Diagnosis and Treatment -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Diagnosis & Treatment Plan</h6>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="mb-3">
-                                    <label for="id_diagnosis" class="form-label">Diagnosis</label>
-                                    <textarea class="form-control" id="id_diagnosis" name="diagnosis" rows="2" placeholder="Primary and secondary diagnoses"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_treatment_plan" class="form-label">Treatment Plan</label>
-                                    <textarea class="form-control" id="id_treatment_plan" name="treatment_plan" rows="4" placeholder="Goals, interventions, frequency, duration"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Assessment Notes -->
                         <div class="row mb-3">
-                            <div class="col-12">
-                                <h6 class="text-primary border-bottom pb-2">Assessment Notes</h6>
+                            <div class="col-md-6">
+                                <label for="id_physio_assessment_type" class="form-label">Assessment Type</label>
+                                <select class="form-select" id="id_physio_assessment_type" name="assessment_type" required>
+                                    <option value="">Select assessment type</option>
+                                    <option value="first_visit">First Visit Assessment</option>
+                                    <option value="follow_up">Follow-up Assessment</option>
+                                </select>
                             </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="id_physio_notes" class="form-label">Additional Notes</label>
-                                    <textarea class="form-control" id="id_physio_notes" name="notes" rows="3" placeholder="Additional observations, recommendations, or comments"></textarea>
-                                </div>
+                            <div class="col-md-6">
+                                <label for="id_related_triage" class="form-label">Related Triage</label>
+                                <select class="form-select" id="id_related_triage" name="related_triage">
+                                    <option value="">Select triage record</option>
+                                </select>
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="id_physio_chief_complaint" class="form-label">Chief Complaint</label>
+                            <textarea class="form-control" id="id_physio_chief_complaint" name="chief_complaint" rows="2" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_history_of_present_illness" class="form-label">History of Present Illness</label>
+                            <textarea class="form-control" id="id_history_of_present_illness" name="history_of_present_illness" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_physical_examination" class="form-label">Physical Examination Findings</label>
+                            <textarea class="form-control" id="id_physical_examination" name="physical_examination" rows="3"></textarea>
+                        </div>
+
+                        <div class="table-responsive crf-outline">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Item</th>
+                                        <th scope="col" class="text-end" style="width: 90px;">Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="crf-section">Intake</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intake" min="0"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="crf-section">Subjective</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_subjective" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">Symptoms</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_subjective_symptoms" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">PIP - Patient Identified Problem</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_subjective_pip" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">CC - Complications / Co-Morbidities</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_subjective_cc" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">+/- Factors</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_subjective_factors" min="0"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="crf-section">Diagnosis</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_diagnosis" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">MOI - Mechanism of Injury</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_diagnosis_moi" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">NATURE</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_diagnosis_nature" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">PATHO-ANATOMIC HYPOTHESIS (Patho. Hypo.)</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_diagnosis_patho" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">MOVEMENT DIAGNOSIS (Movt Dx)</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_diagnosis_movement" min="0"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="crf-section">Movement System Diagnosis Template</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_msd_template" min="0"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="crf-section">Symptoms and Tissue</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_tissue" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">SEVERITY</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_severity" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">IRRITABILITY</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_irritability" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">PHASE OF TX</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_phase" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">SLOPE</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_slope" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">STAGE</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_symptoms_stage" min="0"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="crf-section">Intervention (Strategy/Tactics)</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intervention" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">NPIP - Non-patient identified problem</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intervention_npip" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">STRATEGY</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intervention_strategy" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">TACTICS</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intervention_tactics" min="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="crf-item crf-indent-1">POST TEST</td>
+                                        <td class="text-end"><input class="form-control form-control-sm crf-score" type="number" name="crf_intervention_post_test" min="0"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <label for="id_physio_notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="id_physio_notes" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="department" value="physiotherapy">
                     </form>
                 </div>
                 <div class="modal-footer">

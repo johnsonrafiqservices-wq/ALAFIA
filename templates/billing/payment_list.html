@@ -3,256 +3,169 @@
 
 {% block title %}Payments - Physio & Nutrition Clinic{% endblock %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-credit-card-2-front me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Payment Management</span>
-    </div>
-{% endblock %}
+{% block page_title %}Payments{% endblock %}
 
 {% block page_actions %}
-<div class="d-flex gap-2">
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#paymentRecordModal">
-        <i class="bi bi-plus-circle"></i> Record Payment
-    </button>
-    <a href="{% url 'billing:billing_dashboard' %}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Dashboard
-    </a>
-</div>
+<button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#paymentRecordModal">
+    <i class="bi bi-plus-circle me-1"></i>Record Payment
+</button>
+<a href="{% url 'billing:billing_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Dashboard
+</a>
 {% endblock %}
 
 {% block content %}
 <!-- Filter Section -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Filter Payments</h6>
-    </div>
-    <div class="card-body">
-        <form method="get" class="row g-3">
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <form method="get" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
+                <label class="form-label mb-1" style="font-size:0.75rem;">Status</label>
+                <select name="status" class="form-select form-select-sm">
                     <option value="">All Statuses</option>
                     {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
+                        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Payment Method</label>
-                <select name="method" class="form-select">
+                <label class="form-label mb-1" style="font-size:0.75rem;">Method</label>
+                <select name="method" class="form-select form-select-sm">
                     <option value="">All Methods</option>
                     {% for value, label in method_choices %}
-                        <option value="{{ value }}" {% if selected_method == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
+                        <option value="{{ value }}" {% if selected_method == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Date Range</label>
-                <input type="date" name="date_from" class="form-control" placeholder="From">
+            <div class="col-md-2">
+                <label class="form-label mb-1" style="font-size:0.75rem;">From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm">
             </div>
-            <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-flex gap-2">
-                    <input type="date" name="date_to" class="form-control" placeholder="To">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1" style="font-size:0.75rem;">To</label>
+                <input type="date" name="date_to" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Filter</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Summary Cards -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Total Payments
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ page_obj.paginator.count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-credit-card fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+<div class="row g-2 mb-3">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm" style="border-left:3px solid #1cc88a !important;">
+            <div class="card-body py-2 px-3">
+                <div class="text-uppercase text-muted" style="font-size:0.65rem;letter-spacing:0.05em;">Total Payments</div>
+                <div class="fw-semibold" style="font-size:1.05rem;">{{ page_obj.paginator.count }}</div>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Completed Payments
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            {{ page_obj.object_list|length }}
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm" style="border-left:3px solid #4e73df !important;">
+            <div class="card-body py-2 px-3">
+                <div class="text-uppercase text-muted" style="font-size:0.65rem;letter-spacing:0.05em;">Completed</div>
+                <div class="fw-semibold" style="font-size:1.05rem;">{{ page_obj.object_list|length }}</div>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Pending Payments
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-clock fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm" style="border-left:3px solid #f6c23e !important;">
+            <div class="card-body py-2 px-3">
+                <div class="text-uppercase text-muted" style="font-size:0.65rem;letter-spacing:0.05em;">Pending</div>
+                <div class="fw-semibold" style="font-size:1.05rem;">0</div>
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            This Month
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            {{ page_obj.object_list|length }}
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm" style="border-left:3px solid #36b9cc !important;">
+            <div class="card-body py-2 px-3">
+                <div class="text-uppercase text-muted" style="font-size:0.65rem;letter-spacing:0.05em;">This Month</div>
+                <div class="fw-semibold" style="font-size:1.05rem;">{{ page_obj.object_list|length }}</div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Payments Table -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">Payment Records</h6>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-semibold" style="font-size:0.85rem;">Payment Records</h6>
         <div class="dropdown">
-            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-three-dots"></i> Actions
+            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-three-dots"></i>
             </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" onclick="exportPayments()">
-                    <i class="bi bi-download"></i> Export to CSV
-                </a></li>
-                <li><a class="dropdown-item" href="#" onclick="printPayments()">
-                    <i class="bi bi-printer"></i> Print List
-                </a></li>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item small" href="#" onclick="exportPayments()"><i class="bi bi-download me-1"></i>Export CSV</a></li>
+                <li><a class="dropdown-item small" href="#" onclick="printPayments()"><i class="bi bi-printer me-1"></i>Print</a></li>
             </ul>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
-                <thead>
+            <table class="table table-hover align-middle mb-0" style="font-size:0.8rem;">
+                <thead style="background:#f8fafc;">
                     <tr>
-                        <th>Payment ID</th>
-                        <th>Date</th>
-                        <th>Patient</th>
-                        <th>Invoice</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Status</th>
-                        <th>Reference</th>
-                        <th>Actions</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Payment ID</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Date</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Patient</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Invoice</th>
+                        <th class="text-uppercase text-muted text-end" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Amount</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Method</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Status</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;">Reference</th>
+                        <th class="text-uppercase text-muted" style="font-size:0.68rem;letter-spacing:0.05em;padding:0.4rem 0.5rem;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for payment in payments %}
                     <tr>
-                        <td>
-                            <strong>{{ payment.payment_id }}</strong>
+                        <td style="padding:0.35rem 0.5rem;">
+                            <a href="{% url 'billing:payment_detail' payment.pk %}" class="text-decoration-none fw-medium">{{ payment.payment_id }}</a>
                         </td>
-                        <td>{{ payment.payment_date|date:"M d, Y" }}</td>
-                        <td>
-                            <a href="{% url 'patients:patient_detail' payment.patient.id %}" class="text-decoration-none">
-                                {{ payment.patient.get_full_name }}
-                            </a>
+                        <td style="padding:0.35rem 0.5rem;">{{ payment.payment_date|date:"M d, Y" }}</td>
+                        <td style="padding:0.35rem 0.5rem;">
+                            <a href="{% url 'patients:patient_detail' payment.patient.id %}" class="text-decoration-none">{{ payment.patient.get_full_name }}</a>
                         </td>
-                        <td>
+                        <td style="padding:0.35rem 0.5rem;">
                             {% if payment.invoice %}
-                                <a href="{% url 'billing:invoice_detail' payment.invoice.id %}" class="text-decoration-none">
-                                    {{ payment.invoice.invoice_number }}
-                                </a>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
+                            <a href="{% url 'billing:invoice_detail' payment.invoice.id %}" class="text-decoration-none">{{ payment.invoice.invoice_number }}</a>
+                            {% else %}<span class="text-muted">-</span>{% endif %}
                         </td>
-                        <td>
-                            <strong>UGX {{ payment.amount|floatformat:2|intcomma }}</strong>
+                        <td class="text-end" style="padding:0.35rem 0.5rem;">UGX {{ payment.amount|floatformat:0|intcomma }}</td>
+                        <td style="padding:0.35rem 0.5rem;">
+                            <span class="badge rounded-pill" style="background:#dbeafe;color:#2563eb;font-size:0.68rem;">{{ payment.get_payment_method_display }}</span>
                         </td>
-                        <td>
-                            <span class="badge bg-info">{{ payment.get_payment_method_display }}</span>
-                        </td>
-                        <td>
+                        <td style="padding:0.35rem 0.5rem;">
                             {% if payment.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                            <span class="badge rounded-pill" style="background:#dcfce7;color:#16a34a;font-size:0.68rem;">Completed</span>
                             {% elif payment.status == 'pending' %}
-                                <span class="badge bg-warning">Pending</span>
+                            <span class="badge rounded-pill" style="background:#fef3c7;color:#d97706;font-size:0.68rem;">Pending</span>
                             {% elif payment.status == 'failed' %}
-                                <span class="badge bg-danger">Failed</span>
+                            <span class="badge rounded-pill" style="background:#fee2e2;color:#dc2626;font-size:0.68rem;">Failed</span>
                             {% elif payment.status == 'refunded' %}
-                                <span class="badge bg-secondary">Refunded</span>
+                            <span class="badge rounded-pill" style="background:#e5e7eb;color:#4b5563;font-size:0.68rem;">Refunded</span>
                             {% endif %}
                         </td>
-                        <td>
-                            {% if payment.reference_number %}
-                                <code>{{ payment.reference_number }}</code>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
+                        <td style="padding:0.35rem 0.5rem;">
+                            {% if payment.reference_number %}<code style="font-size:0.75rem;">{{ payment.reference_number }}</code>{% else %}<span class="text-muted">-</span>{% endif %}
                         </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="{% url 'billing:payment_receipt' payment.id %}" 
-                                   class="btn btn-sm btn-outline-primary" title="View Receipt" target="_blank">
-                                    <i class="bi bi-receipt"></i>
-                                </a>
-                                <button class="btn btn-sm btn-outline-info" 
-                                        onclick="viewPaymentDetails({{ payment.id }})" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                {% if payment.status == 'pending' %}
-                                <button class="btn btn-sm btn-outline-success" 
-                                        onclick="markAsCompleted({{ payment.id }})" title="Mark Completed">
-                                    <i class="bi bi-check-circle"></i>
-                                </button>
-                                {% endif %}
-                            </div>
+                        <td style="padding:0.35rem 0.5rem;">
+                            <a href="{% url 'billing:payment_receipt' payment.id %}" class="btn btn-sm border-0 text-primary p-0 me-1" title="Receipt" target="_blank"><i class="bi bi-receipt"></i></a>
+                            <a href="{% url 'billing:payment_detail' payment.pk %}" class="btn btn-sm border-0 text-info p-0 me-1" title="Details"><i class="bi bi-eye"></i></a>
+                            {% if payment.status == 'pending' %}
+                            <button class="btn btn-sm border-0 text-success p-0" onclick="markAsCompleted({{ payment.id }})" title="Complete"><i class="bi bi-check-circle"></i></button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
-                            <i class="bi bi-credit-card-2-front fa-3x mb-3"></i><br>
-                            No payments found matching your criteria.
-                            <br><br>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#paymentRecordModal">
-                                <i class="bi bi-plus-circle"></i> Record First Payment
+                        <td colspan="9" class="text-center text-muted py-3">
+                            <i class="bi bi-credit-card-2-front" style="font-size:1.5rem;"></i><br>
+                            <span style="font-size:0.82rem;">No payments found.</span><br>
+                            <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#paymentRecordModal">
+                                <i class="bi bi-plus-circle me-1"></i>Record Payment
                             </button>
                         </td>
                     </tr>
@@ -270,15 +183,14 @@
 <div class="modal fade" id="paymentDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Payment Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header py-2 px-3">
+                <h6 class="modal-title mb-0 fw-semibold">Payment Details</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="paymentDetailsContent">
-                <!-- Payment details will be loaded here -->
+            <div class="modal-body py-2 px-3" id="paymentDetailsContent" style="font-size:0.85rem;">
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer py-2 px-3">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

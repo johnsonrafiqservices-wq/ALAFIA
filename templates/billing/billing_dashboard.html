@@ -1,300 +1,205 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Billing Dashboard - Physio & Nutrition Clinic{% endblock %}
+{% block title %}Billing Dashboard{% endblock %}
 
-{% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-cash-stack me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Billing Dashboard</span>
-    </div>
-{% endblock %}
+{% block page_title %}Billing Dashboard{% endblock %}
 
 {% block page_actions %}
-<div class="btn-group" role="group">
-    <!-- <a href="{% url 'billing:invoice_create' %}" class="btn btn-primary">
-        <i class="bi bi-receipt"></i> Create Invoice
-    </a> -->
-    <button type="button" class="btn btn-info" onclick="openInvoiceForPatientModal()">
-        <i class="bi bi-person-plus"></i> New Invoice for Patient
-    </button>
-    <!-- <button type="button" class="btn btn-success" onclick="openPaymentModal(null, '', null, '')">
-        <i class="bi bi-credit-card"></i> Record Payment
-    </button> -->
-</div>
+<a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-list-ul me-1"></i>All Invoices
+</a>
+<button type="button" class="btn btn-primary btn-sm" onclick="openInvoiceForPatientModal()">
+    <i class="bi bi-person-plus me-1"></i>New Invoice
+</button>
+<a href="{% url 'billing:insurance_claim_create' %}" class="btn btn-outline-info btn-sm">
+    <i class="bi bi-shield-check me-1"></i>Insurance Claim
+</a>
 {% endblock %}
 
 {% block content %}
 <!-- Financial Overview Cards -->
-<div class="row mb-4">
+<div class="row g-3 mb-3">
     <div class="col-xl-3 col-md-6">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Total Revenue (This Month)
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX {{ monthly_revenue|floatformat:2|intcomma }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-cash fa-2x text-gray-300"></i>
-                    </div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #dbeafe;">
+                    <i class="bi bi-cash-stack" style="color: #2563eb; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Revenue (This Month)</div>
+                    <div class="fw-bold fs-6" style="color: #1e3a5f;">UGX {{ monthly_revenue|floatformat:0|intcomma }}</div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Outstanding Invoices
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX {{ outstanding_amount|floatformat:2|intcomma }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
-                    </div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #fef3c7;">
+                    <i class="bi bi-exclamation-triangle" style="color: #d97706; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Outstanding</div>
+                    <div class="fw-bold fs-6 text-warning">UGX {{ outstanding_amount|floatformat:0|intcomma }}</div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Payments Today
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">UGX {{ daily_payments|floatformat:2|intcomma }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-credit-card fa-2x text-gray-300"></i>
-                    </div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #dcfce7;">
+                    <i class="bi bi-credit-card" style="color: #16a34a; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Payments Today</div>
+                    <div class="fw-bold fs-6" style="color: #16a34a;">UGX {{ daily_payments|floatformat:0|intcomma }}</div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="col-xl-3 col-md-6">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Overdue Invoices
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-clock fa-2x text-gray-300"></i>
-                    </div>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-3 d-flex align-items-center">
+                <div class="rounded-2 p-2 me-3" style="background: #fee2e2;">
+                    <i class="bi bi-clock" style="color: #dc2626; font-size: 1.1rem;"></i>
+                </div>
+                <div>
+                    <div class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Overdue</div>
+                    <div class="fw-bold fs-5 text-danger">{{ overdue_count }}</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Full-width Recent & Draft Invoices -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-receipt me-2"></i>Recent & Draft Invoices
-                </h6>
-                <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-info btn-sm" onclick="openInvoiceForPatientModal()">
-                        <i class="bi bi-person-plus"></i> New for Patient
-                    </button>
-                    <!-- <a href="{% url 'billing:invoice_create' %}" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus"></i> Create Invoice
-                    </a> -->
-                    <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-primary btn-sm">View All</a>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if recent_invoices %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Invoice #</th>
-                                    <th>Patient</th>
-                                    <th>Created</th>
-                                    <th>Due Date</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for invoice in recent_invoices %}
-                                <tr class="{% if invoice.status == 'draft' %}table-warning{% elif invoice.status == 'overdue' %}table-danger{% endif %}">
-                                    <td>
-                                        <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="text-decoration-none fw-bold">
-                                            {{ invoice.invoice_number }}
-                                        </a>
-                                        {% if invoice.status == 'draft' %}
-                                        <br><small class="text-warning"><i class="bi bi-exclamation-triangle"></i> Ready for services</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <strong>{{ invoice.patient.get_full_name }}</strong>
-                                        <br><small class="text-muted">{{ invoice.patient.patient_id }}</small>
-                                    </td>
-                                    <td>{{ invoice.created_at|date:"M d, Y" }}<br><small class="text-muted">{{ invoice.created_at|time:"H:i" }}</small></td>
-                                    <td>
-                                        {{ invoice.due_date|date:"M d, Y" }}
-                                        {% if invoice.status != 'paid' and invoice.due_date < today %}
-                                        <br><small class="text-danger">{{ invoice.due_date|timesince }} overdue</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <strong>UGX {{ invoice.total_amount|floatformat:2|intcomma }}</strong>
-                                        {% if invoice.status == 'draft' and invoice.total_amount == 0 %}
-                                        <br><small class="text-muted">No services added</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'draft' %}warning{% elif invoice.status == 'sent' %}info{% elif invoice.status == 'overdue' %}danger{% else %}secondary{% endif %} fs-6">
-                                            {{ invoice.get_status_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="btn btn-outline-primary" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            {% if invoice.status == 'draft' %}
-                                                <a href="{% url 'billing:invoice_edit' invoice.pk %}" class="btn btn-outline-warning" title="Add Services">
-                                                    <i class="bi bi-plus-circle"></i>
-                                                </a>
-                                            {% endif %}
-                                            {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
-                                                <!-- <button type="button" class="btn btn-outline-success" title="Record Payment" 
-                                                        onclick="openPaymentModal({{ invoice.pk }}, '{{ invoice.invoice_number }}', {{ invoice.get_balance_due|floatformat:2|intcomma }}, {{ invoice.patient.pk }})">
-                                                    <i class="bi bi-credit-card"></i>
-                                                </button> -->
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">No invoices created yet.</p>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <button type="button" class="btn btn-info" onclick="openInvoiceForPatientModal()">
-                                <i class="bi bi-person-plus"></i> Create for Patient
-                            </button>
-                            <!-- <a href="{% url 'billing:invoice_create' %}" class="btn btn-primary">
-                                <i class="bi bi-receipt"></i> Create Invoice
-                            </a> -->
+<!-- Invoices Table -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0 fw-semibold">Recent & Draft Invoices</h6>
+            <small class="text-muted" style="font-size: 0.75rem;">Latest 15 invoices across all statuses.</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="openInvoiceForPatientModal()">
+                <i class="bi bi-person-plus me-1"></i>New for Patient
+            </button>
+            <a href="{% url 'billing:invoice_list' %}" class="btn btn-sm btn-outline-secondary">View All</a>
+        </div>
+    </div>
+    {% if recent_invoices %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.8rem;">
+            <thead style="background: #f8fafc;">
+                <tr>
+                    <th class="ps-3 py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Invoice #</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Patient</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Created</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Due Date</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Amount</th>
+                    <th class="py-2" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                    <th class="py-2 pe-3 text-end" style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in recent_invoices %}
+                <tr class="border-bottom">
+                    <td class="ps-3 py-1">
+                        <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="text-decoration-none fw-semibold">{{ invoice.invoice_number }}</a>
+                        {% if invoice.status == 'draft' %}
+                        <br><small class="text-warning" style="font-size: 0.65rem;"><i class="bi bi-exclamation-triangle"></i> Ready for services</small>
+                        {% endif %}
+                    </td>
+                    <td class="py-1">
+                        <div class="fw-semibold" style="line-height: 1.2;">{{ invoice.patient.get_full_name }}</div>
+                        <small class="text-muted" style="font-size: 0.7rem;">{{ invoice.patient.patient_id }}</small>
+                    </td>
+                    <td class="py-1">
+                        {{ invoice.created_at|date:"M d, Y" }}
+                        <br><small class="text-muted" style="font-size: 0.7rem;">{{ invoice.created_at|time:"H:i" }}</small>
+                    </td>
+                    <td class="py-1">
+                        {{ invoice.due_date|date:"M d, Y" }}
+                        {% if invoice.status != 'paid' and invoice.due_date < today %}
+                        <br><small class="text-danger" style="font-size: 0.65rem;">{{ invoice.due_date|timesince }} overdue</small>
+                        {% endif %}
+                    </td>
+                    <td class="py-1 fw-semibold">UGX {{ invoice.total_amount|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if invoice.status == 'paid' %}
+                        <span class="badge rounded-pill" style="background: #dcfce7; color: #16a34a; font-size: 0.7rem;">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'draft' %}
+                        <span class="badge rounded-pill" style="background: #fef3c7; color: #d97706; font-size: 0.7rem;">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'sent' %}
+                        <span class="badge rounded-pill" style="background: #dbeafe; color: #2563eb; font-size: 0.7rem;">{{ invoice.get_status_display }}</span>
+                        {% elif invoice.status == 'overdue' %}
+                        <span class="badge rounded-pill" style="background: #fee2e2; color: #dc2626; font-size: 0.7rem;">{{ invoice.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge rounded-pill" style="background: #f1f5f9; color: #64748b; font-size: 0.7rem;">{{ invoice.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3 py-1">
+                        <div class="d-inline-flex gap-2">
+                            <a href="{% url 'billing:invoice_detail' invoice.pk %}" title="View" style="color: #3b82f6; font-size: 0.9rem;">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if invoice.status == 'draft' %}
+                            <a href="{% url 'billing:invoice_edit' invoice.pk %}" title="Add Services" style="color: #f59e0b; font-size: 0.9rem;">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                            {% endif %}
                         </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="card-body text-center py-5">
+        <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
+        <h5 class="text-muted mt-3 mb-2">No invoices created yet</h5>
+        <p class="text-muted mb-3" style="font-size: 0.85rem;">Start by creating an invoice for a patient.</p>
+        <button type="button" class="btn btn-primary btn-sm" onclick="openInvoiceForPatientModal()">
+            <i class="bi bi-person-plus me-1"></i>Create for Patient
+        </button>
+    </div>
+    {% endif %}
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-
-        <!-- Revenue Chart -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue Trend</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="revenueChart" width="100%" height="90"></canvas>
-            </div>
-        </div>
+<!-- Revenue Chart -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white py-2 px-3">
+        <h6 class="mb-0 fw-semibold">Monthly Revenue Trend</h6>
     </div>
-
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-        <!-- Quick Actions -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-info" onclick="openInvoiceForPatientModal()">
-                        <i class="bi bi-person-plus"></i> New Invoice for Patient
-                    </button>
-                    <!-- <button type="button" class="btn btn-success" onclick="openPaymentModal(null, '', null, '')">
-                        <i class="bi bi-credit-card"></i> Record Payment
-                    </button> -->
-                     <a href="{% url 'billing:insurance_claim_create' %}" class="btn btn-info">
-                        <i class="bi bi-shield-check"></i> Submit Insurance Claim
-                    </a>
-                    <!--<a href="{% url 'billing:payment_plan_list' %}" class="btn btn-warning">
-                        <i class="bi bi-calendar-range"></i> Manage Payment Plans
-                    </a> -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Methods Summary -->
-        <!-- <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Payment Methods (This Month)</h6>
-            </div>
-            <div class="card-body">
-                {% if payment_methods_data %}
-                    {% for method in payment_methods_data %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span>{{ method.method }}</span>
-                        <span class="badge bg-primary">UGX {{ method.total|floatformat:2|intcomma }}</span>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No payments recorded this month.</p>
-                {% endif %}
-            </div>
-        </div> -->
-
-        <!-- Overdue Invoices Alert -->
-        
-
-        <!-- Insurance Claims Status -->
-        
+    <div class="card-body py-2">
+        <canvas id="revenueChart" width="100%" height="70"></canvas>
     </div>
 </div>
+{% endblock %}
 
-<!-- Using global New Invoice modal from modals/all_modals.html -->
-
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Revenue Chart - Use JSON filter to avoid template syntax issues
 const revenueLabels = {{ revenue_chart_labels|safe }};
 const revenueData = {{ revenue_chart_data|safe }};
 
 const ctx = document.getElementById('revenueChart').getContext('2d');
-const revenueChart = new Chart(ctx, {
+new Chart(ctx, {
     type: 'line',
     data: {
         labels: revenueLabels,
         datasets: [{
             label: 'Monthly Revenue',
             data: revenueData,
-            borderColor: '#4e73df',
-            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
             borderWidth: 2,
             fill: true,
-            tension: 0.3
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#2563eb'
         }]
     },
     options: {
@@ -307,13 +212,13 @@ const revenueChart = new Chart(ctx, {
                     callback: function(value) {
                         return 'UGX ' + value.toLocaleString();
                     }
-                }
-            }
+                },
+                grid: { color: '#f1f5f9' }
+            },
+            x: { grid: { display: false } }
         },
         plugins: {
-            legend: {
-                display: false
-            },
+            legend: { display: false },
             tooltip: {
                 callbacks: {
                     label: function(context) {
@@ -325,40 +230,8 @@ const revenueChart = new Chart(ctx, {
     }
 });
 
-// Quick payment function
-// Use global payment modal (from modals/all_modals.html)
 function openQuickPayment(invoiceId, invoiceNumber, totalAmount) {
-    // Backward-compat wrapper: open modal with invoice context
     openPaymentModal(invoiceId, invoiceNumber, totalAmount, '');
 }
-
-// Patient search functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const patientSelect = document.getElementById('patientSelect');
-    if (patientSelect) {
-        // Add search functionality to patient select
-        patientSelect.addEventListener('input', function() {
-            // This could be enhanced with a search API call
-        });
-    }
-});
 </script>
-
-<style>
-.border-left-primary {
-    border-left: 0.25rem solid #4e73df !important;
-}
-.border-left-success {
-    border-left: 0.25rem solid #1cc88a !important;
-}
-.border-left-info {
-    border-left: 0.25rem solid #36b9cc !important;
-}
-.border-left-warning {
-    border-left: 0.25rem solid #f6c23e !important;
-}
-.border-left-danger {
-    border-left: 0.25rem solid #e74a3b !important;
-}
-</style>
 {% endblock %}
