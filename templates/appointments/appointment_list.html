@@ -3,19 +3,19 @@
 {% block title %}Appointments - Alafia Point Wellness Clinic{% endblock %}
 
 {% block page_title %}
-    <div class="d-flex align-items-center">
-        <i class="bi bi-calendar-check-fill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Appointment Management</span>
-    </div>
+<div class="d-flex align-items-center">
+    <i class="bi bi-calendar-check-fill me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+    <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Appointment Management</span>
+</div>
 {% endblock %}
 
 {% block page_actions %}
 <div class="btn-group" role="group">
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointmentCreateModal">
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#appointmentCreateModal" style="font-size:0.78rem;">
         <i class="bi bi-calendar-plus"></i> Schedule New Appointment
     </button>
     <div class="btn-group" role="group">
-        <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+        <button type="button" class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" style="font-size:0.78rem;">
             <i class="bi bi-download"></i> Export
         </button>
         <ul class="dropdown-menu">
@@ -31,8 +31,8 @@
     /* Compact Calendar Styles */
     .compact-calendar-container {
         background: white;
-        border-radius: 8px;
-        padding: 1rem;
+        border-radius: 6px;
+        padding: 0.7rem;
     }
 
     .compact-calendar-grid {
@@ -47,16 +47,16 @@
     .calendar-day-header {
         background: var(--alafia-primary);
         color: white;
-        padding: 0.5rem;
+        padding: 0.3rem;
         text-align: center;
         font-weight: 600;
-        font-size: 0.75rem;
+        font-size: 0.68rem;
     }
 
     .calendar-day-compact {
         background: white;
-        min-height: 60px;
-        padding: 0.25rem;
+        min-height: 45px;
+        padding: 0.15rem;
         position: relative;
         cursor: pointer;
         transition: all 0.2s ease;
@@ -89,8 +89,8 @@
 
     .day-number-compact {
         font-weight: 600;
-        font-size: 0.875rem;
-        margin-bottom: 0.125rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.1rem;
     }
 
     .appointment-dot {
@@ -108,15 +108,15 @@
     }
 
     .view-appointments-link {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
         background: var(--alafia-primary);
         color: white;
-        padding: 1px 4px;
-        border-radius: 3px;
+        padding: 1px 3px;
+        border-radius: 2px;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s ease;
-        margin-top: 2px;
+        margin-top: 1px;
     }
 
     .view-appointments-link:hover {
@@ -146,9 +146,9 @@
     }
 
     .calendar-stats-compact {
-        padding: 0.5rem;
+        padding: 0.3rem;
         background: var(--alafia-primary-light);
-        border-radius: 6px;
+        border-radius: 4px;
     }
 
     /* View Toggle Styles */
@@ -156,12 +156,28 @@
         background-color: var(--alafia-primary);
         border-color: var(--alafia-primary);
     }
+    
+    /* Detail Table Styles */
+    .detail-table thead th {
+        background: #f8fbff;
+        color: #607086;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid #e6eef7;
+        padding: 0.35rem 0.5rem;
+    }
+    .detail-table tbody td {
+        font-size: 0.82rem;
+        padding: 0.4rem 0.5rem;
+        border-color: #eef2f7;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Appointment Filters -->
-<div class="card mb-3" style="border: 1px solid #e3e6f0;">
+<div class="card mb-2" style="border: 1px solid #e3e6f0;">
     <div class="card-body py-2">
         <form method="GET" id="appointmentFilterForm">
             <div class="row align-items-center g-2">
@@ -200,9 +216,9 @@
 </div>
 
 <!-- Appointments Calendar View Toggle -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">
+<div class="card shadow mb-3">
+    <div class="card-header py-2 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary" style="font-size:0.85rem;">
             Appointments 
             {% if date_from or date_to or status or search_query %}
                 - Filtered Results
@@ -253,64 +269,64 @@
         <div id="list-view-content">
             {% if page_obj %}
                 <div class="table-responsive">
-                    <table class="table table-hover table-sm" id="appointmentsTable" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <thead style="background: var(--alafia-gradient); color: white;">
+                    <table class="table table-hover table-sm detail-table" id="appointmentsTable">
+                        <thead>
                             <tr>
-                                <th onclick="sortAppointmentTable(0)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(0)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Date & Time <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th onclick="sortAppointmentTable(1)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(1)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Patient <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th onclick="sortAppointmentTable(2)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(2)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Service <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th onclick="sortAppointmentTable(3)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(3)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Provider <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th onclick="sortAppointmentTable(4)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(4)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Status <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th onclick="sortAppointmentTable(5)" style="cursor: pointer; user-select: none;">
+                                <th onclick="sortAppointmentTable(5)" style="cursor: pointer; user-select: none; font-size:0.7rem; padding:0.35rem 0.5rem;">
                                     Duration <i class="bi bi-arrow-down-up text-light"></i>
                                 </th>
-                                <th>Actions</th>
+                                <th style="font-size:0.7rem; padding:0.35rem 0.5rem;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for appointment in appointments %}
                             <tr>
-                                <td>
-                                    <strong>{{ appointment.appointment_date|date:"M d, Y" }}</strong><br>
-                                    <small class="text-muted">{{ appointment.appointment_time|time:"g:i A" }}</small>
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">
+                                    <strong style="font-size:0.75rem;">{{ appointment.appointment_date|date:"M d, Y" }}</strong><br>
+                                    <small class="text-muted" style="font-size:0.68rem;">{{ appointment.appointment_time|time:"g:i A" }}</small>
                                 </td>
-                                <td>
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">
                                     <a href="{% url 'patients:patient_detail' appointment.patient.patient_id %}" class="text-decoration-none">
                                         {{ appointment.patient.get_full_name }}
                                     </a><br>
-                                    <small class="text-muted">{{ appointment.patient.patient_id }}</small>
+                                    <small class="text-muted" style="font-size:0.68rem;">{{ appointment.patient.patient_id }}</small>
                                 </td>
-                                <td>
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">
                                     {{ appointment.service.name }}<br>
-                                    <small class="text-muted">UGX {{ appointment.service.price }}</small>
+                                    <small class="text-muted" style="font-size:0.68rem;">UGX {{ appointment.service.price }}</small>
                                 </td>
-                                <td>
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">
                                     {{ appointment.provider.get_full_name }}<br>
-                                    <small class="text-muted">{{ appointment.provider.get_role_display }}</small>
+                                    <small class="text-muted" style="font-size:0.68rem;">{{ appointment.provider.get_role_display }}</small>
                                 </td>
-                                <td>
-                                    <span class="badge bg-{% if appointment.status == 'scheduled' %}secondary{% elif appointment.status == 'confirmed' %}primary{% elif appointment.status == 'in_progress' %}warning{% elif appointment.status == 'completed' %}success{% elif appointment.status == 'cancelled' %}danger{% else %}dark{% endif %}">
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">
+                                    <span class="badge bg-{% if appointment.status == 'scheduled' %}secondary{% elif appointment.status == 'confirmed' %}primary{% elif appointment.status == 'in_progress' %}warning{% elif appointment.status == 'completed' %}success{% elif appointment.status == 'cancelled' %}danger{% else %}dark{% endif %}" style="font-size:0.65rem;">
                                         {{ appointment.get_status_display }}
                                     </span>
                                 </td>
-                                <td>{{ appointment.service.duration }} min</td>
+                                <td style="font-size:0.82rem; padding:0.4rem 0.5rem;">{{ appointment.service.duration }} min</td>
                                 <td class="text-center" style="width: 120px; padding: 0.25rem;">
-                                    <a href="{% url 'appointments:appointment_detail' appointment.id %}" class="btn btn-sm btn-link text-muted p-1" title="View">
+                                    <a href="{% url 'appointments:appointment_detail' appointment.id %}" class="btn btn-sm btn-link text-muted p-1" title="View" style="font-size:0.78rem;">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                    
                                     {% if appointment.status == 'scheduled' or appointment.status == 'confirmed' %}
-                                        <button class="btn btn-sm btn-link text-danger p-1" onclick="cancelAppointment({{ appointment.id }})" title="Cancel">
+                                        <button class="btn btn-sm btn-link text-danger p-1" onclick="cancelAppointment({{ appointment.id }})" title="Cancel" style="font-size:0.78rem;">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     {% endif %}
@@ -324,15 +340,15 @@
                 <!-- Pagination with Page Size Selector -->
                 {% include 'includes/pagination_with_size.html' %}
             {% else %}
-                <div class="text-center py-5">
-                    <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
-                    <h4 class="text-muted mt-3">No Appointments Found</h4>
+                <div class="text-center py-4">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                    <h4 class="text-muted mt-2" style="font-size:1rem;">No Appointments Found</h4>
                     {% if date_from or date_to or status or search_query %}
-                        <p class="text-muted">No appointments match your filter criteria.</p>
-                        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-primary">Clear Filters</a>
+                        <p class="text-muted" style="font-size:0.78rem;">No appointments match your filter criteria.</p>
+                        <a href="{% url 'appointments:appointment_list' %}" class="btn btn-outline-primary btn-sm" style="font-size:0.78rem;">Clear Filters</a>
                     {% else %}
-                        <p class="text-muted">Start by scheduling your first appointment.</p>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointmentCreateModal">
+                        <p class="text-muted" style="font-size:0.78rem;">Start by scheduling your first appointment.</p>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#appointmentCreateModal" style="font-size:0.78rem;">
                             <i class="bi bi-calendar-plus"></i> Schedule First Appointment
                         </button>
                     {% endif %}
@@ -438,17 +454,17 @@
 </div>
 
 <!-- Today's Appointments Summary -->
-<div class="row">
+<div class="row g-2">
     <div class="col-md-3">
         <div class="card border-left-primary shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Appointments</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_appointments_count }}</div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1" style="font-size:0.68rem;">Today's Appointments</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size:1.05rem;">{{ today_appointments_count }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="bi bi-calendar-day fa-2x text-gray-300"></i>
+                        <i class="bi bi-calendar-day" style="font-size:1.2rem; color: #ddd;"></i>
                     </div>
                 </div>
             </div>
@@ -459,11 +475,11 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed Today</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_today_count }}</div>
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1" style="font-size:0.68rem;">Completed Today</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size:1.05rem;">{{ completed_today_count }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        <i class="bi bi-check-circle" style="font-size:1.2rem; color: #ddd;"></i>
                     </div>
                 </div>
             </div>
@@ -474,11 +490,11 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_appointments_count }}</div>
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1" style="font-size:0.68rem;">Pending</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size:1.05rem;">{{ pending_appointments_count }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        <i class="bi bi-clock" style="font-size:1.2rem; color: #ddd;"></i>
                     </div>
                 </div>
             </div>
@@ -489,11 +505,11 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Cancelled</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ cancelled_today_count }}</div>
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1" style="font-size:0.68rem;">Cancelled</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" style="font-size:1.05rem;">{{ cancelled_today_count }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                        <i class="bi bi-x-circle" style="font-size:1.2rem; color: #ddd;"></i>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,191 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt {{ payment.payment_id }} - {{ clinic_settings.clinic_name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; background: #f0f2f5; }
+
+        .receipt-container { max-width: 700px; margin: 20px auto; background: #fff; border-radius: 6px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); overflow: hidden; }
+
+        /* Header */
+        .receipt-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 24px 28px 18px; border-bottom: 3px solid #1B5E96; }
+        .clinic-logo { max-height: 56px; max-width: 160px; margin-bottom: 6px; }
+        .clinic-name { font-size: 18px; font-weight: 700; color: #1B5E96; }
+        .clinic-details { color: #64748b; font-size: 11px; line-height: 1.4; margin-top: 2px; }
+        .receipt-title { text-align: right; }
+        .receipt-title h1 { font-size: 20px; font-weight: 700; color: #1B5E96; margin-bottom: 6px; }
+        .receipt-badge { background: #2E8B57; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: 600; font-size: 12px; display: inline-block; margin-bottom: 6px; }
+        .receipt-date { font-size: 11px; color: #64748b; }
+        .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .status-completed { background: #dcfce7; color: #16a34a; }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-failed { background: #fee2e2; color: #dc2626; }
+
+        /* Content */
+        .receipt-body { padding: 24px 28px; }
+        .section-title { font-size: 13px; font-weight: 700; color: #1B5E96; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+
+        /* Patient Info */
+        .patient-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+        .patient-meta { color: #64748b; font-size: 12px; margin-bottom: 2px; }
+
+        /* Summary Table */
+        .summary-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        .summary-table thead th { background: #1B5E96; color: #fff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 12px; text-align: left; }
+        .summary-table thead th:last-child { text-align: right; }
+        .summary-table tbody td { padding: 10px 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        .summary-table tbody td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
+
+        /* Total Bar */
+        .total-bar { display: flex; justify-content: flex-end; margin-top: 10px; }
+        .total-bar-inner { background: #2E8B57; color: #fff; padding: 8px 24px; border-radius: 4px; font-size: 13px; font-weight: 700; display: flex; gap: 24px; }
+
+        /* Invoice Section */
+        .invoice-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-top: 20px; }
+        .invoice-box-title { font-size: 12px; font-weight: 700; color: #1B5E96; margin-bottom: 8px; }
+        .invoice-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+        .invoice-stat { text-align: center; flex: 1; min-width: 120px; }
+        .invoice-stat-value { font-size: 14px; font-weight: 700; color: #1B5E96; }
+        .invoice-stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; }
+
+        /* Footer */
+        .receipt-footer { padding: 18px 28px; border-top: 1px solid #e2e8f0; text-align: center; background: #f8fafc; }
+        .footer-msg { background: #dcfce7; color: #16a34a; padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 12px; display: inline-block; margin-bottom: 10px; }
+        .footer-msg.pending { background: #fef3c7; color: #d97706; }
+        .footer-contact { color: #64748b; font-size: 10px; line-height: 1.5; }
+        .footer-timestamp { margin-top: 8px; font-size: 9px; color: #94a3b8; font-style: italic; }
+
+        @media (max-width: 640px) {
+            .receipt-container { margin: 10px; }
+            .receipt-header { flex-direction: column; gap: 12px; }
+            .receipt-title { text-align: left; }
+            .receipt-body { padding: 16px; }
+            .invoice-grid { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <!-- Header -->
+        <div class="receipt-header">
+            <div>
+                {% if clinic_settings.logo %}
+                <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="clinic-logo"><br>
+                {% endif %}
+                <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                <div class="clinic-details">
+                    {% if clinic_settings.address %}{{ clinic_settings.address }}<br>{% endif %}
+                    {% if clinic_settings.phone %}Phone: {{ clinic_settings.phone }}{% endif %}
+                    {% if clinic_settings.email %} | {{ clinic_settings.email }}{% endif %}
+                </div>
+            </div>
+            <div class="receipt-title">
+                <h1>PAYMENT RECEIPT</h1>
+                <div class="receipt-badge">{{ payment.payment_id }}</div><br>
+                <div class="receipt-date">
+                    {{ payment.payment_date|date:"F d, Y" }} &bull;
+                    <span class="status-pill status-{{ payment.status }}">{{ payment.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="receipt-body">
+            <!-- Patient Information -->
+            <div class="section-title">Patient Information</div>
+            <div class="patient-name">{{ payment.patient.get_full_name }}</div>
+            <div class="patient-meta">Patient ID: {{ payment.patient.patient_id }}</div>
+            {% if payment.patient.phone %}<div class="patient-meta">Phone: {{ payment.patient.phone }}</div>{% endif %}
+
+            <!-- Payment Summary -->
+            <div style="margin-top: 24px;">
+                <div class="section-title">Payment Summary</div>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                Payment Receipt {{ payment.payment_id }}
+                                {% if payment.invoice %}<br><span style="color:#64748b; font-size:11px;">Invoice: {{ payment.invoice.invoice_number }}</span>{% endif %}
+                            </td>
+                            <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                            <td>{{ payment.get_payment_method_display }}</td>
+                            <td>UGX {{ payment.amount|floatformat:0|intcomma }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="total-bar">
+                    <div class="total-bar-inner">
+                        <span>TOTAL PAID:</span>
+                        <span>UGX {{ payment.amount|floatformat:0|intcomma }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if payment.reference_number or payment.notes or payment.processed_by %}
+            <div style="margin-top: 20px; display: flex; gap: 24px; flex-wrap: wrap; font-size: 12px;">
+                {% if payment.processed_by %}
+                <div><span style="color:#64748b;">Processed by:</span> <strong>{{ payment.processed_by.get_full_name }}</strong></div>
+                {% endif %}
+                {% if payment.reference_number %}
+                <div><span style="color:#64748b;">Reference:</span> <strong>{{ payment.reference_number }}</strong></div>
+                {% endif %}
+            </div>
+            {% if payment.notes %}
+            <div style="margin-top: 8px; font-size: 12px;"><span style="color:#64748b;">Notes:</span> {{ payment.notes }}</div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Invoice Balance -->
+            {% if payment.invoice %}
+            <div class="invoice-box">
+                <div class="invoice-box-title">Invoice {{ payment.invoice.invoice_number }}</div>
+                <div class="invoice-grid">
+                    <div class="invoice-stat">
+                        <div class="invoice-stat-value">UGX {{ payment.invoice.total_amount|floatformat:0|intcomma }}</div>
+                        <div class="invoice-stat-label">Invoice Total</div>
+                    </div>
+                    <div class="invoice-stat">
+                        <div class="invoice-stat-value" style="color: #16a34a;">UGX {{ payment.invoice.get_total_paid|floatformat:0|intcomma }}</div>
+                        <div class="invoice-stat-label">Total Paid</div>
+                    </div>
+                    <div class="invoice-stat">
+                        <div class="invoice-stat-value" style="color: {% if payment.invoice.get_balance_due > 0 %}#dc2626{% else %}#16a34a{% endif %};">UGX {{ payment.invoice.get_balance_due|floatformat:0|intcomma }}</div>
+                        <div class="invoice-stat-label">Balance Due</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="receipt-footer">
+            {% if payment.status == 'completed' %}
+            <div class="footer-msg">&#10003; Payment Successfully Processed</div>
+            {% elif payment.status == 'pending' %}
+            <div class="footer-msg pending">&#9203; Payment Processing</div>
+            {% endif %}
+            <div class="footer-contact">
+                Thank you for your payment!<br>
+                {% if clinic_settings.phone %}{{ clinic_settings.phone }}{% endif %}
+                {% if clinic_settings.email %} | {{ clinic_settings.email }}{% endif %}
+                <br><strong>{{ clinic_settings.clinic_name }}</strong>
+                {% if clinic_settings.address %} &mdash; {{ clinic_settings.address }}{% endif %}
+            </div>
+            <div class="footer-timestamp">Receipt generated {{ "now"|date:"F d, Y \a\\t H:i A" }}</div>
+        </div>
+    </div>
+</body>
+</html>

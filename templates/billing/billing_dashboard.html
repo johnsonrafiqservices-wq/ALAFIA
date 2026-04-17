@@ -3,7 +3,12 @@
 
 {% block title %}Billing Dashboard{% endblock %}
 
-{% block page_title %}Billing Dashboard{% endblock %}
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="bi bi-cash-stack me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+    <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Billing Dashboard</span>
+</div>
+{% endblock %}
 
 {% block page_actions %}
 <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline-secondary btn-sm">

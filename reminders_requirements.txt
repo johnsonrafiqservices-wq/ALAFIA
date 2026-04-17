@@ -1,7 +1,0 @@
-# Appointment Reminders System - Optional Dependencies
-
-# SMS Support (Optional - only if you want SMS reminders)
-twilio>=8.10.0
-phonenumbers>=8.13.0
-
-# Email support is built into Django - no extra packages needed

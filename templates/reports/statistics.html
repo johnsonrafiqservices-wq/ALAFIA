@@ -4,15 +4,15 @@
 {% block title %}Statistics – {{ period_label }}{% endblock %}
 
 {% block page_title %}
-<div class="d-flex align-items-center gap-2">
-    <i class="bi bi-graph-up-arrow" style="font-size:1.4rem;color:var(--alafia-primary);"></i>
-    <span style="font-weight:700;">Clinic Statistics</span>
-    <span class="badge bg-primary ms-1" style="font-size:.75rem;">{{ period_label }}</span>
+<div class="d-flex align-items-center gap-1 stats-title-compact">
+    <i class="bi bi-graph-up-arrow" style="font-size:1.1rem;color:var(--alafia-primary);"></i>
+    <span class="stats-title-text">Clinic Statistics</span>
+    <span class="badge bg-primary ms-1" style="font-size:.68rem;">{{ period_label }}</span>
 </div>
 {% endblock %}
 
 {% block page_actions %}
-<form method="get" action="{% url 'reports:statistics' %}" class="d-flex align-items-center gap-2 flex-wrap" id="statsForm">
+<form method="get" action="{% url 'reports:statistics' %}" class="d-flex align-items-center gap-1 flex-wrap stats-toolbar-compact" id="statsForm">
     <div class="btn-group btn-group-sm" role="group">
         <button type="button" class="btn {% if period == 'daily' %}btn-primary{% else %}btn-outline-primary{% endif %}"
                 onclick="setPreset('daily')">
@@ -31,13 +31,13 @@
             <i class="bi bi-calendar4-range me-1"></i>This Year
         </button>
     </div>
-    <div class="d-flex align-items-center gap-1">
+    <div class="d-flex align-items-center gap-1 stats-date-group">
         <input type="date" name="start_date" id="id_start_date"
-               class="form-control form-control-sm" style="width:145px;"
+               class="form-control form-control-sm" style="width:112px;"
                value="{{ start_date_iso }}" required>
         <span class="text-muted small">–</span>
         <input type="date" name="end_date" id="id_end_date"
-               class="form-control form-control-sm" style="width:145px;"
+               class="form-control form-control-sm" style="width:112px;"
                value="{{ end_date_iso }}" required>
         <button type="submit" class="btn btn-sm btn-success">
             <i class="bi bi-funnel-fill me-1"></i>Apply
@@ -53,12 +53,144 @@
        class="btn btn-sm btn-success d-flex align-items-center gap-1"
        title="Download Excel report for the selected date range">
         <i class="bi bi-file-earmark-excel-fill"></i>
-        <span class="d-none d-md-inline">Download Excel</span>
+        <span class="d-none d-lg-inline">Download Excel</span>
     </a>
 </form>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .stats-title-compact {
+        white-space: nowrap;
+        line-height: 1;
+    }
+
+    .stats-title-text {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .stats-toolbar-compact {
+        gap: 0.35rem !important;
+    }
+
+    @media (min-width: 992px) {
+        .stats-toolbar-compact {
+            flex-wrap: nowrap !important;
+        }
+    }
+
+    .stats-toolbar-compact .btn {
+        padding: 0.22rem 0.45rem;
+        font-size: 0.72rem;
+        line-height: 1.2;
+    }
+
+    .stats-toolbar-compact .form-control-sm {
+        min-height: calc(1.3em + 0.32rem + 2px);
+        padding: 0.16rem 0.35rem;
+        font-size: 0.72rem;
+    }
+
+    .stats-date-group {
+        gap: 0.22rem !important;
+    }
+
+    .stats-compact .mb-4 {
+        margin-bottom: 0.9rem !important;
+    }
+
+    .stats-compact .row {
+        --bs-gutter-x: 0.8rem;
+        --bs-gutter-y: 0.8rem;
+    }
+
+    .stats-compact .card {
+        border-radius: 0.5rem;
+    }
+
+    .stats-compact .card-header {
+        padding: 0.55rem 0.8rem !important;
+    }
+
+    .stats-compact .card-body {
+        padding: 0.75rem 0.85rem;
+    }
+
+    .stats-compact .fs-2 {
+        font-size: 1.55rem !important;
+    }
+
+    .stats-compact .fs-3 {
+        font-size: 1.35rem !important;
+    }
+
+    .stats-compact .fs-4 {
+        font-size: 1.15rem !important;
+    }
+
+    .stats-compact .small {
+        line-height: 1.25;
+    }
+
+    .stats-compact .list-group-item {
+        padding: 0.45rem 0.75rem;
+    }
+
+    .stats-compact .p-3 {
+        padding: 0.7rem !important;
+    }
+
+    .stats-compact .mt-3 {
+        margin-top: 0.7rem !important;
+    }
+
+    .stats-compact .my-2 {
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    .stats-compact canvas#trendChart {
+        max-height: 230px;
+    }
+
+    .stats-compact canvas#returnRateChart {
+        max-height: 82px;
+    }
+
+    .stats-compact canvas#deptChart,
+    .stats-compact canvas#retentionChart {
+        max-height: 145px;
+    }
+
+    @media (max-width: 991.98px) {
+        .stats-title-text {
+            font-size: 0.94rem;
+        }
+
+        .stats-toolbar-compact {
+            row-gap: 0.35rem !important;
+        }
+
+        .stats-toolbar-compact .btn {
+            padding: 0.22rem 0.42rem;
+            font-size: 0.74rem;
+        }
+
+        .stats-toolbar-compact .form-control-sm {
+            font-size: 0.75rem;
+        }
+
+        .stats-compact .card-body {
+            padding: 0.7rem 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+
+<div class="stats-compact">
 
 <!-- ═══ METRIC CARDS ═══ -->
 <div class="row g-3 mb-4">
@@ -328,6 +460,8 @@
             </div>
         </div>
     </div>
+</div>
+
 </div>
 
 {% endblock %}

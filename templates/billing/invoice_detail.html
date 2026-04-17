@@ -3,12 +3,20 @@
 
 {% block title %}Invoice {{ invoice.invoice_number }} - {{ invoice.patient.get_full_name }}{% endblock %}
 
-{% block page_title %}Invoice – {{ invoice.invoice_number }}{% endblock %}
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="bi bi-receipt me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+    <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Invoice - {{ invoice.invoice_number }}</span>
+</div>
+{% endblock %}
 
 {% block page_actions %}
 <a href="{% url 'billing:invoice_pdf' invoice.pk %}" class="btn btn-sm btn-primary" target="_blank">
     <i class="bi bi-download me-1"></i>PDF
 </a>
+<button type="button" class="btn btn-sm btn-success" id="sendInvoiceEmailBtn" data-url="{% url 'billing:invoice_send_email' invoice.pk %}">
+    <i class="bi bi-envelope me-1"></i>Send Email
+</button>
 {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#quickPaymentModal">
     <i class="bi bi-credit-card me-1"></i>Payment
@@ -707,6 +715,68 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentAmountInput = document.getElementById('paymentAmount');
     const balanceDue = parseFloat('{{ invoice.get_balance_due|floatformat:2 }}');
     const totalAmount = parseFloat('{{ invoice.total_amount|floatformat:2 }}');
+
+    // Handle Send Email button
+    const sendInvoiceEmailBtn = document.getElementById('sendInvoiceEmailBtn');
+    if (sendInvoiceEmailBtn) {
+        sendInvoiceEmailBtn.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            const originalText = this.innerHTML;
+
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Sending...';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-check-circle me-2"></i>${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const shell = document.querySelector('.invoice-detail-shell');
+                    if (shell) {
+                        shell.prepend(alertDiv);
+                    }
+                    // Reload page to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-exclamation-triangle me-2"></i>${data.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const shell = document.querySelector('.invoice-detail-shell');
+                    if (shell) {
+                        shell.prepend(alertDiv);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the email. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                this.disabled = false;
+                this.innerHTML = originalText;
+            });
+        });
+    }
     
     // Set full amount function
     window.setFullAmount = function() {

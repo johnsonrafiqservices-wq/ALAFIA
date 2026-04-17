@@ -35,9 +35,9 @@
 
         /* Summary Table */
         .summary-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-        .summary-table thead th { background: #1B5E96; color: #fff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 12px; text-align: left; }
+        .summary-table thead th { background: #1B5E96; color: #fff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 10px 16px; text-align: left; }
         .summary-table thead th:last-child { text-align: right; }
-        .summary-table tbody td { padding: 10px 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        .summary-table tbody td { padding: 14px 16px; font-size: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         .summary-table tbody td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
 
         /* Total Bar */
@@ -50,6 +50,9 @@
         .invoice-grid { display: flex; gap: 24px; flex-wrap: wrap; }
         .invoice-stat { text-align: center; flex: 1; min-width: 120px; }
         .invoice-stat-value { font-size: 14px; font-weight: 700; color: #1B5E96; }
+        .invoice-stat-value.paid { color: #16a34a; }
+        .invoice-stat-value.balance-due { color: #dc2626; }
+        .invoice-stat-value.balance-clear { color: #16a34a; }
         .invoice-stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; }
 
         /* Footer */
@@ -83,9 +86,161 @@
             .invoice-grid { flex-direction: column; gap: 10px; }
             .action-bar { top: 8px; right: 8px; flex-direction: column; }
         }
+
+        body.pdf-mode {
+            background: #fff;
+            padding-top: 0;
+        }
+
+        body.pdf-mode .receipt-container {
+            max-width: none;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            width: 100%;
+        }
+
+        body.pdf-mode .receipt-body {
+            padding: 26px 28px;
+        }
+
+        body.pdf-mode .section-title {
+            margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 0.05em;
+        }
+
+        body.pdf-mode .patient-meta {
+            margin-bottom: 4px;
+        }
+
+        body.pdf-mode .action-bar {
+            display: none;
+        }
+
+        body.pdf-mode .receipt-header {
+            display: block;
+        }
+
+        body.pdf-mode .pdf-header-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border-bottom: 3px solid #1B5E96;
+        }
+
+        body.pdf-mode .pdf-header-left,
+        body.pdf-mode .pdf-header-right {
+            vertical-align: top;
+        }
+
+        body.pdf-mode .pdf-header-right {
+            text-align: right;
+        }
+
+        body.pdf-mode .pdf-header-table td {
+            padding-bottom: 10px;
+        }
+
+        body.pdf-mode .pdf-logo {
+            width: 90px;
+            height: auto;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        body.pdf-mode .total-bar {
+            display: block;
+            text-align: right;
+        }
+
+        body.pdf-mode .total-bar-inner {
+            display: inline-block;
+        }
+
+        body.pdf-mode .invoice-grid {
+            display: none;
+        }
+
+        body.pdf-mode .pdf-invoice-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        body.pdf-mode .pdf-invoice-table td {
+            text-align: center;
+            vertical-align: top;
+            width: 33.33%;
+            padding: 10px 12px;
+        }
+
+        body.pdf-mode .pdf-meta-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px;
+        }
+
+        body.pdf-mode .pdf-meta-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 8px 12px 2px 0;
+        }
+
+        body.pdf-mode .summary-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        body.pdf-mode .summary-table thead th {
+            padding: 10px 14px;
+        }
+
+        body.pdf-mode .summary-table tbody td {
+            padding: 12px 14px;
+        }
+
+        body.pdf-mode .total-bar {
+            margin-top: 14px;
+        }
+
+        body.pdf-mode .total-bar-inner {
+            padding: 18px 44px;
+            line-height: 1;
+        }
+
+        body.pdf-mode .invoice-box {
+            margin-top: 22px;
+            padding: 14px 16px;
+            border: 1px solid #d7dee8;
+        }
+
+        body.pdf-mode .invoice-box-title {
+            padding: 8px 0 14px;
+            margin-bottom: 10px;
+        }
+
+        body.pdf-mode .receipt-footer {
+            padding: 22px 28px 10px;
+            border-top: 1px solid #dbe3ed;
+        }
+
+        body.pdf-mode .footer-msg,
+        body.pdf-mode .status-pill,
+        body.pdf-mode .summary-table thead th,
+        body.pdf-mode .total-bar-inner,
+        body.pdf-mode .receipt-header {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
     </style>
 </head>
-<body>
+<body class="{% if for_pdf %}pdf-mode{% endif %}">
+    {% if not for_pdf %}
     <div class="action-bar">
         {% if payment.invoice %}
         <a href="{% url 'billing:invoice_detail' payment.invoice.id %}" class="btn btn-back">&#8592; Invoice</a>
@@ -94,9 +249,37 @@
         {% endif %}
         <button onclick="window.print()" class="btn btn-print">&#128438; Print</button>
     </div>
+    {% endif %}
 
     <div class="receipt-container">
         <!-- Header -->
+        {% if for_pdf %}
+        <div class="receipt-header" style="padding: 24px 28px 18px;">
+            <table class="pdf-header-table" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="pdf-header-left" width="62%">
+                        {% if clinic_settings.logo %}
+                        <img src="{{ clinic_settings.logo.url }}" alt="{{ clinic_settings.clinic_name }}" class="pdf-logo" width="90">
+                        {% endif %}
+                        <div class="clinic-name">{{ clinic_settings.clinic_name }}</div>
+                        <div class="clinic-details">
+                            {% if clinic_settings.address %}{{ clinic_settings.address }}<br>{% endif %}
+                            {% if clinic_settings.phone %}Phone: {{ clinic_settings.phone }}{% endif %}
+                            {% if clinic_settings.email %} | {{ clinic_settings.email }}{% endif %}
+                        </div>
+                    </td>
+                    <td class="pdf-header-right" width="38%">
+                        <h1 style="font-size: 20px; font-weight: 700; color: #1B5E96; margin: 0 0 6px 0;">PAYMENT RECEIPT</h1>
+                        <div class="receipt-badge">{{ payment.payment_id }}</div><br>
+                        <div class="receipt-date">
+                            {{ payment.payment_date|date:"F d, Y" }} &bull;
+                            <span class="status-pill status-{{ payment.status }}">{{ payment.get_status_display }}</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        {% else %}
         <div class="receipt-header">
             <div>
                 {% if clinic_settings.logo %}
@@ -118,6 +301,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- Body -->
         <div class="receipt-body">
@@ -130,7 +314,15 @@
             <!-- Payment Summary -->
             <div style="margin-top: 24px;">
                 <div class="section-title">Payment Summary</div>
-                <table class="summary-table">
+                <table class="summary-table" {% if for_pdf %}cellpadding="0" cellspacing="0" border="0"{% endif %}>
+                    {% if for_pdf %}
+                    <colgroup>
+                        <col style="width:41%;">
+                        <col style="width:18%;">
+                        <col style="width:18%;">
+                        <col style="width:23%;">
+                    </colgroup>
+                    {% endif %}
                     <thead>
                         <tr>
                             <th>Description</th>
@@ -161,6 +353,26 @@
             </div>
 
             {% if payment.reference_number or payment.notes or payment.processed_by %}
+            {% if for_pdf %}
+            <table class="pdf-meta-table" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                <td>
+                    {% if payment.processed_by %}
+                    <span style="color:#64748b;">Processed by:</span> <strong>{{ payment.processed_by.get_full_name }}</strong>
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+                <td>
+                    {% if payment.reference_number %}
+                    <span style="color:#64748b;">Reference:</span> <strong>{{ payment.reference_number }}</strong>
+                    {% else %}
+                    &nbsp;
+                    {% endif %}
+                </td>
+                </tr>
+            </table>
+            {% else %}
             <div style="margin-top: 20px; display: flex; gap: 24px; flex-wrap: wrap; font-size: 12px;">
                 {% if payment.processed_by %}
                 <div><span style="color:#64748b;">Processed by:</span> <strong>{{ payment.processed_by.get_full_name }}</strong></div>
@@ -169,6 +381,7 @@
                 <div><span style="color:#64748b;">Reference:</span> <strong>{{ payment.reference_number }}</strong></div>
                 {% endif %}
             </div>
+            {% endif %}
             {% if payment.notes %}
             <div style="margin-top: 8px; font-size: 12px;"><span style="color:#64748b;">Notes:</span> {{ payment.notes }}</div>
             {% endif %}
@@ -178,20 +391,39 @@
             {% if payment.invoice %}
             <div class="invoice-box">
                 <div class="invoice-box-title">Invoice {{ payment.invoice.invoice_number }}</div>
+                {% if for_pdf %}
+                <table class="pdf-invoice-table" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td>
+                            <div class="invoice-stat-value">UGX {{ payment.invoice.total_amount|floatformat:0|intcomma }}</div>
+                            <div class="invoice-stat-label">Invoice Total</div>
+                        </td>
+                        <td>
+                            <div class="invoice-stat-value paid">UGX {{ payment.invoice.get_total_paid|floatformat:0|intcomma }}</div>
+                            <div class="invoice-stat-label">Total Paid</div>
+                        </td>
+                        <td>
+                            <div class="invoice-stat-value {% if payment.invoice.get_balance_due > 0 %}balance-due{% else %}balance-clear{% endif %}">UGX {{ payment.invoice.get_balance_due|floatformat:0|intcomma }}</div>
+                            <div class="invoice-stat-label">Balance Due</div>
+                        </td>
+                    </tr>
+                </table>
+                {% else %}
                 <div class="invoice-grid">
                     <div class="invoice-stat">
                         <div class="invoice-stat-value">UGX {{ payment.invoice.total_amount|floatformat:0|intcomma }}</div>
                         <div class="invoice-stat-label">Invoice Total</div>
                     </div>
                     <div class="invoice-stat">
-                        <div class="invoice-stat-value" style="color: #16a34a;">UGX {{ payment.invoice.get_total_paid|floatformat:0|intcomma }}</div>
+                        <div class="invoice-stat-value paid">UGX {{ payment.invoice.get_total_paid|floatformat:0|intcomma }}</div>
                         <div class="invoice-stat-label">Total Paid</div>
                     </div>
                     <div class="invoice-stat">
-                        <div class="invoice-stat-value" style="color: {% if payment.invoice.get_balance_due > 0 %}#dc2626{% else %}#16a34a{% endif %};">UGX {{ payment.invoice.get_balance_due|floatformat:0|intcomma }}</div>
+                        <div class="invoice-stat-value {% if payment.invoice.get_balance_due > 0 %}balance-due{% else %}balance-clear{% endif %}">UGX {{ payment.invoice.get_balance_due|floatformat:0|intcomma }}</div>
                         <div class="invoice-stat-label">Balance Due</div>
                     </div>
                 </div>
+                {% endif %}
             </div>
             {% endif %}
         </div>

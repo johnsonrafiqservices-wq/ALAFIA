@@ -183,6 +183,8 @@
             --alafia-chart-4: {{ clinic_settings.chart_color_4|default:"#FF8C00" }};
             --alafia-chart-5: {{ clinic_settings.chart_color_5|default:"#0891b2" }};
             --alafia-chart-6: {{ clinic_settings.chart_color_6|default:"#dc2626" }};
+            --sidebar-expanded-width: 260px;
+            --sidebar-collapsed-width: 78px;
             
             /* Light Mode (Default) */
             --alafia-dark: {{ clinic_settings.dark_color|default:"#1e293b" }};
@@ -231,11 +233,13 @@
             top: 0;
             left: 0;
             height: 100vh;
+            width: var(--sidebar-expanded-width);
             overflow-y: auto;
             background: var(--alafia-bg-primary);
             border-right: 1px solid var(--alafia-border);
             z-index: 1000;
             box-shadow: var(--alafia-shadow);
+            transition: width 0.2s ease;
         }
 
         .alafia-brand {
@@ -292,6 +296,115 @@
         .main-content {
             background-color: var(--alafia-light);
             min-height: 100vh;
+            margin-left: var(--sidebar-expanded-width);
+            width: calc(100% - var(--sidebar-expanded-width));
+            max-width: calc(100% - var(--sidebar-expanded-width));
+            flex: 0 0 calc(100% - var(--sidebar-expanded-width));
+            transition: margin-left 0.2s ease, width 0.2s ease, max-width 0.2s ease, flex-basis 0.2s ease;
+        }
+
+        .sidebar-toggle-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--alafia-border);
+            background: var(--alafia-bg-primary);
+            color: var(--alafia-text-primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+            color: var(--alafia-primary);
+            border-color: var(--alafia-primary);
+            background: var(--alafia-gradient-light);
+        }
+
+        .sidebar-toggle-btn i {
+            transition: transform 0.2s ease;
+        }
+
+        body.sidebar-collapsed .sidebar-toggle-btn i {
+            transform: rotate(180deg);
+        }
+
+        @media (min-width: 768px) {
+            body.sidebar-collapsed .sidebar {
+                width: var(--sidebar-collapsed-width);
+            }
+
+            body.sidebar-collapsed .main-content {
+                margin-left: var(--sidebar-collapsed-width);
+                width: calc(100% - var(--sidebar-collapsed-width));
+                max-width: calc(100% - var(--sidebar-collapsed-width));
+                flex: 0 0 calc(100% - var(--sidebar-collapsed-width));
+            }
+
+            body.sidebar-collapsed .sidebar .nav-link {
+                justify-content: center;
+                font-size: 0;
+                padding: 0.75rem 0.5rem;
+                margin: 0.125rem 0.5rem;
+            }
+
+            body.sidebar-collapsed .sidebar .nav-link i {
+                margin-right: 0;
+                width: auto;
+                font-size: 1rem;
+            }
+
+            body.sidebar-collapsed .sidebar .alafia-brand {
+                padding: 1rem 0.5rem;
+            }
+
+            body:not(.sidebar-collapsed) .sidebar .brand-mini-icon {
+                display: none;
+            }
+
+            body.sidebar-collapsed .sidebar .brand-mini-icon {
+                display: block;
+                font-size: 1.75rem;
+                color: #ffffff;
+            }
+
+            body.sidebar-collapsed .sidebar .alafia-brand img,
+            body.sidebar-collapsed .sidebar .alafia-brand small,
+            body.sidebar-collapsed .sidebar .alafia-brand .user-info {
+                display: none;
+            }
+
+            body.sidebar-collapsed .sidebar .theme-toggle {
+                justify-content: center;
+                padding: 0.5rem;
+                margin: 1rem 0.5rem;
+            }
+
+            body.sidebar-collapsed .sidebar .theme-toggle span {
+                display: none;
+            }
+
+            body.sidebar-collapsed .sidebar hr {
+                margin: 1rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar-toggle-btn {
+                display: none;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                max-width: 100%;
+                flex: 0 0 100%;
+            }
         }
 
         .alafia-header {
@@ -331,6 +444,71 @@
             color: var(--alafia-dark);
             font-size: 0.875rem;
             border-radius: 12px 12px 0 0;
+        }
+
+        body.reports-compact .main-content .page-header-bar {
+            padding-top: 0.6rem !important;
+            padding-bottom: 0.4rem !important;
+            margin-bottom: 0.7rem !important;
+        }
+
+        body.reports-compact .main-content .page-header-bar .h2 {
+            font-size: 1.35rem;
+        }
+
+        body.reports-compact .main-content .page-actions-toolbar .btn,
+        body.reports-compact .main-content .page-actions-toolbar .dropdown-toggle {
+            padding: 0.24rem 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+
+        body.reports-compact .main-content .page-actions-toolbar .btn-group {
+            gap: 0;
+        }
+
+        body.reports-compact .main-content .row {
+            --bs-gutter-x: 0.8rem;
+            --bs-gutter-y: 0.8rem;
+        }
+
+        body.reports-compact .main-content .mb-4 {
+            margin-bottom: 0.9rem !important;
+        }
+
+        body.reports-compact .main-content .card {
+            border-radius: 0.5rem;
+        }
+
+        body.reports-compact .main-content .card-header {
+            padding: 0.55rem 0.8rem !important;
+        }
+
+        body.reports-compact .main-content .card-body {
+            padding: 0.75rem 0.85rem;
+        }
+
+        body.reports-compact .main-content .form-control,
+        body.reports-compact .main-content .form-select {
+            min-height: calc(1.35em + 0.35rem + 2px);
+            padding: 0.16rem 0.4rem;
+            font-size: 0.78rem;
+        }
+
+        body.reports-compact .main-content .form-label,
+        body.reports-compact .main-content .small {
+            font-size: 0.78rem;
+            line-height: 1.25;
+        }
+
+        @media (max-width: 991.98px) {
+            body.reports-compact .main-content .page-header-bar .h2 {
+                font-size: 1.15rem;
+            }
+
+            body.reports-compact .main-content .card-body {
+                padding: 0.7rem 0.75rem;
+            }
         }
 
         .metric-card {
@@ -1197,7 +1375,7 @@
     }
     </script>
 </head>
-<body>
+<body class="{% if request.resolver_match and request.resolver_match.namespace == 'reports' %}reports-compact{% endif %}">
         <!-- Main Modal -->
         <div class="modal fade" id="mainModal" tabindex="-1" aria-labelledby="mainModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -1215,7 +1393,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse" id="appSidebar">
                 <div class="position-sticky pt-3">
                     <div class="alafia-brand text-center">
                         {% if clinic_settings.logo %}
@@ -1223,6 +1401,7 @@
                         {% else %}
                             <i class="bi bi-heart-pulse-fill mb-3" style="font-size: 3rem;"></i>
                         {% endif %}
+                        <i class="bi bi-heart-pulse-fill brand-mini-icon"></i>
                         {% if user.is_authenticated %}
                             <small class="text-white-50">{{ user.get_full_name }}</small><br>
                             <small class="text-white-50">{{ user.get_role_display }}</small>
@@ -1366,9 +1545,19 @@
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
                 <!-- Top navbar -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom page-header-bar">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Collapse sidebar" title="Collapse sidebar" aria-expanded="true">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <h1 class="h2 mb-0">{% block page_title %}Dashboard{% endblock %}</h1>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0 page-actions-toolbar">
+                        {% if request.resolver_match and request.resolver_match.namespace == 'reports' %}
+                        <a href="{% url 'reports:reports_dashboard' %}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="bi bi-house-door me-1"></i>Main Reports
+                        </a>
+                        {% endif %}
                         {% block page_actions %}{% endblock %}
                     </div>
                 </div>
@@ -1495,6 +1684,53 @@
                         e.preventDefault();
                         toggleTheme();
                     }
+                });
+            }
+
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            const collapseStorageKey = 'sidebarCollapsed';
+            const desktopMedia = window.matchMedia('(min-width: 768px)');
+
+            function updateSidebarToggleUI() {
+                if (!sidebarToggleBtn) {
+                    return;
+                }
+
+                const collapsed = document.body.classList.contains('sidebar-collapsed');
+                sidebarToggleBtn.setAttribute('aria-expanded', (!collapsed).toString());
+                sidebarToggleBtn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                sidebarToggleBtn.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            }
+
+            function applySidebarStateFromStorage() {
+                if (!desktopMedia.matches) {
+                    document.body.classList.remove('sidebar-collapsed');
+                    updateSidebarToggleUI();
+                    return;
+                }
+
+                const collapsed = localStorage.getItem(collapseStorageKey) === 'true';
+                document.body.classList.toggle('sidebar-collapsed', collapsed);
+                updateSidebarToggleUI();
+            }
+
+            applySidebarStateFromStorage();
+
+            if (desktopMedia.addEventListener) {
+                desktopMedia.addEventListener('change', applySidebarStateFromStorage);
+            } else {
+                desktopMedia.addListener(applySidebarStateFromStorage);
+            }
+
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.addEventListener('click', function() {
+                    if (!desktopMedia.matches) {
+                        return;
+                    }
+
+                    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem(collapseStorageKey, isCollapsed.toString());
+                    updateSidebarToggleUI();
                 });
             }
         });

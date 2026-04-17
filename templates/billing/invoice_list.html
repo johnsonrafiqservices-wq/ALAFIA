@@ -3,7 +3,12 @@
 
 {% block title %}Invoices - Alafia Point Wellness Clinic{% endblock %}
 
-{% block page_title %}Invoices{% endblock %}
+{% block page_title %}
+<div class="d-flex align-items-center">
+    <i class="bi bi-receipt-cutoff me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+    <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Invoices</span>
+</div>
+{% endblock %}
 
 {% block page_actions %}
 <button type="button" class="btn btn-primary btn-sm" onclick="openFullInvoiceCreateModal()">

@@ -851,72 +851,129 @@ def bulk_invoice_action(request):
 @login_required
 def payment_receipt_pdf(request, pk):
     payment = get_object_or_404(Payment, pk=pk)
-    
-    # Create PDF
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-    
-    # Header
-    title = Paragraph(f"PAYMENT RECEIPT", styles['Title'])
-    story.append(title)
-    story.append(Spacer(1, 12))
-    
-    # Receipt details
-    receipt_data = [
-        ['Payment ID:', payment.payment_id],
-        ['Payment Date:', payment.payment_date.strftime('%Y-%m-%d %H:%M')],
-        ['Amount:', f"${payment.amount}"],
-        ['Method:', payment.get_payment_method_display()],
-        ['Status:', payment.get_status_display()],
-    ]
-    
-    if payment.reference_number:
-        receipt_data.append(['Reference:', payment.reference_number])
-    
-    receipt_table = Table(receipt_data, colWidths=[2*72, 3*72])
-    receipt_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-    ]))
-    story.append(receipt_table)
-    story.append(Spacer(1, 12))
-    
-    # Patient and invoice information
-    patient_info = Paragraph(f"<b>Patient:</b><br/>{payment.patient.get_full_name()}<br/><b>Invoice:</b> {payment.invoice.invoice_number}", styles['Normal'])
-    story.append(patient_info)
-    
-    doc.build(story)
-    buffer.seek(0)
-    
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+
+    def build_payment_receipt_pdf_bytes(target_payment):
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+
+        title = Paragraph("PAYMENT RECEIPT", styles['Title'])
+        story.append(title)
+        story.append(Spacer(1, 12))
+
+        receipt_data = [
+            ['Payment ID:', target_payment.payment_id],
+            ['Payment Date:', target_payment.payment_date.strftime('%Y-%m-%d %H:%M')],
+            ['Amount:', f"UGX {target_payment.amount}"],
+            ['Method:', target_payment.get_payment_method_display()],
+            ['Status:', target_payment.get_status_display()],
+        ]
+
+        if target_payment.reference_number:
+            receipt_data.append(['Reference:', target_payment.reference_number])
+
+        receipt_table = Table(receipt_data, colWidths=[2 * 72, 3 * 72])
+        receipt_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ]))
+        story.append(receipt_table)
+        story.append(Spacer(1, 12))
+
+        invoice_number = target_payment.invoice.invoice_number if target_payment.invoice else 'N/A'
+        patient_info = Paragraph(
+            f"<b>Patient:</b><br/>{target_payment.patient.get_full_name()}<br/><b>Invoice:</b> {invoice_number}",
+            styles['Normal'],
+        )
+        story.append(patient_info)
+
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    pdf_bytes = build_payment_receipt_pdf_bytes(payment)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="receipt_{payment.payment_id}.pdf"'
     return response
 
 @login_required
 def send_payment_receipt_email(request, pk):
-    """Send payment receipt via email"""
+    """Send payment receipt via email with print-layout attachment"""
     payment = get_object_or_404(Payment, pk=pk)
     
     if not payment.patient.email:
         return JsonResponse({'success': False, 'error': 'Patient has no email address'})
     
-    try:
-        # Build absolute link to the receipt PDF
-        pdf_link = request.build_absolute_uri(
-            reverse('billing:payment_receipt_pdf', kwargs={'pk': payment.pk})
-        )
+    import logging, traceback
+    logger = logging.getLogger(__name__)
 
-        # Prepare email body with link
+    try:
+        from io import BytesIO
+        import os
+
+        try:
+            from clinic_settings.models import ClinicSettings
+            clinic_settings = ClinicSettings.objects.first()
+        except Exception:
+            clinic_settings = None
+
+        # Build PDF attachment (non-blocking: email still sends if PDF fails)
+        pdf_bytes = None
+        pdf_error = None
+        try:
+            from xhtml2pdf import pisa
+
+            receipt_html = render_to_string('billing/payment_receipt.html', {
+                'payment': payment,
+                'clinic_settings': clinic_settings,
+                'for_pdf': True,
+            }, request=request)
+
+            def link_callback(uri, rel):
+                if uri.startswith('http://') or uri.startswith('https://'):
+                    return uri
+                if uri.startswith(settings.MEDIA_URL):
+                    path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ''))
+                elif uri.startswith(settings.STATIC_URL):
+                    static_root = settings.STATIC_ROOT or settings.BASE_DIR / 'static'
+                    path = os.path.join(static_root, uri.replace(settings.STATIC_URL, ''))
+                else:
+                    path = uri
+
+                if not os.path.isfile(path):
+                    return uri
+                return path
+
+            pdf_buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(receipt_html, dest=pdf_buffer, link_callback=link_callback)
+            if not pisa_status.err:
+                pdf_buffer.seek(0)
+                pdf_bytes = pdf_buffer.getvalue()
+            else:
+                pdf_error = 'xhtml2pdf reported generation errors'
+        except Exception as pdf_exc:
+            pdf_error = f'{type(pdf_exc).__name__}: {pdf_exc}'
+            logger.exception('Payment receipt PDF generation failed: %s', pdf_error)
+
         clinic_name = getattr(settings, 'CLINIC_NAME', 'PhysioNutrition Clinic')
         subject = f"Payment Receipt #{payment.payment_id} from {clinic_name}"
-        message = render_to_string('billing/email/payment_receipt_email.txt', {
-            'payment': payment,
-            'clinic_name': clinic_name,
-            'pdf_link': pdf_link,
-        })
+        message = (
+            f"Dear {payment.patient.get_full_name()},\n\n"
+            f"Thank you for your payment. "
+            + ("Your payment receipt is attached to this email.\n\n"
+               if pdf_bytes else "Your payment receipt details are below.\n\n")
+            + f"Payment Details:\n"
+            f"- Payment ID: {payment.payment_id}\n"
+            f"- Amount: UGX {payment.amount}\n"
+            f"- Date: {payment.payment_date.strftime('%B %d, %Y')}\n"
+            f"- Method: {payment.get_payment_method_display()}\n"
+            f"- Status: {payment.get_status_display()}\n\n"
+            f"If you have any questions about this payment, please reply to this email.\n\n"
+            f"Thank you,\n{clinic_name} Billing Team"
+        )
 
         email = EmailMessage(
             subject,
@@ -924,11 +981,24 @@ def send_payment_receipt_email(request, pk):
             settings.DEFAULT_FROM_EMAIL,
             [payment.patient.email],
         )
-        email.send()
-        
-        return JsonResponse({'success': True, 'message': f'Receipt sent to {payment.patient.email}'})
+        if pdf_bytes:
+            email.attach(
+                f"receipt_{payment.payment_id}.pdf",
+                pdf_bytes,
+                'application/pdf',
+            )
+
+        sent_count = email.send(fail_silently=False)
+        if not sent_count:
+            return JsonResponse({'success': False, 'error': 'Email backend reported 0 messages sent'})
+
+        msg = f'Receipt sent to {payment.patient.email}'
+        if not pdf_bytes:
+            msg += ' (without PDF attachment — see server logs)'
+        return JsonResponse({'success': True, 'message': msg})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.exception('send_payment_receipt_email failed')
+        return JsonResponse({'success': False, 'error': f'{type(e).__name__}: {e}', 'trace': traceback.format_exc()})
 
 @login_required
 def invoice_aging_report(request):
@@ -1067,25 +1137,66 @@ def patient_draft_invoices(request, patient_id):
 
 @login_required
 def send_invoice_email(request, pk):
+    """Send invoice via email with PDF attachment"""
     invoice = get_object_or_404(Invoice, pk=pk)
     
     if not invoice.patient.email:
         return JsonResponse({'success': False, 'error': 'Patient has no email address'})
     
-    try:
-        # Build absolute link to the printable invoice page (can be saved as PDF by recipient)
-        pdf_link = request.build_absolute_uri(
-            reverse('billing:invoice_pdf', kwargs={'pk': invoice.pk})
-        )
+    import logging, traceback
+    logger = logging.getLogger(__name__)
 
-        # Prepare email body with link
+    try:
+        from io import BytesIO
+        import os
+
+        try:
+            from clinic_settings.models import ClinicSettings
+            clinic_settings = ClinicSettings.objects.first()
+        except Exception:
+            clinic_settings = None
+
+        # Build PDF attachment (non-blocking: email still sends if PDF fails)
+        pdf_bytes = None
+        pdf_error = None
+        try:
+            from xhtml2pdf import pisa
+
+            invoice_html = render_to_string('billing/invoice_pdf.html', {
+                'invoice': invoice,
+                'line_items': invoice.line_items.all(),
+                'payments': invoice.payments.all(),
+                'clinic_settings': clinic_settings,
+            }, request=request)
+
+            buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(
+                invoice_html,
+                dest=buffer,
+                encoding='utf-8'
+            )
+            if pisa_status.err:
+                logger.error(f'xhtml2pdf errors for invoice {invoice.invoice_number}: {pisa_status.err}')
+            buffer.seek(0)
+            pdf_bytes = buffer.getvalue()
+        except Exception as e_pdf:
+            logger.exception(f'Failed to generate PDF for invoice {invoice.invoice_number}')
+            pdf_error = str(e_pdf)
+
         clinic_name = getattr(settings, 'CLINIC_NAME', 'PhysioNutrition Clinic')
         subject = f"Invoice #{invoice.invoice_number} from {clinic_name}"
-        message = render_to_string('billing/email/invoice_email.txt', {
-            'invoice': invoice,
-            'clinic_name': clinic_name,
-            'pdf_link': pdf_link,
-        })
+        message = (
+            f"Dear {invoice.patient.first_name or 'Patient'},\n\n"
+            f"Please find your invoice #{invoice.invoice_number} attached.\n\n"
+            f"Invoice Details:\n"
+            f"- Invoice Number: {invoice.invoice_number}\n"
+            f"- Issue Date: {invoice.issue_date.strftime('%B %d, %Y')}\n"
+            f"- Due Date: {invoice.due_date.strftime('%B %d, %Y')}\n"
+            f"- Total Amount: UGX {invoice.total_amount}\n"
+            f"- Status: {invoice.get_status_display()}\n\n"
+            f"If you have any questions about this invoice, please reply to this email.\n\n"
+            f"Thank you,\n{clinic_name} Billing Team"
+        )
 
         email = EmailMessage(
             subject,
@@ -1093,15 +1204,28 @@ def send_invoice_email(request, pk):
             settings.DEFAULT_FROM_EMAIL,
             [invoice.patient.email],
         )
-        email.send()
-        
+        if pdf_bytes:
+            email.attach(
+                f"invoice_{invoice.invoice_number}.pdf",
+                pdf_bytes,
+                'application/pdf',
+            )
+
+        sent_count = email.send(fail_silently=False)
+        if not sent_count:
+            return JsonResponse({'success': False, 'error': 'Email backend reported 0 messages sent'})
+
         # Update invoice status
         invoice.status = 'sent'
         invoice.save()
-        
-        return JsonResponse({'success': True})
+
+        msg = f'Invoice sent to {invoice.patient.email}'
+        if not pdf_bytes:
+            msg += ' (without PDF attachment — see server logs)'
+        return JsonResponse({'success': True, 'message': msg})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.exception('send_invoice_email failed')
+        return JsonResponse({'success': False, 'error': f'{type(e).__name__}: {e}', 'trace': traceback.format_exc()})
 
 
 # ==================== AJAX-ONLY VIEWS ====================

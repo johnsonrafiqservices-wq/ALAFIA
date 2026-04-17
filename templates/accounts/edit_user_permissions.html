@@ -4,36 +4,36 @@
 
 {% block page_title %}
     <div class="d-flex align-items-center">
-        <i class="bi bi-shield-lock-fill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Edit Permissions</span>
+        <i class="bi bi-shield-lock-fill me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Edit Permissions</span>
     </div>
 {% endblock %}
 
 {% block content %}
 <!-- Header Card -->
-<div class="card shadow-sm mb-4 border-0">
-    <div class="card-body p-4" style="background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%);">
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-body p-3" style="background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%);">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center text-white">
-                <div class="flex-shrink-0 me-3">
+                <div class="flex-shrink-0 me-2">
                     {% if target_user.profile_picture %}
-                        <img src="{{ target_user.profile_picture.url }}" alt="{{ target_user.get_full_name }}" class="rounded-circle" width="64" height="64" style="object-fit: cover; border: 3px solid rgba(255,255,255,0.3);">
+                        <img src="{{ target_user.profile_picture.url }}" alt="{{ target_user.get_full_name }}" class="rounded-circle" width="40" height="40" style="object-fit: cover; border: 2px solid rgba(255,255,255,0.3);">
                     {% else %}
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); color: white; font-weight: bold; font-size: 1.5rem; border: 3px solid rgba(255,255,255,0.3);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); color: white; font-weight: bold; font-size: 0.9rem; border: 2px solid rgba(255,255,255,0.3);">
                             {{ target_user.first_name|first|upper }}{{ target_user.last_name|first|upper }}
                         </div>
                     {% endif %}
                 </div>
                 <div>
-                    <h5 class="mb-1 fw-bold">{{ target_user.get_full_name }}</h5>
-                    <p class="mb-0 opacity-75">
+                    <div class="fw-bold" style="font-size:0.85rem;">{{ target_user.get_full_name }}</div>
+                    <div class="opacity-75" style="font-size:0.75rem;">
                         <i class="bi bi-person-badge me-1"></i>{{ role_display }}
                         <span class="mx-2">|</span>
                         <i class="bi bi-at me-1"></i>{{ target_user.username }}
-                    </p>
+                    </div>
                 </div>
             </div>
-            <a href="{% url 'accounts:user_permissions_list' %}" class="btn btn-light btn-sm">
+            <a href="{% url 'accounts:user_permissions_list' %}" class="btn btn-light btn-sm" style="font-size:0.78rem;">
                 <i class="bi bi-arrow-left me-1"></i>All Users
             </a>
         </div>
@@ -46,49 +46,49 @@
         <form method="post" id="permissionsForm">
             {% csrf_token %}
             
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-bottom py-3">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white border-bottom py-2 px-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold" style="color: var(--alafia-primary);">
-                            <i class="bi bi-grid-3x3-gap me-2"></i>App Access
-                        </h6>
-                        <span class="badge bg-light text-muted">{{ apps|length }} apps</span>
+                        <div class="fw-semibold" style="font-size:0.85rem;color:var(--alafia-primary);">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>App Access
+                        </div>
+                        <span class="badge bg-light text-muted" style="font-size:0.65rem;">{{ apps|length }} apps</span>
                     </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
                         {% for app in apps %}
-                        <div class="list-group-item d-flex align-items-center justify-content-between py-3">
+                        <div class="list-group-item d-flex align-items-center justify-content-between py-2">
                             <div class="d-flex align-items-center">
-                                <div class="flex-shrink-0 me-3">
-                                    <div class="rounded d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background-color: {{ app.color }}20; color: {{ app.color }};">
-                                        <i class="bi {{ app.icon }} fs-5"></i>
+                                <div class="flex-shrink-0 me-2">
+                                    <div class="rounded d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: {{ app.color }}20; color: {{ app.color }};">
+                                        <i class="bi {{ app.icon }}" style="font-size:0.85rem;"></i>
                                     </div>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0 fw-semibold">{{ app.name }}</h6>
-                                    <small class="text-muted">
+                                    <div class="fw-semibold" style="font-size:0.82rem;">{{ app.name }}</div>
+                                    <small class="text-muted" style="font-size:0.72rem;">
                                         {% if app.role_default %}
-                                            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Full Access (Role default)</span>
+                                            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Full Access</span>
                                         {% else %}
-                                            <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>No Access (Role default)</span>
+                                            <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>No Access</span>
                                         {% endif %}
                                     </small>
                                 </div>
                             </div>
                             <div class="btn-group" role="group">
                                 <input type="radio" class="btn-check" name="app_{{ app.key }}" id="app_{{ app.key }}_default" value="default" {% if app.user_override == 'default' %}checked{% endif %}>
-                                <label class="btn btn-outline-secondary btn-sm" for="app_{{ app.key }}_default" title="Use role default">
+                                <label class="btn btn-outline-secondary btn-sm" for="app_{{ app.key }}_default" title="Use role default" style="font-size:0.72rem;">
                                     <i class="bi bi-circle"></i> Default
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="app_{{ app.key }}" id="app_{{ app.key }}_allow" value="allow" {% if app.user_override == 'allow' %}checked{% endif %}>
-                                <label class="btn btn-outline-success btn-sm" for="app_{{ app.key }}_allow" title="Force grant access">
+                                <label class="btn btn-outline-success btn-sm" for="app_{{ app.key }}_allow" title="Force grant access" style="font-size:0.72rem;">
                                     <i class="bi bi-check-circle"></i> Allow
                                 </label>
                                 
                                 <input type="radio" class="btn-check" name="app_{{ app.key }}" id="app_{{ app.key }}_block" value="block" {% if app.user_override == 'block' %}checked{% endif %}>
-                                <label class="btn btn-outline-danger btn-sm" for="app_{{ app.key }}_block" title="Block access">
+                                <label class="btn btn-outline-danger btn-sm" for="app_{{ app.key }}_block" title="Block access" style="font-size:0.72rem;">
                                     <i class="bi bi-x-circle"></i> Block
                                 </label>
                             </div>
@@ -98,12 +98,12 @@
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between">
-                <a href="{% url 'accounts:user_permissions_list' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle me-2"></i>Cancel
+            <div class="d-flex justify-content-between gap-2">
+                <a href="{% url 'accounts:user_permissions_list' %}" class="btn btn-outline-secondary btn-sm" style="font-size:0.78rem;">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-2"></i>Save Permissions
+                <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.78rem;">
+                    <i class="bi bi-check-circle me-1"></i>Save
                 </button>
             </div>
         </form>
@@ -112,79 +112,79 @@
     <!-- Sidebar - Info & Role Defaults -->
     <div class="col-lg-4">
         <!-- User Info Card -->
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white border-bottom py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-info"></i>User Info</h6>
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white border-bottom py-2 px-3">
+                <div class="fw-semibold" style="font-size:0.85rem;"><i class="bi bi-info-circle me-1 text-info"></i>User Info</div>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="text-muted small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.1em;">Username</label>
-                    <p class="mb-0 fw-semibold">{{ target_user.username }}</p>
+            <div class="card-body p-3">
+                <div class="mb-2">
+                    <label class="text-muted small text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">Username</label>
+                    <div class="fw-semibold" style="font-size:0.82rem;">{{ target_user.username }}</div>
                 </div>
-                <div class="mb-3">
-                    <label class="text-muted small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.1em;">Role</label>
-                    <p class="mb-0 fw-semibold">{{ role_display }}</p>
+                <div class="mb-2">
+                    <label class="text-muted small text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">Role</label>
+                    <div class="fw-semibold" style="font-size:0.82rem;">{{ role_display }}</div>
                 </div>
                 <div class="mb-0">
-                    <label class="text-muted small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.1em;">Email</label>
-                    <p class="mb-0 fw-semibold">{{ target_user.email|default:"—" }}</p>
+                    <label class="text-muted small text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">Email</label>
+                    <div class="fw-semibold" style="font-size:0.82rem;">{{ target_user.email|default:"—" }}</div>
                 </div>
             </div>
         </div>
         
         <!-- How It Works -->
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white border-bottom py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-question-circle me-2 text-info"></i>How it works</h6>
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white border-bottom py-2 px-3">
+                <div class="fw-semibold" style="font-size:0.85rem;"><i class="bi bi-question-circle me-1 text-info"></i>How it works</div>
             </div>
-            <div class="card-body">
-                <div class="d-flex mb-3">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-circle text-secondary"></i>
+            <div class="card-body p-3">
+                <div class="d-flex mb-2">
+                    <div class="flex-shrink-0 me-2">
+                        <i class="bi bi-circle text-secondary" style="font-size:0.85rem;"></i>
                     </div>
                     <div>
-                        <small class="fw-semibold">Default</small>
-                        <p class="small text-muted mb-0">Use the role's built-in access rules</p>
+                        <small class="fw-semibold" style="font-size:0.75rem;">Default</small>
+                        <div class="text-muted" style="font-size:0.72rem;">Use the role's built-in access rules</div>
                     </div>
                 </div>
-                <div class="d-flex mb-3">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-check-circle-fill text-success"></i>
+                <div class="d-flex mb-2">
+                    <div class="flex-shrink-0 me-2">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size:0.85rem;"></i>
                     </div>
                     <div>
-                        <small class="fw-semibold">Allow</small>
-                        <p class="small text-muted mb-0">Force-grant access even if the role doesn't have it</p>
+                        <small class="fw-semibold" style="font-size:0.75rem;">Allow</small>
+                        <div class="text-muted" style="font-size:0.72rem;">Force-grant access even if the role doesn't have it</div>
                     </div>
                 </div>
-                <div class="d-flex mb-0">
-                    <div class="flex-shrink-0 me-3">
-                        <i class="bi bi-x-circle-fill text-danger"></i>
+                <div class="d-flex mb-2">
+                    <div class="flex-shrink-0 me-2">
+                        <i class="bi bi-x-circle-fill text-danger" style="font-size:0.85rem;"></i>
                     </div>
                     <div>
-                        <small class="fw-semibold">Block</small>
-                        <p class="small text-muted mb-0">Revoke access even if the role normally allows it</p>
+                        <small class="fw-semibold" style="font-size:0.75rem;">Block</small>
+                        <div class="text-muted" style="font-size:0.72rem;">Revoke access even if the role normally allows it</div>
                     </div>
                 </div>
-                <hr>
-                <p class="small text-muted mb-0">
+                <hr class="my-2">
+                <div class="text-muted" style="font-size:0.72rem;">
                     <i class="bi bi-info-circle me-1"></i>
-                    Overrides take priority over role defaults. Superusers always have full access regardless of overrides.
-                </p>
+                    Overrides take priority over role defaults. Superusers always have full access.
+                </div>
             </div>
         </div>
         
         <!-- Role Defaults -->
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-bottom py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-person-gear me-2 text-warning"></i>Role Defaults for {{ role_display }}</h6>
+            <div class="card-header bg-white border-bottom py-2 px-3">
+                <div class="fw-semibold" style="font-size:0.85rem;"><i class="bi bi-person-gear me-1 text-warning"></i>Role Defaults for {{ role_display }}</div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-3">
                 <div class="row g-2">
                     {% for app_key, app_data in app_info.items %}
                     <div class="col-6">
                         <div class="d-flex align-items-center p-2 rounded" style="background: {% if app_key in role_default_apps %}rgba(46, 139, 87, 0.1){% else %}rgba(220, 38, 38, 0.1){% endif %}">
-                            <i class="bi {{ app_data.icon }} me-2" style="color: {{ app_data.color }};"></i>
-                            <small class="{% if app_key in role_default_apps %}text-success{% else %}text-danger{% endif %}">
+                            <i class="bi {{ app_data.icon }} me-1" style="color: {{ app_data.color }}; font-size:0.75rem;"></i>
+                            <small class="{% if app_key in role_default_apps %}text-success{% else %}text-danger{% endif %}" style="font-size:0.68rem;">
                                 {% if app_key in role_default_apps %}<i class="bi bi-check-circle-fill me-1"></i>{% else %}<i class="bi bi-x-circle-fill me-1"></i>{% endif %}
                                 {{ app_data.name }}
                             </small>

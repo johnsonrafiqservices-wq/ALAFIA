@@ -4,63 +4,63 @@
 
 {% block page_title %}
     <div class="d-flex align-items-center">
-        <i class="bi bi-shield-lock-fill me-3" style="font-size: 1.5rem; color: var(--alafia-primary);"></i>
-        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">Manage User Permissions</span>
+        <i class="bi bi-shield-lock-fill me-2" style="font-size: 1rem; color: var(--alafia-primary);"></i>
+        <span style="background: var(--alafia-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600; font-size: 1rem;">Manage User Permissions</span>
     </div>
 {% endblock %}
 
 {% block content %}
 <!-- Header Card -->
-<div class="card shadow-sm mb-4 border-0">
-    <div class="card-body p-4" style="background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%);">
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-body p-3" style="background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%);">
         <div class="d-flex justify-content-between align-items-center">
             <div class="text-white">
-                <h5 class="mb-1 fw-bold"><i class="bi bi-shield-check me-2"></i>User Permissions</h5>
-                <p class="mb-0 opacity-75">Assign, grant, or revoke app access for each user. Overrides apply on top of role defaults.</p>
+                <div class="fw-semibold" style="font-size:0.85rem;"><i class="bi bi-shield-check me-1"></i>User Permissions</div>
+                <div class="opacity-75" style="font-size:0.75rem;">Assign, grant, or revoke app access for each user.</div>
             </div>
-            <a href="{% url 'clinic_settings:settings' %}" class="btn btn-light btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Settings
+            <a href="{% url 'clinic_settings:settings' %}" class="btn btn-light btn-sm" style="font-size:0.78rem;">
+                <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </div>
     </div>
 </div>
 
 <!-- Stats Cards -->
-<div class="row mb-4">
+<div class="row g-2 mb-3">
     <div class="col-md-4">
         <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body py-4">
-                <h2 class="fw-bold mb-1" style="color: var(--alafia-primary);">{{ total_users }}</h2>
-                <p class="text-muted mb-0 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.1em;">Total Users</p>
+            <div class="card-body py-3">
+                <div class="fw-bold" style="font-size:1.05rem;color:var(--alafia-primary);">{{ total_users }}</div>
+                <div class="text-muted text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">Total Users</div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body py-4">
-                <h2 class="fw-bold mb-1" style="color: var(--alafia-success);">{{ users_with_overrides }}</h2>
-                <p class="text-muted mb-0 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.1em;">Users with Overrides</p>
+            <div class="card-body py-3">
+                <div class="fw-bold" style="font-size:1.05rem;color:var(--alafia-success);">{{ users_with_overrides }}</div>
+                <div class="text-muted text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">Users with Overrides</div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body py-4">
-                <h2 class="fw-bold mb-1" style="color: var(--alafia-warning);">{{ total_apps }}</h2>
-                <p class="text-muted mb-0 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.1em;">System Apps</p>
+            <div class="card-body py-3">
+                <div class="fw-bold" style="font-size:1.05rem;color:var(--alafia-warning);">{{ total_apps }}</div>
+                <div class="text-muted text-uppercase" style="font-size:0.68rem;letter-spacing:0.06em;">System Apps</div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Search Bar -->
-<div class="card shadow-sm mb-4 border-0">
-    <div class="card-body">
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-body p-3">
         <div class="input-group">
             <span class="input-group-text bg-light border-end-0">
                 <i class="bi bi-search text-muted"></i>
             </span>
-            <input type="text" class="form-control border-start-0 bg-light" id="userSearch" placeholder="Search by name, role, or username...">
+            <input type="text" class="form-control border-start-0 bg-light form-control-sm" id="userSearch" placeholder="Search by name, role, or username...">
         </div>
     </div>
 </div>
@@ -70,39 +70,39 @@
     <div class="card-body p-0">
         <div class="list-group list-group-flush" id="usersList">
             {% for user in users %}
-            <div class="list-group-item d-flex align-items-center justify-content-between py-3 user-item" data-name="{{ user.get_full_name|lower }} {{ user.username|lower }} {{ user.get_role_display|lower }}">
+            <div class="list-group-item d-flex align-items-center justify-content-between py-2 user-item" data-name="{{ user.get_full_name|lower }} {{ user.username|lower }} {{ user.get_role_display|lower }}">
                 <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
+                    <div class="flex-shrink-0 me-2">
                         {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle" width="48" height="48" style="object-fit: cover;">
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle" width="36" height="36" style="object-fit: cover;">
                         {% else %}
-                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%); color: white; font-weight: bold;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: linear-gradient(135deg, #1B5E96 0%, #2E8B57 100%); color: white; font-weight: bold; font-size: 0.8rem;">
                                 {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                             </div>
                         {% endif %}
                     </div>
                     <div>
-                        <h6 class="mb-0 fw-bold">{{ user.get_full_name }}</h6>
-                        <small class="text-muted">{{ user.get_role_display }} · @{{ user.username }}</small>
+                        <div class="fw-semibold" style="font-size:0.82rem;">{{ user.get_full_name }}</div>
+                        <small class="text-muted" style="font-size:0.72rem;">{{ user.get_role_display }} · @{{ user.username }}</small>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     {% if user.is_superuser %}
-                        <span class="badge bg-warning text-dark">Superuser</span>
+                        <span class="badge bg-warning text-dark" style="font-size:0.65rem;">Superuser</span>
                     {% elif user.overrides_count > 0 %}
-                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>{{ user.overrides_count }} granted</span>
+                        <span class="badge bg-success" style="font-size:0.65rem;"><i class="bi bi-check-circle me-1"></i>{{ user.overrides_count }} granted</span>
                     {% else %}
-                        <span class="badge bg-light text-muted">Role defaults</span>
+                        <span class="badge bg-light text-muted" style="font-size:0.65rem;">Role defaults</span>
                     {% endif %}
-                    <a href="{% url 'accounts:edit_user_permissions' user.id %}" class="btn btn-outline-primary btn-sm">
+                    <a href="{% url 'accounts:edit_user_permissions' user.id %}" class="btn btn-outline-primary btn-sm" style="font-size:0.78rem;">
                         <i class="bi bi-pencil-square me-1"></i>Edit
                     </a>
                 </div>
             </div>
             {% empty %}
-            <div class="list-group-item text-center py-5">
-                <i class="bi bi-people fs-1 text-muted"></i>
-                <p class="text-muted mt-3">No users found.</p>
+            <div class="list-group-item text-center py-4">
+                <i class="bi bi-people text-muted" style="font-size:2rem;"></i>
+                <p class="text-muted mt-2" style="font-size:0.78rem;">No users found.</p>
             </div>
             {% endfor %}
         </div>
