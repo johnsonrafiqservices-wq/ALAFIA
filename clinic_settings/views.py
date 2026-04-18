@@ -155,10 +155,25 @@ def database_export_view(request):
         messages.error(request, 'Database file not found.')
         return redirect('clinic_settings:database_management')
     
-    # Create filename with timestamp
+    # Create filename with timestamp and extension
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     db_name = os.path.basename(db_path)
-    filename = f"backup_{db_name}_{timestamp}"
+    
+    # Extract base name and extension
+    if db_name.endswith('.sqlite3'):
+        base_name = db_name[:-8]  # Remove .sqlite3
+        ext = '.sqlite3'
+    elif db_name.endswith('.db'):
+        base_name = db_name[:-3]  # Remove .db
+        ext = '.db'
+    elif db_name.endswith('.sqlite'):
+        base_name = db_name[:-7]  # Remove .sqlite
+        ext = '.sqlite'
+    else:
+        base_name = db_name
+        ext = '.sqlite3'
+    
+    filename = f"backup_{base_name}_{timestamp}{ext}"
     
     # Read the database file
     with open(db_path, 'rb') as f:
@@ -173,6 +188,9 @@ def database_export_view(request):
 @user_passes_test(is_admin_or_superuser)
 def database_import_view(request):
     """Import database from uploaded file"""
+    import logging
+    logger = logging.getLogger(__name__)
+
     if request.method != 'POST':
         return redirect('clinic_settings:database_management')
     
@@ -183,9 +201,29 @@ def database_import_view(request):
     uploaded_file = request.FILES['database_file']
     db_path = settings.DATABASES['default']['NAME']
     
-    # Validate file type
-    if not (uploaded_file.name.endswith('.sqlite3') or uploaded_file.name.endswith('.db') or uploaded_file.name.endswith('.sqlite')):
-        messages.error(request, 'Invalid file type. Please upload a SQLite database file.')
+    # Log the uploaded filename for debugging
+    logger.info(f"Uploaded file name: {uploaded_file.name}")
+    
+    # Validate file type - very flexible check
+    file_lower = uploaded_file.name.lower()
+    valid_extensions = ['.sqlite3', '.db', '.sqlite']
+    
+    # Check if file ends with valid extension
+    is_valid = any(file_lower.endswith(ext) for ext in valid_extensions)
+    
+    # Also check for old format where timestamp is after extension (e.g., backup_db.sqlite3_20260417_153417)
+    if not is_valid:
+        import re
+        old_pattern = r'.*\.(sqlite3|db|sqlite)_\d{8}_\d{6}$'
+        if re.match(old_pattern, file_lower):
+            is_valid = True
+    
+    # Also accept any file containing "sqlite" in the name (for maximum flexibility)
+    if not is_valid and 'sqlite' in file_lower:
+        is_valid = True
+    
+    if not is_valid:
+        messages.error(request, f'Invalid file type: "{uploaded_file.name}". Please upload a SQLite database file (.sqlite3, .db, or .sqlite).')
         return redirect('clinic_settings:database_management')
     
     # Create backup of current database
